@@ -1,0 +1,5 @@
+//Definitions go here to avoid clutter elsewhere
+
+// Define the particle structure
+
+typedef struct{
