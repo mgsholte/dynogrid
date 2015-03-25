@@ -6,7 +6,7 @@ all:scan
 CC=mpicxx
 
 scan: $(OBJS)
-	$(CC) $(LFLAGS) $(OBJS) -o search
+	$(CC) $(LFLAGS) $(OBJS) -o dynogrid
 
 bsearch.o: bsearch.cpp
 	$(CC) $(CFLAGS) bsearch.cpp
