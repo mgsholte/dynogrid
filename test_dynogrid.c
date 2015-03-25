@@ -4,6 +4,7 @@
 //djflajf;
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 //joel's edit
 int y = 10;
 for (y = 10; y < 20; y++){
@@ -17,3 +18,7 @@ for (y = 10; y < 20; y++){
 =======
 //joel's edit
 >>>>>>> parent of 8264fc6... added for loop to test_dynogrid.c
+=======
+//joel's edit
+>>>>>>> parent of 8264fc6... added for loop to test_dynogrid.c
+jjjjjjjjjj
