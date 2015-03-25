@@ -1,21 +1,21 @@
-OBJS = search.o bsearch.o
+OBJS = main.o push.o
 CFLAGS = -O3 -openmp -c
 LFLAGS = -O3 -openmp
 all:scan
 
-CC=mpicxx
+CC=dyno
 
-scan: $(OBJS)
+dyno: $(OBJS)
 	$(CC) $(LFLAGS) $(OBJS) -o dynogrid
 
-bsearch.o: bsearch.cpp
-	$(CC) $(CFLAGS) bsearch.cpp
+main.o: main.c
+	$(CC) $(CFLAGS) main.c
 
-search.o: search.cpp
-	$(CC) $(CFLAGS) search.cpp
+push.o: push.c
+	$(CC) $(CFLAGS) push.c
 
 run:scan
-	@./search 10
+	@./dynogrid
 
 clean:
 	@/bin/rm -rf *.o
