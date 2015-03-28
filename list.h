@@ -1,7 +1,7 @@
 #ifndef LIST_H
 #define LIST_H
 
-struct Node;
+typedef struct Node Node;
 typedef struct {
 	void *payload;
 	Node *next;
