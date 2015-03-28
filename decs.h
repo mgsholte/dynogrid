@@ -3,8 +3,6 @@
 
 //Definitions go here to avoid clutter elsewhere
 
-// Define the particle structure
-
 typedef struct {
 	double x,y;
 } vec2;
@@ -13,10 +11,11 @@ typedef struct {
 	double x,y,z;
 } vec3;
 
+// Define the particle structure
 typedef struct {
 	vec2 pos;  // position
 	vec3 p;  // momentum
-    final double mass, charge, weight;  // weight is the number of actual particles this instance represents
+    const double mass, charge, weight;  // weight is the number of actual particles this instance represents
 	//particle *next;  // treat the particles as a list. this points to the next particle in the list
 } particle;
 
