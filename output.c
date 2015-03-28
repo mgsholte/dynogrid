@@ -55,9 +55,9 @@ void output_grid(int itNum, grid_point **grid_points, int nx, int ny, List parti
     
     list_reset_iter(particles);
     while(list_has_next(particles)){
-    	/*write one line to file per grid point in this format:
-			coordinates:i,j,Ex=lf,Ey=lf,Ez=lf,Bx=lf,By=lf,Bz=lf
-			*/
+    	/*write one line to file per particle in this format:
+			pos_x=#,pos_y=#,p_x=#,p_y=#,p_z=#
+		*/
 		particle *ptc = (particle*) list_get_next(particles);
 		fprintf(grid_file, "pos_x=%lf,pos_y=%lf,p_x=%lf,p_y=%lf,p_z=%lf\n", (ptc->pos).x, (ptc->pos).y, (ptc->pos).x, (ptc->p).x, (ptc->p).y, (ptc->p).z);
 	}//end while
