@@ -1,9 +1,9 @@
 #include <stdlib.h>
+
 #include "list.h"
 #include "decs.h"
 #include "grid.h"
 
-<<<<<<< HEAD
 void output_grid(int itNum, grid_point **grid_points, int nx, int ny, List particles) {
 	// create the file name to output for the grid point data:
 	char fname_grid[] = ((char)itNum);
