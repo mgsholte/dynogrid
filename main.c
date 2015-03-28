@@ -15,7 +15,7 @@ int main(int argc, char *argv[]) {
 
 	printf("initializing grid and particles");
 
-	double **grid_points = init_grid(nx, ny);
+	grid_point **grid_points = init_grid(nx, ny);
 	particle *particles = init_particles(ul, lr, part_per_cell);
 
 	printf("beginning simulation");
