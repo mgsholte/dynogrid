@@ -2,6 +2,7 @@
 
 #include "decs.h"
 #include "grid.h"
+#include "dynamics.h"
 
 int main(int argc, char *argv[]) {
 	int i;  // loop index variable
