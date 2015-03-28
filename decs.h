@@ -28,4 +28,14 @@ typedef struct {
 double dt = 1e-18; // the time step
 double time; // changes every iteration
 
+const double dx = 1; // what units?
+const double dy = 1;
+
+const double PROTON_WEIGHT = 5.0;
+const double ELECTRON_WEIGHT = 1.0;
+const int BASE_PROTON_MASS = 1.672*10^(-27); //kg
+const int BASE_ELECTRON_MASS = 9.109*10^(-31); //kg
+const int BASE_PROTON_CHARGE = 1.602*10^(-19); //C
+const int BASE_ELECTRON_CHARGE = -1*PROTON_CHARGE; //C
+
 #endif //DECS_H
