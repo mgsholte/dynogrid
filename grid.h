@@ -16,6 +16,7 @@ void add_laser(double **grid_points);
 
 void push_particles(double **grid_points, particle *particles);
 
-void output_grid(double **grid_points, particle *particles);
+// print the fields and particles at iteration i
+void output_grid(int i, double **grid_points, particle *particles);
 
 #endif //GRID_H

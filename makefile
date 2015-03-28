@@ -1,20 +1,20 @@
-OBJS = main.o push.o
+CC = mpicc
 CFLAGS = -O3 -openmp -c
 LFLAGS = -O3 -openmp
-all:scan
 
-CC=dyno
+OBJS = main.o push.o
 
-dyno: $(OBJS)
-	$(CC) $(LFLAGS) $(OBJS) -o dynogrid
+.PHONY: all
+all: dynogrid
 
-main.o: main.c
-	$(CC) $(CFLAGS) main.c
+dynogrid: $(OBJS)
+	$(CC) $(LFLAGS) $^ -o $@
 
-push.o: push.c
-	$(CC) $(CFLAGS) push.c
+%.o: %.c
+	$(CC) -c $(CFLAGS) $^
 
-run:scan
+.PHONY: run
+run: dynogrid
 	@./dynogrid
 
 clean:
