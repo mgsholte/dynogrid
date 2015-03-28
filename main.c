@@ -12,9 +12,13 @@ int main(int argc, char *argv[]) {
 	int part_per_cell = 10;
 	int output_freq = nSteps/10;
 
+<<<<<<< Updated upstream
 	printf("initializing grid and particles");
 
 	double **grid_points = init_grid(nx, ny);
+=======
+	grid_point **grid_points = init_grid(nx, ny);
+>>>>>>> Stashed changes
 	particle *particles = init_particles(part_per_cell);
 
 	printf("beginning simulation");
