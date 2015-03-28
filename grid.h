@@ -7,7 +7,7 @@
 double** init_grid(int nx, int ny);
 
 // return the list of particles. put 'part_per_cell' particles in each grid
-particle* init_particles(int part_per_cell);
+particle* init_particles(vec2 ul, vec2 lr, int part_per_cell);
 
 void update_grid(double **grid_points);
 

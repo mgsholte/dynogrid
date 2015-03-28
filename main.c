@@ -11,11 +11,12 @@ int main(int argc, char *argv[]) {
 	int nx = 100, ny = 100;
 	int part_per_cell = 10;
 	int output_freq = nSteps/10;
+	vec2 ul = {45, 55}, lr = {55, 45};  // upper left, lower right coordinates defining the rectangle where particles begin in the simulation
 
 	printf("initializing grid and particles");
 
 	double **grid_points = init_grid(nx, ny);
-	particle *particles = init_particles(part_per_cell);
+	particle *particles = init_particles(ul, lr, part_per_cell);
 
 	printf("beginning simulation");
 
