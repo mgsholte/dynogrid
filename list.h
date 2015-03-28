@@ -13,7 +13,7 @@ typedef struct {
 	Node *sentinel;  // dummy node which marks the beginning and end of the list
 } List;
 
-List* list_init(int size);
+List list_init(int size);
 void list_add(List list, void *payload);
 
 #endif //LIST_H
