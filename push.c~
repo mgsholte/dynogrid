@@ -1,0 +1,14 @@
+#include "decs.h"
+
+// Some globals that I am assuming exist
+// dx, dy -- cell size
+// dt -- time step
+
+// Particle pusher!!!!
+void push_particles(double **grid_points, particle *particles);{
+	//  Just copying multiplication factors from EPOCH
+	idx = 1./dx;
+	idy = 1./dy;
+	idt = 1./dt;
+	dto2 = dt/2.;
+	dtco2 = c * dto2
