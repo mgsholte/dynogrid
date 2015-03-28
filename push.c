@@ -9,25 +9,25 @@
 void push_particles(double **grid_points, particle *particles);{
 	particle *curr = particles;
 	//  Just copying multiplication factors from EPOCH
-	idx = 1./dx;
-	idy = 1./dy;
-	idt = 1./dt;
-	dto2 = dt/2.;
-	dtco2 = c * dto2;
-	dtfac = .5*dt ;//times some weighting factor, that I think is 1 anyways
-	third = 1./3.;
-	idty = idt*idy;
-	idtx = idt*idy;
-	idxy = idx*idy;
+	double idx = 1./dx;
+	double idy = 1./dy;
+	double idt = 1./dt;
+	double dto2 = dt/2.;
+	double dtco2 = c * dto2;
+	double dtfac = .5*dt ;//times some weighting factor, that I think is 1 anyways
+	double third = 1./3.;
+	double idty = idt*idy;
+	double idtx = idt*idy;
+	double idxy = idx*idy;
 
 	//loop over all the particles
 	while (curr != NULL){
-		ux = curr->p->x * ipart_mc;
-		uy = curr->p->y * ipart_mc;
-		uz = curr->p->z * ipart_mc;
+		double ux = curr->p->x * ipart_mc;
+		double uy = curr->p->y * ipart_mc;
+		double uz = curr->p->z * ipart_mc;
 
 		//Calculate velocity
-		root = dtco2 / sqrt(ux*ux + uy*uy + uz*uz + 1.);
+		double root = dtco2 / sqrt(ux*ux + uy*uy + uz*uz + 1.);
 
 		//Move half timestep
 		curr->pos->x += ux * root;
