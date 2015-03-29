@@ -1,0 +1,5 @@
+GRIDPOINTS
+itNum=0
+Time= 0.0000000
+TimeStep = 0.00000000000000000018
+GridSize:nx=100,ny=100
