@@ -31,9 +31,10 @@ double dt = 1e-18; // the time step
 double time; // changes every iteration
 
 // width and height of a cell. aka distance between adjacent grid points
-const double dx = 1.0; // what units?
-const double dy = 1.0;
+const double dx = 3e-10; // defined as c*dt so laser moves 1 dx per 1 dt
+const double dy = 3e-10;
 
+const double c = 3e8;
 const double PROTON_WEIGHT = 5.0;
 const double ELECTRON_WEIGHT = 1.0;
 const int BASE_PROTON_MASS = 1.672e-27; //kg

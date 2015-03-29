@@ -24,7 +24,7 @@ int main(int argc, char *argv[]) {
 	for(i = 0; i < nSteps; ++i) {
 		time = i*dt;
 		push_particles(grid_points, particles);
-		update_grid(i, grid_points);  // add the laser, ...
+		update_grid(grid_points);  // add the laser, ...
 		if (i % output_freq == 0) {
 			output_grid(i, grid_points, nx, ny, particles);
 		}
