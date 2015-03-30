@@ -1,7 +1,8 @@
+#include "dynamics.h"
+
 // Currently the laser pulse is step-function-like in both x and y directions with a wavelength
 //  of 4*dx and E,B at magnitudes of 10 (in SI, I don't know if this is valid).
 // Improvements will likely be necessary, but this should compile.
-
 void update_grid(grid_point **grid_points) {
 	// could make some of these inputs later
 	// assuming ny = 100 (check with main())

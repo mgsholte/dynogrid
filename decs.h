@@ -27,14 +27,17 @@ typedef struct {
 	// double rho; // average charge density at grid point
 } grid_point;
 
-double dt = 1e-18; // the time step
+const double dt = 1e-18; // the length of a single iteration in seconds
 double time; // changes every iteration
 
-// width and height of a cell. aka distance between adjacent grid points
-const double dx = 3e-10; // defined as c*dt so laser moves 1 dx per 1 dt
-const double dy = 3e-10;
+const double c = 3e8;  // speed of light in m/s
 
-const double c = 3e8;
+// width and height of a cell. aka distance between adjacent grid points
+//const double dx = 3e-10; // defined as c*dt so laser moves 1 dx per 1 dt
+//const double dy = 3e-10;
+const double dx = c*dt; // defined as c*dt so laser moves 1 dx per 1 dt
+const double dy = c*dt;
+
 const double PROTON_WEIGHT = 5.0;
 const double ELECTRON_WEIGHT = 1.0;
 const int BASE_PROTON_MASS = 1.672e-27; //kg
