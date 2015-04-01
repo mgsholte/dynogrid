@@ -13,6 +13,9 @@ dynogrid: $(OBJS)
 %.o: %.c
 	$(CC) -c $(CFLAGS) $^
 
+push.c: dynamics.h
+	
+
 .PHONY: run
 run: dynogrid
 	@./dynogrid
