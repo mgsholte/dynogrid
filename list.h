@@ -3,7 +3,7 @@
 
 typedef struct Node Node;
 typedef struct {
-	void *payload;
+	particle *payload;
 	Node *next;
 } Node;
 
@@ -15,7 +15,7 @@ typedef struct {
 
 // list modification
 List list_init();
-void list_add(List list, void *payload);
+void list_add(List list, particle *payload);
 
 // list iteration
 void list_reset_iter(List l);

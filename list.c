@@ -7,7 +7,7 @@ List list_init() {
 	return (List) { sentinel, sentinel };
 }
 
-void list_add(List list, void *payload) {
+void list_add(List list, particle *payload) {
 	Node *new_node = (Node*) malloc(sizeof(Node));
 
 	new_node->payload = payload;
@@ -24,7 +24,7 @@ bool list_has_next(List l) {
 }
 
 void* list_get_next(List l) {
-	void *ans = l.iter->payload;
+	particle *ans = l.iter->payload;
 	l.iter = l.iter->next;
 
 	return ans;
