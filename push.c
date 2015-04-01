@@ -1,7 +1,5 @@
-#include <math.h>
-
 #include "decs.h"
-#include "dynamics.h"
+#include "math.h"
 
 // Some globals that I am assuming exist
 // dx, dy -- cell size
@@ -55,20 +53,20 @@ void push_particles(grid_point **grid_points, List part_list);{
         ipart_mc = 1./part_mc;
 
         // u is gamma*v, see Birdsall and Langdon sectoin 15-4
-		ux = curr->px * ipart_mc;
-		uy = curr->py * ipart_mc;
-		uz = curr->pz * ipart_mc;
+		ux = (curr->p).x * ipart_mc;
+		uy = (curr->p).y * ipart_mc;
+		uz = (curr->p).z * ipart_mc;
 		//Calculate velocity
 		root = dtco2 / sqrt(ux*ux + uy*uy + uz*uz + 1.);
 
 		//Move half timestep
-		curr->x += ux * root;
-		curr->y += uy * root;
+		(curr->pos).x += ux * root;
+		(curr->pos).y += uy * root;
 
 		//Do interpolation to find e and b here.
         // x-left and y-up indices
-        xl = floor(curr->x * idx);
-        yu = floor(curr->y * idy);
+        xl = floor((curr->pos).x * idx);
+        yu = floor((curr->pos).y * idy);
         xlf = curr->x % dx;
         yuf = curr->y % dy;
         E = interp(grid[xl][yu].E, grid[xl][yu+1].E, grid[xl+1][yu], grid[xl+1][yu+1].E, xlf, yuf);
@@ -103,20 +101,20 @@ void push_particles(grid_point **grid_points, List part_list);{
         // Full push
 		root = dtco2 / sqrt(ux*ux + uy*uy + uz*uz + 1.);
 
-        curr->x += ux*root;
-        curr->y += uy*root;
+        (curr->pos).x += ux*root;
+        (curr->pos).y += uy*root;
 
         // Store
-        curr->px = ux*part_mc;
-        curr->py = uy*part_mc;
-        curr->pz = uz*part_mc;
+        (curr->p).x = ux*part_mc;
+        (curr->p).y = uy*part_mc;
+        (curr->p).z = uz*part_mc;
 
 		
         //This is where the current and charge density would be calculatted.
 
 		//move on to the next one
 		if (list_has_next(part_list))
-			curr = curr->next;
+			curr = list_get_next(part_list);
 		else{
 			list_reset_iter(part_list);
 			return;

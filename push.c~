@@ -24,7 +24,7 @@ vec3 interp(vec3 *field00, vec3 *field01, vec3 *field10, vec *field11, double xl
 void push_particles(grid_point **grid_points, List part_list);{
 
     // Declare variables!
-	if (!list_has_next(part_list)
+	if (!list_has_next(part_list))
 			return;
     particle *curr = list_get_next(part_list);
     double ux, uy, uz;
@@ -48,7 +48,7 @@ void push_particles(grid_point **grid_points, List part_list);{
     double idxy = idx*idy;
     
     //loop over all the particles
-    while (curr != NULL){
+    while (true){
         part_mc = c*curr->mass;
         ipart_mc = 1./part_mc;
 
@@ -113,6 +113,11 @@ void push_particles(grid_point **grid_points, List part_list);{
         //This is where the current and charge density would be calculatted.
 
 		//move on to the next one
-		curr = curr->next
+		if (list_has_next(part_list))
+			curr = curr->next;
+		else{
+			list_reset_iter(part_list);
+			return;
+		}
     }
 }
