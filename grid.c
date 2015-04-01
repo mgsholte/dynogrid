@@ -10,9 +10,10 @@ static double rand_float( double low, double high ) {
 // inits all grid points to 0 in E and B
 grid_point** init_grid(int nx, int ny) {
 	grid_point **grid_points = (grid_point**) malloc( ny * sizeof(size_t) ); // allocate an array of pointers to rows
-	for (int i = 0; i < ny; ++i) {
+	int i; int j;
+	for (i = 0; i < ny; ++i) {
 		grid_points[i] = (grid_point*) malloc( nx * sizeof(grid_point) );  // allocate the row
-		for (int j = 0; j < nx; j++) {
+		for (j = 0; j < nx; j++) {
 			// all grid points are initialized with no field
 			grid_points[i][j].E = {0,0,0};
 			grid_points[i][j].B = {0,0,0};
@@ -26,10 +27,11 @@ grid_point** init_grid(int nx, int ny) {
 // lower right corner lr
 List init_particles(vec2 ul, vec2 lr, int part_per_cell) {
 	List particles = list_init();
-	for (int row = lr.y; row < ul.y; row++) {
-		for (int col = ul.x; col < lr.x; col++) {
+	int row; int col; int k;
+	for (row = lr.y; row < ul.y; row++) {
+		for (col = ul.x; col < lr.x; col++) {
 			// add protons
-			for (int k = 0; k < part_per_cell/2; k++) {
+			for (k = 0; k < part_per_cell/2; k++) {
 				particle* p = (particle*) malloc(sizeof(particle));
 				double x = rand_float(0, dx) + j;
 				double y = rand_float(0, dy) + i;
@@ -42,7 +44,7 @@ List init_particles(vec2 ul, vec2 lr, int part_per_cell) {
 				list_add(particles, p);
 			}
 			// add electrons
-			for (int k = 0; k < (part_per_cell - part_per_cell/2); k++) {
+			for (k = 0; k < (part_per_cell - part_per_cell/2); k++) {
 				particle *p = (particle*) malloc(sizeof(particle));
 				double x = rand_float(0, dx) + j;
 				double y = rand_float(0, dy) + i;
