@@ -2,7 +2,7 @@ CC = mpicc
 CFLAGS = -O3 -openmp -c
 LFLAGS = -O3 -openmp
 
-OBJS = main.o push.o
+OBJS := $(patsubst %.c,%.o,$(wildcard *.c))
 
 .PHONY: all
 all: dynogrid
