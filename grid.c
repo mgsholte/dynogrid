@@ -116,7 +116,7 @@ void output_grid(int itNum, grid_point **grid_points, int nx, int ny, List parti
     	/*write one line to file per particle in this format:
 			pos_x=#,pos_y=#,p_x=#,p_y=#,p_z=#
 		*/
-		particle *ptc = (particle*) list_get_next(particles);
+		particle *ptc = list_get_next(particles);
 		fprintf(grid_file, "pos_x=%lf,pos_y=%lf,p_x=%lf,p_y=%lf,p_z=%lf\n", (ptc->pos).x, (ptc->pos).y, (ptc->pos).x, (ptc->p).x, (ptc->p).y, (ptc->p).z);
 	}//end while
     fclose(particles_file);

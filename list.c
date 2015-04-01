@@ -23,7 +23,7 @@ bool list_has_next(List l) {
 	return l.iter != l.sentinel;
 }
 
-void* list_get_next(List l) {
+particle* list_get_next(List l) {
 	particle *ans = l.iter->payload;
 	l.iter = l.iter->next;
 
