@@ -26,7 +26,7 @@ int main(int argc, char *argv[]) {
 		push_particles(grid_points, particles);
 		update_grid(grid_points);  // add the laser, ...
 		if (i % output_freq == 0) {
-			output_grid(i, grid_points, nx, ny, particles);
+			output_data2D(i, grid_points, nx, ny, particles);
 		}
 	}
 	output_grid(i, grid_points, nx, ny, particles);
