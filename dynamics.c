@@ -14,9 +14,10 @@ void update_grid(grid_point **grid_points) {
 	double EMax = 10; // no idea on the validity of these values
 	double BMax = 10;
 	
-	for (int i = yCenter - beam_amp; i < yCenter + beam_amp; i++) {
+	int i; int j;
+	for (i = yCenter - beam_amp; i < yCenter + beam_amp; i++) {
 		// create a (not very physical) plane wave
-		for (int j = xCenter - pulse_hw; j < xCenter + pulse_hw; j++) {
+		for (j = xCenter - pulse_hw; j < xCenter + pulse_hw; j++) {
 			if (j%4 == 0) { // wavelength is 4*dx
 				grid_points[i][j].E = { 0, EMax, 0 };
 				grid_points[i][j].B = { 0, 0, Bmax };
@@ -29,7 +30,7 @@ void update_grid(grid_point **grid_points) {
 			}
 		}
 		// clean up from earlier time steps
-		for (int j = xCenter - pulse_hw - 2; j < xCenter - pulse_hw; j++) {
+		for (j = xCenter - pulse_hw - 2; j < xCenter - pulse_hw; j++) {
 			grid_points[i][j].E = { 0, 0, 0 };
 			grid_points[i][j].B = { 0, 0, 0 };
 		}
