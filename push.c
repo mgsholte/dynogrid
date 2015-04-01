@@ -21,10 +21,12 @@ vec3 interp(vec3 *field00, vec3 *field01, vec3 *field10, vec *field11, double xl
 }
 
 // Particle pusher!!!!
-void push_particles(grid_point **grid_points, particle *particles);{
+void push_particles(grid_point **grid_points, List part_list);{
 
     // Declare variables!
-    particle *curr = particles;
+	if (!list_has_next(part_list))
+			return;
+    particle *curr = list_get_next(part_list);
     double ux, uy, uz;
     double root;
     double xl, yu, xlf, yuf;
@@ -46,22 +48,22 @@ void push_particles(grid_point **grid_points, particle *particles);{
     double idxy = idx*idy;
     
     //loop over all the particles
-    while (curr != NULL){
+    while (true){
         part_mc = c*curr->mass;
         ipart_mc = 1./part_mc;
 
         // u is gamma*v, see Birdsall and Langdon sectoin 15-4
-	ux = curr->px * ipart_mc;
-	uy = curr->py * ipart_mc;
-	uz = curr->pz * ipart_mc;
-	//Calculate velocity
-	root = dtco2 / sqrt(ux*ux + uy*uy + uz*uz + 1.);
+		ux = curr->px * ipart_mc;
+		uy = curr->py * ipart_mc;
+		uz = curr->pz * ipart_mc;
+		//Calculate velocity
+		root = dtco2 / sqrt(ux*ux + uy*uy + uz*uz + 1.);
 
-	//Move half timestep
-	curr->x += ux * root;
-	curr->y += uy * root;
+		//Move half timestep
+		curr->x += ux * root;
+		curr->y += uy * root;
 
-	//Do interpolation to find e and b here.
+		//Do interpolation to find e and b here.
         // x-left and y-up indices
         xl = floor(curr->x * idx);
         yu = floor(curr->y * idy);
@@ -97,20 +99,25 @@ void push_particles(grid_point **grid_points, particle *particles);{
         uz = uzp + cmratio*E.z;
 
         // Full push
-	root = dtco2 / sqrt(ux*ux + uy*uy + uz*uz + 1.);
+		root = dtco2 / sqrt(ux*ux + uy*uy + uz*uz + 1.);
 
         curr->x += ux*root;
         curr->y += uy*root;
 
         // Store
-        part->px = uxp*part_mc;
-        part->py = uyp*part_mc;
-        part->pz = uzp*part_mc;
+        curr->px = ux*part_mc;
+        curr->py = uy*part_mc;
+        curr->pz = uz*part_mc;
 
 		
         //This is where the current and charge density would be calculatted.
 
-	//move on to the next one
-	curr = curr->next
+		//move on to the next one
+		if (list_has_next(part_list))
+			curr = curr->next;
+		else{
+			list_reset_iter(part_list);
+			return;
+		}
     }
 }
