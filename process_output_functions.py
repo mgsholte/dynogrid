@@ -2,15 +2,15 @@
 import random
 import matplotlib.pyplot as plt
 import os
-import  matplotlib.cm as cm
+import matplotlib.cm as cm
 import numpy as np
 from mpl_toolkits.mplot3d import Axes3D
 
 
-def createTestOutputFile2D(itNum, nx, ny, numParticles, numFiles):
+def createTestOutputFile2D(itNum, nx, ny, numParticles, numFiles, ext):
     dt = 0.000000000000000018
     # create a fake output file for itNum_grid.txt
-    f_name = str(itNum) + "_grid.txt"
+    f_name = str(itNum) + "_grid." + str(ext)
     with open(f_name, 'w+') as test_file:
         test_file.write("GRIDPOINTS\n")
         test_file.write("itNum=" + str(itNum) + "\n")
@@ -28,7 +28,7 @@ def createTestOutputFile2D(itNum, nx, ny, numParticles, numFiles):
                     test_file.write(str(j) + "," + str(i) + "," + str(E) + "," + str(B) + "\n")
     
     # create a fake output file for itNum_particles.txt
-    f_name2 = str(itNum) + "_particles.txt"
+    f_name2 = str(itNum) + "_particles." + str(ext)
     with open(f_name2, 'w+') as test_file2:
         test_file2.write("PARTICLES\n")
         test_file2.write("itNum=" + str(itNum) + "\n")
@@ -54,10 +54,10 @@ def createTestOutputFile2D(itNum, nx, ny, numParticles, numFiles):
                     pos_y = (random.uniform(yspread, ny-yspread))
                     test_file2.write("ptcl:" + str(i) + "," + str(pos_x) + "," + str(pos_y) + "," + str(p) + "\n")
 
-def createTestOutputFile3D(itNum, nx, ny, nz, numParticles, numFiles):
+def createTestOutputFile3D(itNum, nx, ny, nz, numParticles, numFiles, ext):
     dt = 0.000000000000000018
     # create a fake output file for itNum_grid.txt
-    f_name = str(itNum) + "_grid.txt"
+    f_name = str(itNum) + "_grid." + str(ext)
     with open(f_name, 'w+') as test_file:
         test_file.write("GRIDPOINTS\n")
         test_file.write("itNum=" + str(itNum) + "\n")
@@ -76,7 +76,7 @@ def createTestOutputFile3D(itNum, nx, ny, nz, numParticles, numFiles):
                         test_file.write(str(j) + "," + str(i) + "," + str(k) + "," + str(E) + "," + str(B) + "\n")
     
     # create a fake output file for itNum_particles.txt
-    f_name2 = str(itNum) + "_particles.txt"
+    f_name2 = str(itNum) + "_particles." + str(ext)
     with open(f_name2, 'w+') as test_file2:
         test_file2.write("PARTICLES\n")
         test_file2.write("itNum=" + str(itNum) + "\n")
@@ -107,22 +107,22 @@ def createTestOutputFile3D(itNum, nx, ny, nz, numParticles, numFiles):
                     test_file2.write("ptcl:" + str(i) + "," + str(pos_x) + "," + str(pos_y) + "," + str(pos_z) + "," + str(p) + "\n")
 
 
-def createTestOutputFiles_ALL2D(nx, ny, numParticles, numFiles):
+def createTestOutputFiles_ALL2D(nx, ny, numParticles, numFiles, ext):
     for i in xrange(0, numFiles):
-        createTestOutputFile2D(i, nx, ny, numParticles, numFiles)
+        createTestOutputFile2D(i, nx, ny, numParticles, numFiles, ext)
         
-def createTestOutputFiles_ALL3D(nx, ny, nz, numParticles, numFiles):
+def createTestOutputFiles_ALL3D(nx, ny, nz, numParticles, numFiles, ext):
     for i in xrange(0, numFiles):
-        createTestOutputFile3D(i, nx, ny, nz, numParticles, numFiles)        
+        createTestOutputFile3D(i, nx, ny, nz, numParticles, numFiles, ext)        
 
-def getGridData2D(numFiles):   
+def getGridData2D(numFiles, ext):   
     timesteps = list()
     # suck in all the gridpoint files and parse the text for the relevant data:
     E_min = 0.0
     E_max= 0.0
     B_min = 0.0
     B_max = 0.0
-    fname_grid = "_grid.txt"
+    fname_grid = "_grid." + str(ext)
     for i in xrange(0, numFiles):
         fname = str(i) + str(fname_grid)
         gridpoints = dict()
@@ -160,11 +160,11 @@ def getGridData2D(numFiles):
         timesteps.append({'gridpoints':gridpoints,'particles':''})
     return timesteps, E_min, E_max, B_min, B_max
 
-def getParticleData2D(numFiles, timesteps):
+def getParticleData2D(numFiles, timesteps, ext):
     p_min = 0.0
     p_max = 0.0        
     # suck in all the particles files and parse the text for the relevant data:            
-    fname_particles = "_particles.txt"
+    fname_particles = "_particles." + str(ext)
     for i in xrange(0, numFiles):
         fname = str(i) + str(fname_particles)
         particles = dict()
@@ -197,14 +197,14 @@ def getParticleData2D(numFiles, timesteps):
     return timesteps, p_min, p_max
 
 
-def getGridData3D(numFiles):   
+def getGridData3D(numFiles, ext):   
     timesteps = list()
     # suck in all the gridpoint files and parse the text for the relevant data:
     E_min = 0.0
     E_max= 0.0
     B_min = 0.0
     B_max = 0.0
-    fname_grid = "_grid.txt"
+    fname_grid = "_grid." + str(ext)
     for i in xrange(0, numFiles):
         fname = str(i) + str(fname_grid)
         gridpoints = dict()
@@ -245,11 +245,11 @@ def getGridData3D(numFiles):
         timesteps.append({'gridpoints':gridpoints,'particles':''})
     return timesteps, E_min, E_max, B_min, B_max
         
-def getParticleData3D(numFiles, timesteps):
+def getParticleData3D(numFiles, timesteps, ext):
     p_min = 0.0
     p_max = 0.0        
     # suck in all the particles files and parse the text for the relevant data:            
-    fname_particles = "_particles.txt"
+    fname_particles = "_particles." + str(ext)
     for i in xrange(0, numFiles):
         fname = str(i) + str(fname_particles)
         particles = dict()
@@ -314,15 +314,20 @@ def normalizeData(timesteps, E_min, E_max, B_min, B_max, p_min, p_max):
 
 
 
-def plotDataForSingleTimeStep2D(gridpoints, particles, itNum, nx, ny, path):
+def plotDataForSingleTimeStep2D(gridpoints, particles, itNum, nx, ny, path, E_or_B):
+    itNum = '{0:05d}'.format(itNum)
+    if E_or_B == 'B':
+        title = "B_field_" + str(itNum)
+    elif E_or_B == 'E':
+        title = "E_field_" + str(itNum)
+
     fig = plt.figure(figsize=(12,7))
     ax1 = fig.add_subplot(111)
     gridpoints_Xs = np.array(gridpoints['Xs'])
     gridpoints_Ys = np.array(gridpoints['Ys'])
     gridpoints_Es = np.array(gridpoints['Es'])
     gridpoints_Bs = np.array(gridpoints['Bs'])
-    itNum = '{0:05d}'.format(itNum)
-    title = "B_field_" + str(itNum)
+
     fig.suptitle(title, fontsize='20')
     SM = cm.ScalarMappable()
     cMap = SM.get_cmap()
@@ -330,7 +335,10 @@ def plotDataForSingleTimeStep2D(gridpoints, particles, itNum, nx, ny, path):
     plt.ylabel('Y', fontsize=16)
     plt.xlim(0, nx)
     plt.ylim(0, ny)
-    cb1 = ax1.scatter(gridpoints_Xs, gridpoints_Ys, s=40, c=gridpoints_Bs, marker=u'o', cmap='binary', linewidths=0, alpha=.3, label='B Field')
+    if E_or_B == 'B':
+        cb1 = ax1.scatter(gridpoints_Xs, gridpoints_Ys, s=40, c=gridpoints_Bs, marker=u'o', cmap='binary', linewidths=0, alpha=.3, label='B Field')
+    elif E_or_B == 'E':
+        cb1 = ax1.scatter(gridpoints_Xs, gridpoints_Ys, s=40, c=gridpoints_Es, marker=u'o', cmap='binary', linewidths=0, alpha=.3, label='E Field')
 
     particles_Xs = np.array(particles['Xs'])
     particles_Ys = np.array(particles['Ys'])
@@ -347,9 +355,16 @@ def plotDataForSingleTimeStep2D(gridpoints, particles, itNum, nx, ny, path):
         os.mkdir(path)
         os.chdir(path)
     fig.savefig(title)
+    plt.close(fig)
     
     
-def plotDataForSingleTimeStep3D(gridpoints, particles, itNum, nx, ny, nz, path):
+def plotDataForSingleTimeStep3D(gridpoints, particles, itNum, nx, ny, nz, path, E_or_B):
+    itNum = '{0:05d}'.format(itNum)
+    if E_or_B == 'B':
+        title = "B_field_" + str(itNum)
+    elif E_or_B == 'E':
+        title = "E_field_" + str(itNum)    
+    
     fig = plt.figure(figsize=(12,7))
     ax1 = fig.add_subplot(111, projection='3d')
     gridpoints_Xs = np.array(gridpoints['Xs'])
@@ -357,8 +372,7 @@ def plotDataForSingleTimeStep3D(gridpoints, particles, itNum, nx, ny, nz, path):
     gridpoints_Zs = np.array(gridpoints['Zs'])
     gridpoints_Es = np.array(gridpoints['Es'])
     gridpoints_Bs = np.array(gridpoints['Bs'])
-    itNum = '{0:05d}'.format(itNum)
-    title = "B_field_" + str(itNum)
+
     fig.suptitle(title, fontsize='20')
     SM = cm.ScalarMappable()
     cMap = SM.get_cmap()
@@ -369,7 +383,11 @@ def plotDataForSingleTimeStep3D(gridpoints, particles, itNum, nx, ny, nz, path):
     ax1.set_xlim(0, nx)
     ax1.set_ylim(0, ny)
     ax1.set_zlim(0, nz)
-    cb1 = ax1.scatter(gridpoints_Xs, gridpoints_Ys, gridpoints_Zs, s=40, c=gridpoints_Bs, marker=u'o', cmap='binary', linewidths=0, alpha=.1, label='B Field')
+    
+    if E_or_B == 'B':
+        cb1 = ax1.scatter(gridpoints_Xs, gridpoints_Ys, gridpoints_Zs, s=40, c=gridpoints_Bs, marker=u'o', cmap='binary', linewidths=0, alpha=.1, label='B Field')
+    elif E_or_B == 'E':
+        cb1 = ax1.scatter(gridpoints_Xs, gridpoints_Ys, gridpoints_Zs, s=40, c=gridpoints_Es, marker=u'o', cmap='binary', linewidths=0, alpha=.1, label='E Field')
 
     particles_Xs = np.array(particles['Xs'])
     particles_Ys = np.array(particles['Ys'])
@@ -387,5 +405,35 @@ def plotDataForSingleTimeStep3D(gridpoints, particles, itNum, nx, ny, nz, path):
         os.mkdir(path)
         os.chdir(path)
     fig.savefig(title)
+    plt.close()
+
+    
+def makeVideos(path, E_or_B, win_or_linux, numFiles, vidLen):
+    img_names = ""
+    fname = ""
+    fps = int(float(numFiles)/float(vidLen))
+    
+    if win_or_linux == "win":
+        if E_or_B == 'B':
+            img_names = "B_field_%5d.png"
+            fname = "B_field.mp4"
+            command = "ffmpeg -f image2 -r " + str(fps) + " -i " + str(img_names) + " -vcodec mpeg4 -y " + str(fname)
+            os.system(command)
+        elif E_or_B == 'E':
+            img_names = "E_field_%5d.png"
+            fname = "E_field.mp4"
+            command = "ffmpeg -f image2 -r " + str(fps) + " -i " + str(img_names) + " -vcodec mpeg4 -y " + str(fname)
+            os.system(command)
+    elif win_or_linux == "linux":
+        if E_or_B == 'B':
+            img_names = "B_field_%5d.png"
+            fname = "B_field.mp4"
+#             command = "ffmpeg -f image2 -r " + str(fps) + " -i " + str(img_names) + " -vcodec mpeg4 -y " + str(fname)
+#             os.system(command)
+        elif E_or_B == 'E':
+            img_names = "E_field_%5d.png"
+            fname = "E_field.mp4"
+#             command = "ffmpeg -f image2 -r " + str(fps) + " -i " + str(img_names) + " -vcodec mpeg4 -y " + str(fname)
+#             os.system(command)
     
     
