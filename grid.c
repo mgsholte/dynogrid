@@ -29,7 +29,7 @@ grid_point** init_grid(int nx, int ny) {
 List init_particles(vec2 ul, vec2 lr, int part_per_cell) {
 	List particles = list_init();
 	int row; int col; int k;
-	for (row = lr.y; row < ul.y; row++) {
+	for (row = ul.y; row < lr.y; row++) {
 		for (col = ul.x; col < lr.x; col++) {
 			// add protons
 			for (k = 0; k < part_per_cell/2; k++) {
@@ -59,6 +59,7 @@ List init_particles(vec2 ul, vec2 lr, int part_per_cell) {
 			}
 		}
 	}
+	list_reset_iter(&particles);
 	return particles;
 }
 

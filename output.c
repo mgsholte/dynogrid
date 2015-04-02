@@ -64,7 +64,7 @@ void output_data2D(int itNum, grid_point **grid_points, int nx, int ny, List par
     
     int particle_ct = -1;
     list_reset_iter(&particles);
-    while(list_has_next(particles)){
+    while(list_has_next(particles)) {
 		particle *ptc = list_get_next(&particles);
         //calculate the L2 norm of the p vector:
         double p = pow(pow((ptc->p).x, 2.0) + pow((ptc->p).y, 2.0) + pow((ptc->p).z, 2.0), 0.5);
@@ -137,7 +137,7 @@ void output_data3D(int itNum, grid_point **grid_points, int nx, int ny, int nz, 
     
     int particle_ct = -1;
     list_reset_iter(&particles);
-    while(list_has_next(particles)){
+    while(list_has_next(particles)) {
         particle *ptc = list_get_next(&particles);
         //calculate the L2 norm of the p vector:
         double p = pow(pow((ptc->p).x, 2.0) + pow((ptc->p).y, 2.0) + pow((ptc->p).z, 2.0), 0.5);
