@@ -8,15 +8,15 @@
 // Interpolation helper
 vec3 interp(vec3 *field00, vec3 *field01, vec3 *field10, vec *field11, double xlf, double yuf){
     vec3 interped;
-    int i;
     double norm = 1./(dx*dy);//Make this a global for speed
     double xrf = 1. - xlf;
     double ydf = 1.- yuf;
     // Not sure if these are proper vec3 accesses.  May need to unroll.
-    for (i=0;i<3;i++){
         // Bilinear interpolation from Wikipedia.  There are certainly
         // better interpolation methods to use for PIC codes.
-        interped[i] = norm * ( field00[i]*xrf*yuf + field10[i]*xlf*yuf + field01*xrf*ydf + field11[i]*xlf*ydf);
+    interped.x = norm * ( field00.x*xrf*yuf + field10.x*xlf*yuf + field01.y*xrf*ydf + field11.x*xlf*ydf);
+    interped.y = norm * ( field00.y*xrf*yuf + field10.y*xlf*yuf + field01.y*xrf*ydf + field11.y*xlf*ydf);
+    interped.z = norm * ( field00.z*xrf*yuf + field10.z*xlf*yuf + field01.z*xrf*ydf + field11.*xlf*ydf);
     }
 }
 
