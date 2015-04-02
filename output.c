@@ -11,7 +11,7 @@ void output_data2D(int itNum, grid_point **grid_points, int nx, int ny, List par
 	char *f_extension = "data";
 	// create the file name to output for the grid point data:
 	char fname_grid[256];
-	sprintf(&fname_grid, "%d_grid.%s", itNum, f_extension);
+	sprintf(fname_grid, "%d_grid.%s", itNum, f_extension);
 
 	// create a file to output the grid data to:
 	FILE *grid_file = fopen(fname_grid, "w"); // write only
@@ -63,9 +63,9 @@ void output_data2D(int itNum, grid_point **grid_points, int nx, int ny, List par
     fprintf(particles_file, "GridSize:nx=%d,ny=%d\n", nx, ny);
     
     int particle_ct = -1;
-    list_reset_iter(particles);
+    list_reset_iter(&particles);
     while(list_has_next(particles)){
-		particle *ptc = list_get_next(particles);
+		particle *ptc = list_get_next(&particles);
         //calculate the L2 norm of the p vector:
         double p = pow(pow((ptc->p).x, 2.0) + pow((ptc->p).y, 2.0) + pow((ptc->p).z, 2.0), 0.5);
     	/*write one line to file per particle in this format:
@@ -81,7 +81,7 @@ void output_data3D(int itNum, grid_point **grid_points, int nx, int ny, int nz, 
 	char *f_extension = "data";
     // create the file name to output for the grid point data:
     char fname_grid[256];
-	sprintf(&fname_grid, "%d_grid.%s", itNum, f_extension);
+	sprintf(fname_grid, "%d_grid.%s", itNum, f_extension);
 
     // create a file to output the grid data to:
     FILE *grid_file = fopen(fname_grid, "w"); // write only
@@ -119,7 +119,7 @@ void output_data3D(int itNum, grid_point **grid_points, int nx, int ny, int nz, 
     // PARTICLE DATA:
     // create the file name to output for the particle data:
     char fname_particles[256];
-	sprintf(&fname_particles, "%d_particles.%s", itNum, f_extension);
+	sprintf(fname_particles, "%d_particles.%s", itNum, f_extension);
 
     // create a file to output the particle data to:
     FILE *particles_file = fopen(fname_particles, "w"); // write only
@@ -136,9 +136,9 @@ void output_data3D(int itNum, grid_point **grid_points, int nx, int ny, int nz, 
     fprintf(particles_file, "GridSize:nx=%d,ny=%d,nz=%d\n", nx, ny, nz);
     
     int particle_ct = -1;
-    list_reset_iter(particles);
+    list_reset_iter(&particles);
     while(list_has_next(particles)){
-        particle *ptc = list_get_next(particles);
+        particle *ptc = list_get_next(&particles);
         //calculate the L2 norm of the p vector:
         double p = pow(pow((ptc->p).x, 2.0) + pow((ptc->p).y, 2.0) + pow((ptc->p).z, 2.0), 0.5);
         /*write one line to file per particle in this format:

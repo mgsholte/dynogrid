@@ -16,11 +16,11 @@ typedef struct {
 
 // list modification
 List list_init();
-void list_add(List list, particle *payload);
+void list_add(List *list, particle *payload);
 
 // list iteration
-void list_reset_iter(List l);
+void list_reset_iter(List *l);
 bool list_has_next(List l);
-particle* list_get_next(List l);
+particle* list_get_next(List *l);
 
 #endif //LIST_H

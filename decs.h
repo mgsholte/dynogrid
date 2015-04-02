@@ -36,13 +36,14 @@ typedef struct {
 
 double time; // changes every iteration
 
-const double dx, dy;
+#define dx c*dt
+#define dy c*dt
 
-const double PROTON_WEIGHT;
-const double ELECTRON_WEIGHT;
-const int BASE_PROTON_MASS;
-const int BASE_ELECTRON_MASS;
-const int BASE_PROTON_CHARGE;
-const int BASE_ELECTRON_CHARGE;
-
+#define PROTON_WEIGHT 5.0
+#define ELECTRON_WEIGHT 1.0
+#define BASE_PROTON_MASS 1.672e-27
+#define BASE_ELECTRON_MASS 9.109e-31
+#define BASE_PROTON_CHARGE 1.602e-19
+#define BASE_ELECTRON_CHARGE -1.0*BASE_PROTON_CHARGE
+        
 #endif //DECS_H

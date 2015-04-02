@@ -42,7 +42,7 @@ List init_particles(vec2 ul, vec2 lr, int part_per_cell) {
 					  BASE_PROTON_CHARGE * PROTON_WEIGHT,	//charge
 					  PROTON_WEIGHT		//weight
 					};
-				list_add(particles, p);
+				list_add(&particles, p);
 			}
 			// add electrons
 			for (k = 0; k < (part_per_cell - part_per_cell/2); k++) {
@@ -55,7 +55,7 @@ List init_particles(vec2 ul, vec2 lr, int part_per_cell) {
 					  BASE_ELECTRON_CHARGE * ELECTRON_WEIGHT,	//charge
 					  ELECTRON_WEIGHT		//weight
 					};
-				list_add(particles, p);
+				list_add(&particles, p);
 			}
 		}
 	}

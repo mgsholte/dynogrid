@@ -24,10 +24,12 @@ vec3 interp(vec3 field00, vec3 field01, vec3 field10, vec3 field11, double xlf, 
 // Particle pusher!!!!
 void push_particles(grid_point **grid, List part_list) {
 
+	list_reset_iter(&part_list);
+
     // Declare variables!
 	if (!list_has_next(part_list))
 			return;
-    particle *curr = list_get_next(part_list);
+    particle *curr = list_get_next(&part_list);
     double ux, uy, uz;
     double root;
     int xl, yu;
@@ -117,9 +119,9 @@ void push_particles(grid_point **grid, List part_list) {
 
 		//move on to the next one
 		if (list_has_next(part_list))
-			curr = list_get_next(part_list);
+			curr = list_get_next(&part_list);
 		else{
-			list_reset_iter(part_list);
+			list_reset_iter(&part_list);
 			return;
 		}
     }

@@ -33,5 +33,5 @@
 .*.swp
 
 # Project
-*_grid.txt
-*_particles.txt
+*.data
+dynogrid
