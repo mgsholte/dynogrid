@@ -14,12 +14,14 @@ int main(int argc, char *argv[]) {
 	int output_freq = nSteps/10;
 	vec2 ul = {45, 45}, lr = {55, 55};  // upper left, lower right coordinates defining the rectangle where particles begin in the simulation
 
-	printf("initializing grid and particles");
+	printf("initializing grid and particles\n");
 
 	grid_point **grid_points = init_grid(nx, ny);
 	List particles = init_particles(ul, lr, part_per_cell);
 
-	printf("beginning simulation");
+	output_data2D(1, grid_points, nx, ny, particles);
+
+	printf("beginning simulation\n");
 
 	for(i = 0; i < nSteps; ++i) {
 		time = i*dt;
@@ -31,7 +33,7 @@ int main(int argc, char *argv[]) {
 	}
 	output_grid(i, grid_points, nx, ny, particles);
 
-	printf("simulation finished");
+	printf("simulation finished\n");
 
 	return 0;
 }

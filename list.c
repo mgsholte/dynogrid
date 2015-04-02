@@ -16,7 +16,7 @@ void list_add(List list, particle *payload) {
 }
 
 void list_reset_iter(List l) {
-	l.iter = sentinel->next;
+	l.iter = l.sentinel->next;
 }
 
 bool list_has_next(List l) {

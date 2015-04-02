@@ -1,19 +1,23 @@
 #include <stdlib.h>
 #include <math.h>
+#include <stdio.h>
+
 #include "list.h"
 #include "decs.h"
 #include "grid.h"
 
+
 void output_data2D(int itNum, grid_point **grid_points, int nx, int ny, List particles) {
+	char *f_extension = "data";
 	// create the file name to output for the grid point data:
-	char fname_grid[] = ((char)itNum);
-	strcat(fname_grid, "_grid.txt");
+	char fname_grid[256];
+	sprintf(&fname_grid, "%d_grid.%s", itNum, f_extension);
 
 	// create a file to output the grid data to:
 	FILE *grid_file = fopen(fname_grid, "w"); // write only
     // test to ensure that the file was actually created and exists: 
     if (grid_file == NULL){
-    	printf("Error! Could not create file\n"); 
+    	printf("1. Error! Could not create file\n"); 
         exit(-1); // must include stdlib.h 
     }//end if
 
@@ -34,55 +38,56 @@ void output_data2D(int itNum, grid_point **grid_points, int nx, int ny, List par
             /*write one line to file per grid point in this format:
 			xcoord,ycoord,E,B
 			*/
-			fprintf(grid_file, "%d,%d,%lf,%lf", j, i, E, B);
+			fprintf(grid_file, "%d,%d,%lf,%lf\n", j, i, E, B);
     	}//end inner for
     }//end outer for
     fclose(grid_file);
 
     // PARTICLE DATA:
     // create the file name to output for the particle data:
-	char fname_particles[] = ((char)itNum);
-	strcat(fname_particles, "_particles.txt");
+	char fname_particles[256];
+	sprintf(fname_particles, "%d_particles.%s", itNum, f_extension);
 
 	// create a file to output the particle data to:
 	FILE *particles_file = fopen(fname_particles, "w"); // write only
     // test to ensure that the file was actually created and exists: 
     if (particles_file == NULL){
-    	printf("Error! Could not create file\n"); 
+    	printf("2. Error! Could not create file\n"); 
         exit(-1); // must include stdlib.h 
     }//end if
 
-    fprintf(grid_file, "PARTICLES\n");
-    fprintf(grid_file, "itNum=%d\n", itNum);
-    fprintf(grid_file, "Time=%lf\n", time);
-    fprintf(grid_file, "TimeStep=%lf\n", dt);
-    fprintf(grid_file, "GridSize:nx=%d,ny=%d\n", nx, ny);
+    fprintf(particles_file, "PARTICLES\n");
+    fprintf(particles_file, "itNum=%d\n", itNum);
+    fprintf(particles_file, "Time=%lf\n", time);
+    fprintf(particles_file, "TimeStep=%lf\n", dt);
+    fprintf(particles_file, "GridSize:nx=%d,ny=%d\n", nx, ny);
     
     int particle_ct = -1;
     list_reset_iter(particles);
     while(list_has_next(particles)){
+		particle *ptc = list_get_next(particles);
         //calculate the L2 norm of the p vector:
         double p = pow(pow((ptc->p).x, 2.0) + pow((ptc->p).y, 2.0) + pow((ptc->p).z, 2.0), 0.5);
     	/*write one line to file per particle in this format:
 			ptcl:#,pos_x,pos_y,p
 		*/
         particle_ct++;
-		particle *ptc = (particle*) list_get_next(particles);
-		fprintf(grid_file, "ptcl:%d,%lf,%lf,%lf\n", particle_ct, (ptc->pos).x, (ptc->pos).y, p);
+		fprintf(particles_file, "ptcl:%d,%lf,%lf,%lf\n", particle_ct, (ptc->pos).x, (ptc->pos).y, p);
 	}//end while
     fclose(particles_file);
 }//end output_grid function
 
-void output_data3D(int itNum, grid_point **grid_points, int nx, int ny, int nz List particles) {
+void output_data3D(int itNum, grid_point **grid_points, int nx, int ny, int nz, List particles) {
+	char *f_extension = "data";
     // create the file name to output for the grid point data:
-    char fname_grid[] = ((char)itNum);
-    strcat(fname_grid, "_grid.txt");
+    char fname_grid[256];
+	sprintf(&fname_grid, "%d_grid.%s", itNum, f_extension);
 
     // create a file to output the grid data to:
     FILE *grid_file = fopen(fname_grid, "w"); // write only
     // test to ensure that the file was actually created and exists: 
     if (grid_file == NULL){
-        printf("Error! Could not create file\n"); 
+        printf("3. Error! Could not create file\n"); 
         exit(-1); // must include stdlib.h 
     }//end if
 
@@ -96,16 +101,16 @@ void output_data3D(int itNum, grid_point **grid_points, int nx, int ny, int nz L
     fprintf(grid_file, "GridSize:nx=%d,ny=%d,nz=%d\n", nx, ny, nz);
     for(y = 0; y < ny; y++){
         for(x = 0; x < nx; x++){
-            for(z = 0; z < nz, z++){
+            for(z = 0; z < nz; z++){
                 //calculate the L2 norm of the E field vector:
-                double E = pow(pow((grid_points[i][j].E).x, 2.0) + pow((grid_points[i][j].E).y, 2.0) + pow((grid_points[i][j].E).z, 2.0), 0.5);
+                double E = pow(pow((grid_points[y][x].E).x, 2.0) + pow((grid_points[y][x].E).y, 2.0) + pow((grid_points[y][x].E).z, 2.0), 0.5);
                 //calculate the L2 norm of the B field vector:
-                double B = pow(pow((grid_points[i][j].B).x, 2.0) + pow((grid_points[i][j].B).y, 2.0) + pow((grid_points[i][j].B).z, 2.0), 0.5);
+                double B = pow(pow((grid_points[y][x].B).x, 2.0) + pow((grid_points[y][x].B).y, 2.0) + pow((grid_points[y][x].B).z, 2.0), 0.5);
                 
                 /*write one line to file per grid point in this format:
                 xcoord,ycoord,zcoord,E,B
                 */
-                fprintf(grid_file, "%d,%d,%d,%lf,%lf", x, y, z, E, B);
+                fprintf(grid_file, "%d,%d,%d,%lf,%lf\n", x, y, z, E, B);
             }//end innermost for
         }//end middle for
     }//end outer for
@@ -113,34 +118,36 @@ void output_data3D(int itNum, grid_point **grid_points, int nx, int ny, int nz L
 
     // PARTICLE DATA:
     // create the file name to output for the particle data:
-    char fname_particles[] = ((char)itNum);
-    strcat(fname_particles, "_particles.txt");
+    char fname_particles[256];
+	sprintf(&fname_particles, "%d_particles.%s", itNum, f_extension);
 
     // create a file to output the particle data to:
     FILE *particles_file = fopen(fname_particles, "w"); // write only
     // test to ensure that the file was actually created and exists: 
     if (particles_file == NULL){
-        printf("Error! Could not create file\n"); 
+        printf("3. Error! Could not create file\n"); 
         exit(-1); // must include stdlib.h 
     }//end if
 
-    fprintf(grid_file, "PARTICLES\n");
-    fprintf(grid_file, "itNum=%d\n", itNum);
-    fprintf(grid_file, "Time=%lf\n", time);
-    fprintf(grid_file, "TimeStep=%lf\n", dt);
-    fprintf(grid_file, "GridSize:nx=%d,ny=%d,nz=%d\n", nx, ny, nz);
+    fprintf(particles_file, "PARTICLES\n");
+    fprintf(particles_file, "itNum=%d\n", itNum);
+    fprintf(particles_file, "Time=%lf\n", time);
+    fprintf(particles_file, "TimeStep=%lf\n", dt);
+    fprintf(particles_file, "GridSize:nx=%d,ny=%d,nz=%d\n", nx, ny, nz);
     
     int particle_ct = -1;
     list_reset_iter(particles);
     while(list_has_next(particles)){
+        particle *ptc = list_get_next(particles);
         //calculate the L2 norm of the p vector:
         double p = pow(pow((ptc->p).x, 2.0) + pow((ptc->p).y, 2.0) + pow((ptc->p).z, 2.0), 0.5);
         /*write one line to file per particle in this format:
             ptcl:#,pos_x,pos_y,pos_z,p
         */
         particle_ct++;
-        particle *ptc = (particle*) list_get_next(particles);
-        fprintf(grid_file, "ptcl:%d,%lf,%lf,%lf,%lf\n", particle_ct, (ptc->pos).x, (ptc->pos).y, (ptc->pos).z, p);
+		//HACK: fix me later
+        //fprintf(grid_file, "ptcl:%d,%lf,%lf,%lf,%lf\n", particle_ct, (ptc->pos).x, (ptc->pos).y, (ptc->pos).z, p);
+        fprintf(particles_file, "ptcl:%d,%lf,%lf,%lf,%lf\n", particle_ct, (ptc->pos).x, (ptc->pos).y, 50.0, p);
     }//end while
     fclose(particles_file);
 }//end output_data3D function

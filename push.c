@@ -1,12 +1,13 @@
 #include "decs.h"
 #include "math.h"
+#include "list.h"
 
 // Some globals that I am assuming exist
 // dx, dy -- cell size
 // dt -- time step
 
 // Interpolation helper
-vec3 interp(vec3 *field00, vec3 *field01, vec3 *field10, vec *field11, double xlf, double yuf){
+vec3 interp(vec3 field00, vec3 field01, vec3 field10, vec3 field11, double xlf, double yuf) {
     vec3 interped;
     double norm = 1./(dx*dy);//Make this a global for speed
     double xrf = 1. - xlf;
@@ -14,14 +15,14 @@ vec3 interp(vec3 *field00, vec3 *field01, vec3 *field10, vec *field11, double xl
     // Not sure if these are proper vec3 accesses.  May need to unroll.
         // Bilinear interpolation from Wikipedia.  There are certainly
         // better interpolation methods to use for PIC codes.
-    interped.x = norm * ( field00.x*xrf*yuf + field10.x*xlf*yuf + field01.y*xrf*ydf + field11.x*xlf*ydf);
+    interped.x = norm * ( field00.x*xrf*yuf + field10.x*xlf*yuf + field01.x*xrf*ydf + field11.x*xlf*ydf);
     interped.y = norm * ( field00.y*xrf*yuf + field10.y*xlf*yuf + field01.y*xrf*ydf + field11.y*xlf*ydf);
-    interped.z = norm * ( field00.z*xrf*yuf + field10.z*xlf*yuf + field01.z*xrf*ydf + field11.*xlf*ydf);
-    }
+    interped.z = norm * ( field00.z*xrf*yuf + field10.z*xlf*yuf + field01.z*xrf*ydf + field11.z*xlf*ydf);
+	return interped;
 }
 
 // Particle pusher!!!!
-void push_particles(grid_point **grid_points, List part_list);{
+void push_particles(grid_point **grid, List part_list) {
 
     // Declare variables!
 	if (!list_has_next(part_list))
@@ -29,9 +30,9 @@ void push_particles(grid_point **grid_points, List part_list);{
     particle *curr = list_get_next(part_list);
     double ux, uy, uz;
     double root;
-    double xl, yu, xlf, yuf;
+    int xl, yu;
+	double xlf, yuf;
     vec3 E, B;
-    double ux, uy, uz;
     double uxm, uym, uzm;
     double uxp, uyp, uzp;
     double part_mc, ipart_mc;
@@ -46,9 +47,11 @@ void push_particles(grid_point **grid_points, List part_list);{
     double idty = idt*idy;
     double idtx = idt*idy;
     double idxy = idx*idy;
+	double tau, taux, taux2, tauy, tauy2, tauz, tauz2;
     
     //loop over all the particles
     while (true){
+		double cmratio = curr->charge/curr->mass;
         part_mc = c*curr->mass;
         ipart_mc = 1./part_mc;
 
@@ -67,10 +70,10 @@ void push_particles(grid_point **grid_points, List part_list);{
         // x-left and y-up indices
         xl = floor((curr->pos).x * idx);
         yu = floor((curr->pos).y * idy);
-        xlf = curr->x % dx;
-        yuf = curr->y % dy;
-        E = interp(grid[xl][yu].E, grid[xl][yu+1].E, grid[xl+1][yu], grid[xl+1][yu+1].E, xlf, yuf);
-        B = interp(grid[xl][yu].B, grid[xl][yu+1].B, grid[xl+1][yu], grid[xl+1][yu+1].B, xlf, yuf);
+        xlf = ((curr->pos).x - xl*dx) / dx;
+        yuf = ((curr->pos).y - yu*dy) / dy;
+        E = interp(grid[xl][yu].E, grid[xl][yu+1].E, grid[xl+1][yu].E, grid[xl+1][yu+1].E, xlf, yuf);
+        B = interp(grid[xl][yu].B, grid[xl][yu+1].B, grid[xl+1][yu].B, grid[xl+1][yu+1].B, xlf, yuf);
         
         // Update momenta to u_-, from Birdsall and Langdor
         uxm = ux + cmratio * E.x;
@@ -85,7 +88,7 @@ void push_particles(grid_point **grid_points, List part_list);{
         tauy = B.y*root;
         tauy2 *= tauy;
         tauz = B.z*root;
-        touz2 *= tauz;
+        tauz2 *= tauz;
 
         tau = 1. / (1. + taux2 + tauy2 + tauz2);
 
