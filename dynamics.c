@@ -38,6 +38,7 @@ void update_grid(grid_point ***grid_points) {
 					(grid_points[x][y][z]).E = (vec3) { 0, 0, 0 };
 					(grid_points[x][y][z]).B = (vec3) { 0, 0, 0 };
 				}
+
 			}
 		}
 	}
