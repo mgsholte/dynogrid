@@ -81,7 +81,7 @@ void push_particles(grid_point ***grid, List part_list) {
 		//Move half timestep
 		(curr->pos).x += ux * root;
 		(curr->pos).y += uy * root;
-		(curr->pos).z += uz * root
+		(curr->pos).z += uz * root;
 
 		//Do interpolation to find e and b here.
         // x-left and y-up indices
@@ -91,8 +91,8 @@ void push_particles(grid_point ***grid, List part_list) {
         xlf = ((curr->pos).x - xl*dx) / dx;
         yuf = ((curr->pos).y - yu*dy) / dy;
 		znf = ((curr->pos).z - zn*dz) / dz;
-        E = interp3(grid[xl][yu][zn].E, grid[xl][yu][zn+1].E, grid[xl][yu+1][zn].E, grid[xl+1][yu][zn].E, grid[xl][yu+1][zn+1].E, grid[xl+1][yu][zn+1].E, grid[xl][yu+1][zn+1].E, grid[xl+1][yu+1][zn+1].E, xlf, yuf);
-        B = interp3(grid[xl][yu][zn].B, grid[xl][yu][zn+1].B, grid[xl][yu+1][zn].B, grid[xl+1][yu][zn].B, grid[xl][yu+1][zn+1].B, grid[xl+1][yu][zn+1].B, grid[xl][yu+1][zn+1].B, grid[xl+1][yu+1][zn+1].B, xlf, yuf);
+        E = interp3(grid[xl][yu][zn].E, grid[xl][yu][zn+1].E, grid[xl][yu+1][zn].E, grid[xl+1][yu][zn].E, grid[xl][yu+1][zn+1].E, grid[xl+1][yu][zn+1].E, grid[xl][yu+1][zn+1].E, grid[xl+1][yu+1][zn+1].E, xlf, yuf, znf);
+        B = interp3(grid[xl][yu][zn].B, grid[xl][yu][zn+1].B, grid[xl][yu+1][zn].B, grid[xl+1][yu][zn].B, grid[xl][yu+1][zn+1].B, grid[xl+1][yu][zn+1].B, grid[xl][yu+1][zn+1].B, grid[xl+1][yu+1][zn+1].B, xlf, yuf, znf);
         
         // Update momenta to u_-, from Birdsall and Langdon
         uxm = ux + cmratio * E.x;

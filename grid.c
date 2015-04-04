@@ -1,5 +1,6 @@
 #include <stdlib.h>
 
+#include "decs.h"
 #include "grid.h"
 #include "output.h"
 
@@ -9,16 +10,18 @@ static inline double rand_float( double low, double high ) {
 }
 
 // inits all grid points to 0 in E and B
-grid_point** init_grid(int nx, int ny) {
-	int i, j;
-	grid_point **grid_points = (grid_point**) malloc( ny * sizeof(size_t) ); // allocate an array of pointers to rows
-
-	for (i = 0; i < ny; ++i) {
-		grid_points[i] = (grid_point*) malloc( nx * sizeof(grid_point) );  // allocate the row
-		for (j = 0; j < nx; j++) {  // populate the row
-			// all grid points are initialized with no field
-			grid_points[i][j].E = (vec3) {0,0,0};
-			grid_points[i][j].B = (vec3) {0,0,0};
+grid_point*** init_grid() {
+	grid_point ***grid_points = (grid_point***) malloc( nx * sizeof(grid_point**) ); // allocate an array of pointers to rows-depthwise
+	int i, j, k;
+	for (i = 0; i < nx; ++i) {
+		grid_points[i] = (grid_point**) malloc( ny * sizeof(grid_point*) );  // allocate the row
+		for (j = 0; j < ny; ++j) {
+			grid_points[i][j] = (grid_point*) malloc( nz * sizeof(grid_point) );  // allocate the row
+			for (k = 0; k < nz; ++k) {
+				// all grid points are initialized with no field
+				grid_points[i][j][k].E = (vec3) {0,0,0};
+				grid_points[i][j][k].B = (vec3) {0,0,0};
+			}
 		}
 	}
 	return grid_points;
@@ -29,17 +32,19 @@ grid_point** init_grid(int nx, int ny) {
 List init_particles(vec3 origin, vec3 dims, int part_per_cell) {
 	List particles = list_init();
 	int row, col, dep, k;
-	int x_min = round(origin.x/dx), x_max = round(dims.x/dx);
-	int y_min = round(origin.y/dy), y_may = round(dims.y/dy);
-	int z_min = round(origin.z/dz), z_maz = round(dims.z/dz);
+	int x_i_min = round_i(origin.x/dx), x_i_max = round_i(dims.x/dx);
+	int y_i_min = round_i(origin.y/dy), y_i_max = round_i(dims.y/dy);
+	int z_i_min = round_i(origin.z/dz), z_i_max = round_i(dims.z/dz);
 	double x,y,z; // the coords of the next particle to add
-	for (dep = z_min; dep < z_max; ++dep) {
-		for (row = y_min; row < y_max; ++row) {
-			for (col = x_min; col < x_max; ++col) {
+	particle *p; // pointer to the next particle to add
+	for (dep = z_i_min; dep < z_i_max; ++dep) {
+		for (row = y_i_min; row < y_i_max; ++row) {
+			for (col = x_i_min; col < x_i_max; ++col) {
 				// add particles in this cell
 				for (k = 0; k < part_per_cell/2; k++) {
 					// add a proton
-					particle *p = (particle*) malloc(sizeof(particle));
+					p = (particle*) malloc(sizeof(particle));
+
 					x = rand_float(0, dx) + col*dx;
 					y = rand_float(0, dy) + row*dy;
 					z = rand_float(0, dz) + dep*dz;
@@ -50,18 +55,23 @@ List init_particles(vec3 origin, vec3 dims, int part_per_cell) {
 						BASE_PROTON_CHARGE * PROTON_WEIGHT,	//charge
 						PROTON_WEIGHT		//weight
 						};
+
 					list_add(&particles, p);
 
 					// add an electron
-					*p = (particle*) malloc(sizeof(particle));
-					double x = rand_float(0, dx) + col*dx;
-					double y = rand_float(0, dy) + row*dy;
-					*p = (particle) { {x, y},		//position
-						  {0, 0, 0},	//momentum
-						  BASE_ELECTRON_MASS * ELECTRON_WEIGHT,		//mass
-						  BASE_ELECTRON_CHARGE * ELECTRON_WEIGHT,	//charge
-						  ELECTRON_WEIGHT		//weight
+					p = (particle*) malloc(sizeof(particle));
+
+					x = rand_float(0, dx) + col*dx;
+					y = rand_float(0, dy) + row*dy;
+					z = rand_float(0, dz) + dep*dz;
+					*p = (particle) { 
+						{x, y, z},		//position
+						{0, 0, 0},	//momentum
+						BASE_ELECTRON_MASS * ELECTRON_WEIGHT,		//mass
+						BASE_ELECTRON_CHARGE * ELECTRON_WEIGHT,	//charge
+						ELECTRON_WEIGHT		//weight
 						};
+
 					list_add(&particles, p);
 				}
 			}
@@ -71,9 +81,9 @@ List init_particles(vec3 origin, vec3 dims, int part_per_cell) {
 	return particles;
 }
 
-void output_grid(int itNum, grid_point **grid_points, int nx, int ny, List particles) {
-	output_data2D(itNum, grid_points, nx, ny, particles);
+void output_grid(int itNum, int numFiles, grid_point ***grid_points, List particles) {
+	output_data3D(itNum, numFiles, grid_points, particles);
 	//TODO: it should be true that itNum == time/dt. maybe we don't need to pass the itNum variable as an argument
-	// int itNum = round(time/dt);
+	// int itNum = round_i(time/dt);
 }
           

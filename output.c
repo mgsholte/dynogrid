@@ -7,7 +7,8 @@
 #include "grid.h"
 
 
-void output_data2D(int itNum, int numFiles, grid_point **grid_points, int nx, int ny, double dx, double dy, List particles) {
+/*
+void output_data2D(int itNum, int numFiles, grid_point ***grid_points, List particles) {
     char *f_extension = "data";
     if(itNum == 0){
         // create a file to output the grid data to:
@@ -54,9 +55,6 @@ void output_data2D(int itNum, int numFiles, grid_point **grid_points, int nx, in
             //calculate the L2 norm of the B field vector:
             double B = pow(pow((grid_points[i][j].B).x, 2.0) + pow((grid_points[i][j].B).y, 2.0) + pow((grid_points[i][j].B).z, 2.0), 0.5);
             
-            /*write one line to file per grid point in this format:
-			xcoord,ycoord,E,B
-			*/
 			fprintf(grid_file, "%lg,%lg,%lg,%lg\n", (((double)j * dx), ((double)i * dy), E, B);
 			// fprintf(grid_file, "%d,%d,%lg,%lg\n", j, i, E, B);
     	}//end inner for
@@ -88,33 +86,33 @@ void output_data2D(int itNum, int numFiles, grid_point **grid_points, int nx, in
 		particle *ptc = list_get_next(&particles);
         //calculate the L2 norm of the p vector:
         double p = pow(pow((ptc->p).x, 2.0) + pow((ptc->p).y, 2.0) + pow((ptc->p).z, 2.0), 0.5);
-    	/*write one line to file per particle in this format:
-			ptcl:#,pos_x,pos_y,p
-		*/
         particle_ct++;
 		fprintf(particles_file, "ptcl:%d,%lg,%lg,%lg\n", particle_ct, (ptc->pos).x, (ptc->pos).y, p);
 	}//end while
     fclose(particles_file);
 }//end output_grid function
+*/
 
-void output_data3D(int itNum, int numFiles, grid_point **grid_points, int nx, int ny, int nz, double dx, double dy, double dz, List particles) {
+void output_data3D(int itNum, int numFiles, grid_point ***grid_points, List particles) {
 	char *f_extension = "data";
     // create a file to output the grid data to:
-    char* params[256];
-    sprintf(params, "%dparams.%s", f_extension);
+	if (itNum == 0) {
+		char params[256];
+		sprintf(params, "params.%s", f_extension);
 
-    FILE *params_file = fopen(params, "w"); // write only
-    // test to ensure that the file was actually created and exists: 
-    if (params_file == NULL){
-        printf("1. Error! Could not create file\n"); 
-        exit(-1); // must include stdlib.h 
-    }//end if
+		FILE *params_file = fopen(params, "w"); // write only
+		// test to ensure that the file was actually created and exists: 
+		if (params_file == NULL){
+			printf("1. Error! Could not create file\n"); 
+			exit(-1); // must include stdlib.h 
+		}//end if
 
-    fprintf(params_file, "PARAMS\n");
-    fprintf(params_file, "nx=%d,ny=%d,nz=%d\n", nx, ny, nz);
-    fprintf(params_file, "dx=%lg,dy=%lg,dz%lg\n", dx, dy, dz);
-    fprintf(params_file, "numFiles=%d\n", numFiles);
-    fclose(params_file);
+		fprintf(params_file, "PARAMS\n");
+		fprintf(params_file, "nx=%d,ny=%d,nz=%d\n", nx, ny, nz);
+		fprintf(params_file, "dx=%lg,dy=%lg,dz%lg\n", dx, dy, dz);
+		fprintf(params_file, "numFiles=%d\n", numFiles);
+		fclose(params_file);
+	}
 
     // create the file name to output for the grid point data:
     char fname_grid[256];
@@ -136,13 +134,13 @@ void output_data3D(int itNum, int numFiles, grid_point **grid_points, int nx, in
     fprintf(grid_file, "Time=%lg\n", time);
     fprintf(grid_file, "TimeStep=%lg\n", dt);
     fprintf(grid_file, "GridSize:nx=%d,ny=%d,nz=%d\n", nx, ny, nz);
-    for(y = 0; y < ny; y++){
-        for(x = 0; x < nx; x++){
+	for(x = 0; x < nx; x++){
+		for(y = 0; y < ny; y++){
             for(z = 0; z < nz; z++){
                 //calculate the L2 norm of the E field vector:
-                double E = pow(pow((grid_points[y][x].E).x, 2.0) + pow((grid_points[y][x].E).y, 2.0) + pow((grid_points[y][x].E).z, 2.0), 0.5);
+                double E = pow(pow((grid_points[x][y][z].E).x, 2.0) + pow((grid_points[x][y][z].E).y, 2.0) + pow((grid_points[x][y][z].E).z, 2.0), 0.5);
                 //calculate the L2 norm of the B field vector:
-                double B = pow(pow((grid_points[y][x].B).x, 2.0) + pow((grid_points[y][x].B).y, 2.0) + pow((grid_points[y][x].B).z, 2.0), 0.5);
+                double B = pow(pow((grid_points[x][y][z].B).x, 2.0) + pow((grid_points[x][y][z].B).y, 2.0) + pow((grid_points[x][y][z].B).z, 2.0), 0.5);
                 
                 /*write one line to file per grid point in this format:
                 xcoord,ycoord,zcoord,E,B

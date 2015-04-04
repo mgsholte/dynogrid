@@ -32,9 +32,9 @@ typedef struct {
 
 double time; // changes every iteration
 
-#define x_max = 1.e-4
-#define y_max = 1.e-4
-#define z_max = 1.e-4
+#define x_max (1e-4)
+#define y_max (1e-4)
+#define z_max (1e-4)
 
 #define nx (100)
 #define ny (100)
@@ -47,7 +47,9 @@ double time; // changes every iteration
 // Use the smallest of dx, dy, or dz!!!
 #define dt (dz/c)
 
-#define round(x) ((int) (x+0.5))
+inline int round_i(double x) {
+	return (int) (x+0.5);
+}
 
 #define PROTON_WEIGHT (5.0)
 #define ELECTRON_WEIGHT (1.0)

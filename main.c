@@ -19,7 +19,7 @@ int main(int argc, char *argv[]) {
 
 	printf("initializing grid and particles\n");
 
-	grid_point ***grid_points = init_grid(nx, ny, nz);
+	grid_point ***grid_points = init_grid();
 	List particles = init_particles(ulf, dims, part_per_cell);
 
 	printf("finished initializing. beginning simulation\n");
@@ -29,11 +29,10 @@ int main(int argc, char *argv[]) {
 		push_particles(grid_points, particles);
 		update_grid(grid_points);  // add the laser, ...
 		if (i % output_freq == 0) {
-			//output_data2D((i/output_freq), (nsteps/output_freq), grid_points, nx, ny, dx, dy, particles);
-			output_data3D((i/output_freq), (nsteps/output_freq), grid_points, nx, ny, nz, dx, dy, dz, particles);
+			output_grid((i/output_freq), (nSteps/output_freq), grid_points, particles);
 		}
 	}
-		output_data2D((i/output_freq), (nsteps/output_freq), grid_points, nx, ny, dx, dy, particles);
+	output_grid((i/output_freq), (nSteps/output_freq), grid_points, particles);
 
 	printf("simulation finished\n");
 
