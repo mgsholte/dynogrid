@@ -21,8 +21,21 @@ vec3 interp(vec3 field00, vec3 field01, vec3 field10, vec3 field11, double xlf, 
 	return interped;
 }
 
+// 3D Interpalation helper
+vec3 interp3(vec3 field000, vec3 field001, vec3 field010, vec3 field100, vec3 field011, vec3 field101, vec3 field110, vec3 field111, double xlf, double yuf, double znf){
+	vec3 interped;
+	double norm = 1./(dx*dy*dz);
+	double xrf = 1.-xlf;
+	double ydf = 1. - yuf;
+	double zff = 1. - znf;
+	interped.x = norm * (field000.x*xlf*yuf*znf + field001.x*xlf*yuf*zff + field010.x*xlf*ydf*znf + field100.x*xrf*yuf*znf + field011.x*xlf*ydf*zff + field101.x*xrf*yuf*zff + field110.x*xrf*ydf*znf + field111.x*xrf*ydf*zff);
+	interped.y = norm * (field000.y*xlf*yuf*znf + field001.y*xlf*yuf*zff + field010.y*xlf*ydf*znf + field100.y*xrf*yuf*znf + field011.y*xlf*ydf*zff + field101.y*xrf*yuf*zff + field110.y*xrf*ydf*znf + field111.y*xrf*ydf*zff);
+	interped.z = norm * (field000.z*xlf*yuf*znf + field001.z*xlf*yuf*zff + field010.z*xlf*ydf*znf + field100.z*xrf*yuf*znf + field011.z*xlf*ydf*zff + field101.z*xrf*yuf*zff + field110.z*xrf*ydf*znf + field111.z*xrf*ydf*zff);
+	return interped;
+}
+
 // Particle pusher!!!!
-void push_particles(grid_point **grid, List part_list) {
+void push_particles(grid_point ***grid, List part_list) {
 
 	list_reset_iter(&part_list);
 
@@ -32,8 +45,8 @@ void push_particles(grid_point **grid, List part_list) {
     particle *curr = list_get_next(&part_list);
     double ux, uy, uz;
     double root;
-    int xl, yu;
-	double xlf, yuf;
+    int xl, yu, zn;
+	double xlf, yuf, znf;
     vec3 E, B;
     double uxm, uym, uzm;
     double uxp, uyp, uzp;
@@ -41,6 +54,7 @@ void push_particles(grid_point **grid, List part_list) {
     //  Just copying multiplication factors from EPOCH
     double idx = 1./dx;
     double idy = 1./dy;
+	double idz = 1./dz;
     double idt = 1./dt;
     double dto2 = dt/2.;
     double dtco2 = c * dto2;
@@ -67,17 +81,20 @@ void push_particles(grid_point **grid, List part_list) {
 		//Move half timestep
 		(curr->pos).x += ux * root;
 		(curr->pos).y += uy * root;
+		(curr->pos).z += uz * root
 
 		//Do interpolation to find e and b here.
         // x-left and y-up indices
         xl = floor((curr->pos).x * idx);
         yu = floor((curr->pos).y * idy);
+		zn = floor((curr->pos).z * idz);
         xlf = ((curr->pos).x - xl*dx) / dx;
         yuf = ((curr->pos).y - yu*dy) / dy;
-        E = interp(grid[xl][yu].E, grid[xl][yu+1].E, grid[xl+1][yu].E, grid[xl+1][yu+1].E, xlf, yuf);
-        B = interp(grid[xl][yu].B, grid[xl][yu+1].B, grid[xl+1][yu].B, grid[xl+1][yu+1].B, xlf, yuf);
+		znf = ((curr->pos).z - zn*dz) / dz;
+        E = interp3(grid[xl][yu][zn].E, grid[xl][yu][zn+1].E, grid[xl][yu+1][zn].E, grid[xl+1][yu][zn].E, grid[xl][yu+1][zn+1].E, grid[xl+1][yu][zn+1].E, grid[xl][yu+1][zn+1].E, grid[xl+1][yu+1][zn+1].E, xlf, yuf);
+        B = interp3(grid[xl][yu][zn].B, grid[xl][yu][zn+1].B, grid[xl][yu+1][zn].B, grid[xl+1][yu][zn].B, grid[xl][yu+1][zn+1].B, grid[xl+1][yu][zn+1].B, grid[xl][yu+1][zn+1].B, grid[xl+1][yu+1][zn+1].B, xlf, yuf);
         
-        // Update momenta to u_-, from Birdsall and Langdor
+        // Update momenta to u_-, from Birdsall and Langdon
         uxm = ux + cmratio * E.x;
         uym = uy + cmratio * E.y;
         uzm = uz + cmratio * E.z;
@@ -108,6 +125,7 @@ void push_particles(grid_point **grid, List part_list) {
 
         (curr->pos).x += ux*root;
         (curr->pos).y += uy*root;
+		(curr->pos).z += uz*root;
 
         // Store
         (curr->p).x = ux*part_mc;

@@ -10,7 +10,7 @@
 void output_data2D(int itNum, int numFiles, grid_point **grid_points, int nx, int ny, double dx, double dy, List particles) {
     char *f_extension = "data";
     if(itNum == 0){
-               // create a file to output the grid data to:
+        // create a file to output the grid data to:
         char* params[256];
         sprintf(params, "%dparams.%s", f_extension);
 
@@ -44,8 +44,8 @@ void output_data2D(int itNum, int numFiles, grid_point **grid_points, int nx, in
     int j;
     fprintf(grid_file, "GRIDPOINTS\n");
     fprintf(grid_file, "itNum=%d\n", itNum);
-    fprintf(grid_file, "Time=%lf\n", time);
-    fprintf(grid_file, "TimeStep=%lf\n", dt);
+    fprintf(grid_file, "Time=%lg\n", time);
+    fprintf(grid_file, "TimeStep=%lg\n", dt);
     fprintf(grid_file, "GridSize:nx=%d,ny=%d\n", nx, ny);
     for(i = 0; i < ny; i++){
     	for(j = 0; j < nx; j++){
@@ -58,6 +58,7 @@ void output_data2D(int itNum, int numFiles, grid_point **grid_points, int nx, in
 			xcoord,ycoord,E,B
 			*/
 			fprintf(grid_file, "%lg,%lg,%lg,%lg\n", (((double)j * dx), ((double)i * dy), E, B);
+			// fprintf(grid_file, "%d,%d,%lg,%lg\n", j, i, E, B);
     	}//end inner for
     }//end outer for
     fclose(grid_file);
@@ -77,8 +78,8 @@ void output_data2D(int itNum, int numFiles, grid_point **grid_points, int nx, in
 
     fprintf(particles_file, "PARTICLES\n");
     fprintf(particles_file, "itNum=%d\n", itNum);
-    fprintf(particles_file, "Time=%lf\n", time);
-    fprintf(particles_file, "TimeStep=%lf\n", dt);
+    fprintf(particles_file, "Time=%lg\n", time);
+    fprintf(particles_file, "TimeStep=%lg\n", dt);
     fprintf(particles_file, "GridSize:nx=%d,ny=%d\n", nx, ny);
     
     int particle_ct = -1;
@@ -132,8 +133,8 @@ void output_data3D(int itNum, int numFiles, grid_point **grid_points, int nx, in
     int z;
     fprintf(grid_file, "GRIDPOINTS\n");
     fprintf(grid_file, "itNum=%d\n", itNum);
-    fprintf(grid_file, "Time=%lf\n", time);
-    fprintf(grid_file, "TimeStep=%lf\n", dt);
+    fprintf(grid_file, "Time=%lg\n", time);
+    fprintf(grid_file, "TimeStep=%lg\n", dt);
     fprintf(grid_file, "GridSize:nx=%d,ny=%d,nz=%d\n", nx, ny, nz);
     for(y = 0; y < ny; y++){
         for(x = 0; x < nx; x++){
@@ -147,6 +148,7 @@ void output_data3D(int itNum, int numFiles, grid_point **grid_points, int nx, in
                 xcoord,ycoord,zcoord,E,B
                 */
                 fprintf(grid_file, "%lg,%lg,%lg,%lg,%lg\n", ((double)x * dx), ((double)y * dy), ((double)z * dz), E, B);
+                // fprintf(grid_file, "%d,%d,%d,%lg,%lg\n", x, y, z, E, B);
             }//end innermost for
         }//end middle for
     }//end outer for
@@ -167,8 +169,8 @@ void output_data3D(int itNum, int numFiles, grid_point **grid_points, int nx, in
 
     fprintf(particles_file, "PARTICLES\n");
     fprintf(particles_file, "itNum=%d\n", itNum);
-    fprintf(particles_file, "Time=%lf\n", time);
-    fprintf(particles_file, "TimeStep=%lf\n", dt);
+    fprintf(particles_file, "Time=%lg\n", time);
+    fprintf(particles_file, "TimeStep=%lg\n", dt);
     fprintf(particles_file, "GridSize:nx=%d,ny=%d,nz=%d\n", nx, ny, nz);
     
     int particle_ct = -1;
