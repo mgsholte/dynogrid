@@ -38,6 +38,8 @@ double time; // changes every iteration
 #define dx (c*dt)
 #define dy (c*dt)
 
+#define round(x) ((int) (x+0.5))
+
 #define PROTON_WEIGHT (5.0)
 #define ELECTRON_WEIGHT (1.0)
 #define BASE_PROTON_MASS (1.672e-27)

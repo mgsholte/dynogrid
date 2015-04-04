@@ -7,7 +7,7 @@
 // return the initialized grid. make a grid with 'nx' points along x and 'ny' points along y
 grid_point** init_grid(int nx, int ny);
 
-// return the list of particles. put 'part_per_cell' particles in each grid within the rectangle with upper left corner 'ul' and lower right corner 'lr'
+// return the list of particles. put 'part_per_cell' particles in each grid cell within the rectangular prism with the specified origin and dimensions. the origin is the upper-left-front-most point of the prism
 List init_particles(vec3 origin, vec3 dims, int part_per_cell);
 
 // print the fields and particles at iteration i
