@@ -23,4 +23,7 @@ void list_reset_iter(List *l);
 bool list_has_next(List l);
 particle* list_get_next(List *l);
 
+// list query
+int list_length(List list);
+
 #endif //LIST_H
