@@ -5,9 +5,8 @@
 // Improvements will likely be necessary, but this should compile.
 void update_grid(grid_point ***grid_points) {
 	// could make some of these inputs later
-	// CAUTION: assuming ny = 100 (check with main())
-	double yCenter = 50; // ny/2
-	double zCenter = 50; // nz/2
+	double yCenter = ny/2;
+	double zCenter = nz/2;
 	double beam_hw = 2; //half width of laser in y and z
 	double xCenter = c * time;
 	double pulse_hw = 15; //pulse half width: "amplitude" in x
