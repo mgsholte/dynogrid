@@ -7,8 +7,27 @@
 #include "grid.h"
 
 
-void output_data2D(int itNum, grid_point **grid_points, int nx, int ny, List particles) {
-	char *f_extension = "data";
+void output_data2D(int itNum, int numFiles, grid_point **grid_points, int nx, int ny, double dx, double dy, List particles) {
+    char *f_extension = "data";
+    if(itNum == 0){
+        // create a file to output the grid data to:
+        char* params[256];
+        sprintf(params, "%dparams.%s", f_extension);
+
+        FILE *params_file = fopen(params, "w"); // write only
+        // test to ensure that the file was actually created and exists: 
+        if (params_file == NULL){
+            printf("1. Error! Could not create file\n"); 
+            exit(-1); // must include stdlib.h 
+        }//end if
+
+        fprintf(params_file, "PARAMS\n");
+        fprintf(params_file, "nx=%d,ny=%d\n", nx, ny);
+        fprintf(params_file, "dx=%lg,dy=%lg\n", dx, dy);
+        fprintf(params_file, "numFiles=%d\n", numFiles);
+        fclose(params_file); 
+    }//end if
+
 	// create the file name to output for the grid point data:
 	char fname_grid[256];
 	sprintf(fname_grid, "%d_grid.%s", itNum, f_extension);
@@ -38,7 +57,8 @@ void output_data2D(int itNum, grid_point **grid_points, int nx, int ny, List par
             /*write one line to file per grid point in this format:
 			xcoord,ycoord,E,B
 			*/
-			fprintf(grid_file, "%d,%d,%lg,%lg\n", j, i, E, B);
+			fprintf(grid_file, "%lg,%lg,%lg,%lg\n", (((double)j * dx), ((double)i * dy), E, B);
+			// fprintf(grid_file, "%d,%d,%lg,%lg\n", j, i, E, B);
     	}//end inner for
     }//end outer for
     fclose(grid_file);
@@ -77,8 +97,25 @@ void output_data2D(int itNum, grid_point **grid_points, int nx, int ny, List par
     fclose(particles_file);
 }//end output_grid function
 
-void output_data3D(int itNum, grid_point **grid_points, int nx, int ny, int nz, List particles) {
+void output_data3D(int itNum, int numFiles, grid_point **grid_points, int nx, int ny, int nz, double dx, double dy, double dz, List particles) {
 	char *f_extension = "data";
+    // create a file to output the grid data to:
+    char* params[256];
+    sprintf(params, "%dparams.%s", f_extension);
+
+    FILE *params_file = fopen(params, "w"); // write only
+    // test to ensure that the file was actually created and exists: 
+    if (params_file == NULL){
+        printf("1. Error! Could not create file\n"); 
+        exit(-1); // must include stdlib.h 
+    }//end if
+
+    fprintf(params_file, "PARAMS\n");
+    fprintf(params_file, "nx=%d,ny=%d,nz=%d\n", nx, ny, nz);
+    fprintf(params_file, "dx=%lg,dy=%lg,dz%lg\n", dx, dy, dz);
+    fprintf(params_file, "numFiles=%d\n", numFiles);
+    fclose(params_file);
+
     // create the file name to output for the grid point data:
     char fname_grid[256];
 	sprintf(fname_grid, "%d_grid.%s", itNum, f_extension);
@@ -110,7 +147,8 @@ void output_data3D(int itNum, grid_point **grid_points, int nx, int ny, int nz, 
                 /*write one line to file per grid point in this format:
                 xcoord,ycoord,zcoord,E,B
                 */
-                fprintf(grid_file, "%d,%d,%d,%lg,%lg\n", x, y, z, E, B);
+                fprintf(grid_file, "%lg,%lg,%lg,%lg,%lg\n", ((double)x * dx), ((double)y * dy), ((double)z * dz), E, B);
+                // fprintf(grid_file, "%d,%d,%d,%lg,%lg\n", x, y, z, E, B);
             }//end innermost for
         }//end middle for
     }//end outer for
