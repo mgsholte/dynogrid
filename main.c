@@ -20,25 +20,18 @@ int main(int argc, char *argv[]) {
 	grid_point **grid_points = init_grid(nx, ny);
 	List particles = init_particles(ul, lr, part_per_cell);
 
-	printf("list has particles: %d\n", list_has_next(particles));
-	particle *p = list_get_next(&particles);
-	printf("list has particles: %d\n", list_has_next(particles));
-	printf("1st particle has x: %lf\n", p->pos.x);
-
-	//TODO: remove me after debugging
-	output_data2D(1, grid_points, nx, ny, particles);
-
-	printf("beginning simulation\n");
+	printf("finished initializing. beginning simulation\n");
 
 	for(i = 0; i < nSteps; ++i) {
 		time = i*dt;
 		push_particles(grid_points, particles);
 		update_grid(grid_points);  // add the laser, ...
 		if (i % output_freq == 0) {
-			output_data2D(i, grid_points, nx, ny, particles);
+			output_grid((i/output_freq), grid_points, nx, ny, particles);
+			// output_data3D((i/output_freq), grid_points, nx, ny, particles);
 		}
 	}
-	output_grid(i, grid_points, nx, ny, particles);
+	output_grid((i/output_freq), grid_points, nx, ny, particles);
 
 	printf("simulation finished\n");
 

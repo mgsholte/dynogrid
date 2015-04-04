@@ -34,8 +34,8 @@ List init_particles(vec2 ul, vec2 lr, int part_per_cell) {
 			// add protons
 			for (k = 0; k < part_per_cell/2; k++) {
 				particle *p = (particle*) malloc(sizeof(particle));
-				double x = rand_float(0, dx) + col;
-				double y = rand_float(0, dy) + row;
+				double x = rand_float(0, dx) + col*dx;
+				double y = rand_float(0, dy) + row*dy;
 				*p = (particle) { {x, y},		//position
 					  {0, 0, 0},	//momentum
 					  BASE_PROTON_MASS * PROTON_WEIGHT,		//mass
@@ -47,8 +47,8 @@ List init_particles(vec2 ul, vec2 lr, int part_per_cell) {
 			// add electrons
 			for (k = 0; k < (part_per_cell - part_per_cell/2); k++) {
 				particle *p = (particle*) malloc(sizeof(particle));
-				double x = rand_float(0, dx) + col;
-				double y = rand_float(0, dy) + row;
+				double x = rand_float(0, dx) + col*dx;
+				double y = rand_float(0, dy) + row*dy;
 				*p = (particle) { {x, y},		//position
 					  {0, 0, 0},	//momentum
 					  BASE_ELECTRON_MASS * ELECTRON_WEIGHT,		//mass
