@@ -17,8 +17,7 @@ typedef struct {
 
 // Define the particle structure
 typedef struct {
-	vec2 pos;  // position
-	vec3 p;  // momentum
+	vec3 p, pos;  // momentum, position
     double mass, charge, weight;  // weight is the number of actual particles this instance represents
 	//particle *next;  // treat the particles as a list. this points to the next particle in the list
 } particle;
@@ -29,21 +28,21 @@ typedef struct {
 	// double rho; // average charge density at grid point
 } grid_point;
 
-#define c 3e8
+#define c (3e8)
 
 // the length of a single iteration in seconds
-#define dt 1e-18
+#define dt (1e-18)
 
 double time; // changes every iteration
 
-#define dx c*dt
-#define dy c*dt
+#define dx (c*dt)
+#define dy (c*dt)
 
-#define PROTON_WEIGHT 5.0
-#define ELECTRON_WEIGHT 1.0
-#define BASE_PROTON_MASS 1.672e-27
-#define BASE_ELECTRON_MASS 9.109e-31
-#define BASE_PROTON_CHARGE 1.602e-19
-#define BASE_ELECTRON_CHARGE -1.0*BASE_PROTON_CHARGE
+#define PROTON_WEIGHT (5.0)
+#define ELECTRON_WEIGHT (1.0)
+#define BASE_PROTON_MASS (1.672e-27)
+#define BASE_ELECTRON_MASS (9.109e-31)
+#define BASE_PROTON_CHARGE (1.602e-19)
+#define BASE_ELECTRON_CHARGE (-1.0*BASE_PROTON_CHARGE)
         
 #endif //DECS_H
