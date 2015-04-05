@@ -13,36 +13,37 @@ import os
 fakes = raw_input("create fake files? \t")
 if(fakes == "y"):
     numParticles = int(raw_input("how many particles? \t"))
-dim = raw_input("dim? \t")
+dim = int(raw_input("dim? \t"))
 vidLen = int(raw_input("video length in secs? \t"))
 simID = raw_input("simID? \t\t\t")
 ext = "data"
 win_or_linux = "win"
 
 # grab params info from params file:
-with open("params.data", 'r') as params_file:
-    if(dim == 2):
-        params_file_lines = params_file.readlines() # params_file_lines is a list of the lines in params_file
-        line = params_file_lines[1]
-        nx = float((((line.split(","))[0]).split("="))[1])
-        ny = float((((line.split(","))[1]).split("="))[1])
-        line = params_file_lines[2]
-        dx = float((((line.split(","))[0]).split("="))[1])
-        dy = float((((line.split(","))[1]).split("="))[1])
-        line = params_file_lines[3]
-        numFiles = int((line.split("="))[1])
-    if(dim == 3):
-        params_file_lines = params_file.readlines() # params_file_lines is a list of the lines in params_file
-        line = params_file_lines[1]
-        nx = float((((line.split(","))[0]).split("="))[1])
-        ny = float((((line.split(","))[1]).split("="))[1])
-        nz = float((((line.split(","))[2]).split("="))[1])
-        line = params_file_lines[2]
-        dx = float((((line.split(","))[0]).split("="))[1])
-        dy = float((((line.split(","))[1]).split("="))[1])
-        dz = float((((line.split(","))[2]).split("="))[1])
-        line = params_file_lines[3]
-        numFiles = int((line.split("="))[1])
+params_file = open('params.data', 'r')
+if(dim == 2):
+    params_file_lines = params_file.readlines() # params_file_lines is a list of the lines in params_file
+    line = params_file_lines[1]
+    nx = float((((line.split(","))[0]).split("="))[1])
+    ny = float((((line.split(","))[1]).split("="))[1])
+    line = params_file_lines[2]
+    dx = float((((line.split(","))[0]).split("="))[1])
+    dy = float((((line.split(","))[1]).split("="))[1])
+    line = params_file_lines[3]
+    numFiles = int((line.split("="))[1])
+if(dim == 3):
+    params_file_lines = params_file.readlines() # params_file_lines is a list of the lines in params_file
+    line = params_file_lines[1]
+    nx = float((((line.split(","))[0]).split("="))[1])
+    ny = float((((line.split(","))[1]).split("="))[1])
+    nz = float((((line.split(","))[2]).split("="))[1])
+    line = params_file_lines[2]
+    dx = float((((line.split(","))[0]).split("="))[1])
+    dy = float((((line.split(","))[1]).split("="))[1])
+    dz = float((((line.split(","))[2]).split("="))[1])
+    line = params_file_lines[3]
+    numFiles = int((line.split("="))[1])
+params_file.close()
 
 # # gather inputs for creating "fake" files:
 # fakes = raw_input("create fake files? \t")
@@ -98,15 +99,15 @@ timesteps = fn.normalizeData(timesteps, E_min, E_max, B_min, B_max, p_min, p_max
 # plot data:    
 if(dim == 2):
     for t in xrange(0, numFiles):
-        fn.plotDataForSingleTimeStep2D(timesteps[t]['gridpoints'], timesteps[t]['particles'], t, nx, ny, path, 'B')
+        fn.plotDataForSingleTimeStep2D(timesteps[t]['gridpoints'], timesteps[t]['particles'], t, nx, ny, dx, dy, path, 'B')
     for t in xrange(0, numFiles):
-        fn.plotDataForSingleTimeStep2D(timesteps[t]['gridpoints'], timesteps[t]['particles'], t, nx, ny, path, 'E')
+        fn.plotDataForSingleTimeStep2D(timesteps[t]['gridpoints'], timesteps[t]['particles'], t, nx, ny, dx, dy, path, 'E')
     
 elif(dim == 3):
     for t in xrange(0, numFiles):
-        fn.plotDataForSingleTimeStep3D(timesteps[t]['gridpoints'], timesteps[t]['particles'], t, nx, ny, nz, path, 'B')
+        fn.plotDataForSingleTimeStep3D(timesteps[t]['gridpoints'], timesteps[t]['particles'], t, nx, ny, nz, dx, dy, dz, path, 'B')
     for t in xrange(0, numFiles):
-        fn.plotDataForSingleTimeStep3D(timesteps[t]['gridpoints'], timesteps[t]['particles'], t, nx, ny, nz, path, 'E')
+        fn.plotDataForSingleTimeStep3D(timesteps[t]['gridpoints'], timesteps[t]['particles'], t, nx, ny, nz, dx, dy, dz, path, 'E')
 
 # elif makevid == 'y':
 # if os.access(path, os.F_OK):

@@ -139,8 +139,8 @@ def getGridData2D(numFiles, ext):
                     continue
                 # parse eachline to get needed data:
                 eachline = line.split(',') # eachline is a list of the results of the split
-                xcoord = int(eachline[0])
-                ycoord = int(eachline[1])
+                xcoord = float(eachline[0])
+                ycoord = float(eachline[1])
                 E = float(eachline[2])
                 B = float(eachline[3])
                 if E < E_min:
@@ -222,9 +222,9 @@ def getGridData3D(numFiles, ext):
                     continue
                 # parse eachline to get needed data:
                 eachline = line.split(',') # eachline is a list of the results of the split
-                xcoord = int(eachline[0])
-                ycoord = int(eachline[1])
-                zcoord = int(eachline[2])
+                xcoord = float(eachline[0])
+                ycoord = float(eachline[1])
+                zcoord = float(eachline[2])
                 E = float(eachline[3])
                 B = float(eachline[4])
                 if E < E_min:
@@ -314,7 +314,7 @@ def normalizeData(timesteps, E_min, E_max, B_min, B_max, p_min, p_max):
 
 
 
-def plotDataForSingleTimeStep2D(gridpoints, particles, itNum, nx, ny, path, E_or_B):
+def plotDataForSingleTimeStep2D(gridpoints, particles, itNum, nx, ny, dx, dy, path, E_or_B):
     itNum = '{0:05d}'.format(itNum)
     if E_or_B == 'B':
         title = "B_field_" + str(itNum)
@@ -358,7 +358,7 @@ def plotDataForSingleTimeStep2D(gridpoints, particles, itNum, nx, ny, path, E_or
     plt.close(fig)
     
     
-def plotDataForSingleTimeStep3D(gridpoints, particles, itNum, nx, ny, nz, path, E_or_B):
+def plotDataForSingleTimeStep3D(gridpoints, particles, itNum, nx, ny, nz, dx, dy, dz, path, E_or_B):
     itNum = '{0:05d}'.format(itNum)
     if E_or_B == 'B':
         title = "B_field_" + str(itNum)
@@ -380,9 +380,9 @@ def plotDataForSingleTimeStep3D(gridpoints, particles, itNum, nx, ny, nz, path, 
     ax1.set_xlabel('X', fontsize=16)
     ax1.set_ylabel('Y', fontsize=16)
     ax1.set_zlabel('Z', fontsize=16)
-    ax1.set_xlim(0, nx)
-    ax1.set_ylim(0, ny)
-    ax1.set_zlim(0, nz)
+    ax1.set_xlim(0, nx*dx)
+    ax1.set_ylim(0, ny*dy)
+    ax1.set_zlim(0, nz*dz)
     
     if E_or_B == 'B':
         cb1 = ax1.scatter(gridpoints_Xs, gridpoints_Ys, gridpoints_Zs, s=40, c=gridpoints_Bs, marker=u'o', cmap='binary', linewidths=0, alpha=.1, label='B Field')

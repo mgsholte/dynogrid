@@ -109,7 +109,7 @@ void output_data3D(int itNum, int numFiles, grid_point ***grid_points, List part
 
 		fprintf(params_file, "PARAMS\n");
 		fprintf(params_file, "nx=%d,ny=%d,nz=%d\n", nx, ny, nz);
-		fprintf(params_file, "dx=%lg,dy=%lg,dz%lg\n", dx, dy, dz);
+		fprintf(params_file, "dx=%lg,dy=%lg,dz=%lg\n", dx, dy, dz);
 		fprintf(params_file, "numFiles=%d\n", numFiles);
 		fclose(params_file);
 	}
@@ -183,7 +183,7 @@ void output_data3D(int itNum, int numFiles, grid_point ***grid_points, List part
         particle_ct++;
 		//HACK: fix me later
         //fprintf(grid_file, "ptcl:%d,%lf,%lf,%lf,%lf\n", particle_ct, (ptc->pos).x, (ptc->pos).y, (ptc->pos).z, p);
-        fprintf(particles_file, "ptcl:%d,%lg,%lg,%lg,%lg\n", particle_ct, (ptc->pos).x, (ptc->pos).y, 50.0, p);
+        fprintf(particles_file, "ptcl:%d,%lg,%lg,%lg,%lg\n", particle_ct, (ptc->pos).x, (ptc->pos).y, (ptc->pos).z, p);
     }//end while
     fclose(particles_file);
 }//end output_data3D function
