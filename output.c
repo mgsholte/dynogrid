@@ -175,6 +175,7 @@ void output_data3D(int itNum, int numFiles, grid_point ***grid_points, List part
     list_reset_iter(&particles);
     while(list_has_next(particles)) {
         particle *ptc = list_get_next(&particles);
+        // printf("Anything here");
         //calculate the L2 norm of the p vector:
         double p = pow(pow((ptc->p).x, 2.0) + pow((ptc->p).y, 2.0) + pow((ptc->p).z, 2.0), 0.5);
         /*write one line to file per particle in this format:
