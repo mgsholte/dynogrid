@@ -32,16 +32,16 @@ grid_point*** init_grid() {
 List init_particles(vec3 origin, vec3 dims, int part_per_cell) {
 	List particles = list_init();
 	int row, col, dep, k;
-	int x_i_min = round_i(origin.x/dx), x_i_max = round_i(dims.x/dx);
-	int y_i_min = round_i(origin.y/dy), y_i_max = round_i(dims.y/dy);
-	int z_i_min = round_i(origin.z/dz), z_i_max = round_i(dims.z/dz);
+	int x_i_min = round_i(origin.x/dx), x_i_max = round_i(dims.x/dx) + x_i_min;
+	int y_i_min = round_i(origin.y/dy), y_i_max = round_i(dims.y/dy) + y_i_min;
+	int z_i_min = round_i(origin.z/dz), z_i_max = round_i(dims.z/dz) + z_i_min;
 	double x,y,z; // the coords of the next particle to add
 	particle *p; // pointer to the next particle to add
-	for (dep = z_i_min; dep < z_i_max; ++dep) {
+	for (col = x_i_min; col < x_i_max; ++col) {
 		for (row = y_i_min; row < y_i_max; ++row) {
-			for (col = x_i_min; col < x_i_max; ++col) {
+			for (dep = z_i_min; dep < z_i_max; ++dep) {
 				// add particles in this cell
-				for (k = 0; k < part_per_cell/2; k++) {
+				for (k = 0; k < part_per_cell/2; ++k) {
 					// add a proton
 					p = (particle*) malloc(sizeof(particle));
 
@@ -49,11 +49,11 @@ List init_particles(vec3 origin, vec3 dims, int part_per_cell) {
 					y = rand_float(0, dy) + row*dy;
 					z = rand_float(0, dz) + dep*dz;
 					*p = (particle) { 
-						{x, y, z},		//position
-						{0, 0, 0},	//momentum
-						BASE_PROTON_MASS * PROTON_WEIGHT,		//mass
-						BASE_PROTON_CHARGE * PROTON_WEIGHT,	//charge
-						PROTON_WEIGHT		//weight
+						{x, y, z},  //position
+						{0, 0, 0},  //momentum
+						BASE_PROTON_MASS * PROTON_WEIGHT,   //mass
+						BASE_PROTON_CHARGE * PROTON_WEIGHT, //charge
+						PROTON_WEIGHT  //weight
 						};
 
 					list_add(&particles, p);
@@ -65,11 +65,11 @@ List init_particles(vec3 origin, vec3 dims, int part_per_cell) {
 					y = rand_float(0, dy) + row*dy;
 					z = rand_float(0, dz) + dep*dz;
 					*p = (particle) { 
-						{x, y, z},		//position
-						{0, 0, 0},	//momentum
-						BASE_ELECTRON_MASS * ELECTRON_WEIGHT,		//mass
-						BASE_ELECTRON_CHARGE * ELECTRON_WEIGHT,	//charge
-						ELECTRON_WEIGHT		//weight
+						{x, y, z},  //position
+						{0, 0, 0},  //momentum
+						BASE_ELECTRON_MASS * ELECTRON_WEIGHT,   //mass
+						BASE_ELECTRON_CHARGE * ELECTRON_WEIGHT, //charge
+						ELECTRON_WEIGHT  //weight
 						};
 
 					list_add(&particles, p);

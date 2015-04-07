@@ -14,8 +14,8 @@ int main(int argc, char *argv[]) {
 	int part_per_cell = 10;
 	int output_freq = nSteps/10;
 	//vec2 ul = {45, 45}, lr = {55, 55};  // upper left, lower right coordinates defining the rectangle where particles begin in the simulation
-	vec3 ulf = {.4*x_max, .4*y_max, .4*z_max};
-	vec3 dims = {.2*x_max, .2*y_max, .2*z_max};
+	vec3 ulf = {.46*x_max, .46*y_max, .46*z_max};
+	vec3 dims = {.08*x_max, .08*y_max, .08*z_max};
 
 	printf("initializing grid and particles\n");
 
@@ -26,8 +26,12 @@ int main(int argc, char *argv[]) {
 
 	for(i = 0; i < nSteps; ++i) {
 		time = i*dt;
+		printf("entering push_particles\n");
 		push_particles(grid_points, particles);
+		printf("exited push_particles\n");
+		printf("entering update_grid\n");
 		update_grid(grid_points);  // add the laser, ...
+		printf("exited update_grid\n");
 		if (i % output_freq == 0) {
 			output_grid((i/output_freq), (nSteps/output_freq), grid_points, particles);
 		}

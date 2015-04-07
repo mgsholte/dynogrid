@@ -17,7 +17,7 @@ typedef struct {
 
 // Define the particle structure
 typedef struct {
-	vec3 p, pos;  // momentum, position
+	vec3 pos, p;  // position, momentum
     double mass, charge, weight;  // weight is the number of actual particles this instance represents
 	//particle *next;  // treat the particles as a list. this points to the next particle in the list
 } particle;
@@ -47,9 +47,10 @@ double time; // changes every iteration
 // Use the smallest of dx, dy, or dz!!!
 #define dt (dz/c)
 
-inline int round_i(double x) {
-	return (int) (x+0.5);
-}
+#define round_i(x) ((int) (x+0.5))
+//inline int round_i(double x) {
+//	return (int) (x+0.5);
+//}
 
 #define PROTON_WEIGHT (5.0)
 #define ELECTRON_WEIGHT (1.0)
