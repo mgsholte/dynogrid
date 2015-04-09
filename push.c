@@ -43,6 +43,7 @@ void push_particles(grid_point ***grid, List part_list) {
 	if (!list_has_next(part_list))
 			return;
     particle *curr = list_get_next(&part_list);
+	node *prev = part_list.sentenel;
     double ux, uy, uz;
     double root;
     int xl, yu, zn;
@@ -82,6 +83,22 @@ void push_particles(grid_point ***grid, List part_list) {
 		(curr->pos).x += ux * root;
 		(curr->pos).y += uy * root;
 		(curr->pos).z += uz * root;
+
+		// Check if out of bounds
+		if (((curr->pos).x <= 0 || (curr->pos).y <= 0) || (curr->pos).z <= 0){
+			if (((curr->pos).x >= x_max || (curr->pos).y >= y_max) || (curr->pos).z >= z_max){
+				part_list_pop(prev, part_list.iter);
+				//move on to the next one
+				if (list_has_next(part_list)){
+					curr = list_get_next(&part_list);
+					continue;
+				}
+				else{
+					list_reset_iter(&part_list);
+					return;
+				}
+			}
+		}
 
 		//Do interpolation to find e and b here.
         // x-left and y-up indices
@@ -127,6 +144,22 @@ void push_particles(grid_point ***grid, List part_list) {
         (curr->pos).y += uy*root;
 		(curr->pos).z += uz*root;
 
+		// Check if out of bounds
+		if (((curr->pos).x <= 0 || (curr->pos).y <= 0) || (curr->pos).z <= 0){
+			if (((curr->pos).x >= x_max || (curr->pos).y >= y_max) || (curr->pos).z >= z_max){
+				part_list_pop(prev, part_list.iter);
+				//move on to the next one
+				if (list_has_next(part_list)){
+					curr = list_get_next(&part_list);
+					continue;
+				}
+				else{
+					list_reset_iter(&part_list);
+					return;
+				}
+			}
+		}
+
         // Store
         (curr->p).x = ux*part_mc;
         (curr->p).y = uy*part_mc;
@@ -136,8 +169,10 @@ void push_particles(grid_point ***grid, List part_list) {
         //This is where the current and charge density would be calculatted.
 
 		//move on to the next one
-		if (list_has_next(part_list))
+		if (list_has_next(part_list)){
+			prev = part_list.iter;
 			curr = list_get_next(&part_list);
+		}
 		else{
 			list_reset_iter(&part_list);
 			return;
