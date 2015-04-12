@@ -197,7 +197,8 @@ def getParticleData2D(numFiles, timesteps, ext):
     return timesteps, p_min, p_max
 
 
-def getGridData3D(numFiles, ext):   
+def getGridData3D(numFiles, ext, nx, ny, nz):
+    numLines = nx*ny*nz
     timesteps = list()
     # suck in all the gridpoint files and parse the text for the relevant data:
     E_min = 0.0
@@ -207,18 +208,24 @@ def getGridData3D(numFiles, ext):
     fname_grid = "_grid." + str(ext)
     for i in xrange(0, numFiles):
         fname = str(i) + str(fname_grid)
+        
         gridpoints = dict()
-        Xs = list()
-        Ys = list()
-        Zs = list()
-        Es = list()
-        Bs = list()
+        # Xs = list()
+        # Ys = list()
+        # Zs = list()
+        # Bs = list()
+        # Es = list()
+        Xs = np.zeros((numLines, 1), dtype=np.float64)
+        Ys = np.zeros((numLines, 1), dtype=np.float64)
+        Zs = np.zeros((numLines, 1), dtype=np.float64)
+        Bs = np.zeros((numLines, 1), dtype=np.float64)
+        Es = np.zeros((numLines, 1), dtype=np.float64)
         with open(fname, 'r') as grid_file:
-            grid_file_lines = grid_file.readlines() # grid_file_lines is a list of the lines in grid_file
-            line_ct = 0
-            for line in grid_file_lines:
+            # grid_file_lines = grid_file.readlines() # grid_file_lines is a list of the lines in grid_file
+            line_ct = -1
+            for line in grid_file:
                 line_ct += 1
-                if line_ct <= 5:
+                if line_ct < 5:
                     continue
                 # parse eachline to get needed data:
                 eachline = line.split(',') # eachline is a list of the results of the split
@@ -235,11 +242,12 @@ def getGridData3D(numFiles, ext):
                     B_min = B
                 if B > B_max:
                     B_max = B
-                Xs.append(xcoord)
-                Ys.append(ycoord)
-                Zs.append(zcoord)
-                Es.append(E)
-                Bs.append(B)
+                # Xs.append(xcoord)
+                # Ys.append(ycoord)
+                # Zs.append(zcoord)
+                # Es.append(E)
+                # Bs.append(B)
+                Xs[lin]
                 # store data in a dictionary:
         gridpoints = {'Xs':Xs, 'Ys':Ys, 'Zs':Zs, 'Es':Es, 'Bs':Bs}
         timesteps.append({'gridpoints':gridpoints,'particles':''})
