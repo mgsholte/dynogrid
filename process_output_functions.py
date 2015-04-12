@@ -234,6 +234,7 @@ def getGridData3D(numFiles, ext, nx, ny, nz):
                 zcoord = float(eachline[2])
                 E = float(eachline[3])
                 B = float(eachline[4])
+                print("E is: " + str(E) + "\tB is: " + str(B))
                 if E < E_min:
                     E_min = E
                 if E > E_max:
@@ -283,6 +284,7 @@ def getParticleData3D(numFiles, timesteps, ext, numParticles):
                 ycoord = float(eachline[2])
                 zcoord = float(eachline[3])
                 p = float(eachline[4])
+                print("p is: " + str(p))
                 if p < p_min:
                     p_min = p
                 if p > p_max:
@@ -306,14 +308,18 @@ def normalizeData(timesteps, E_min, E_max, B_min, B_max, p_min, p_max, nx, ny, n
             # normalize E and B in each gridpoint dictionary:
             if E_min == E_max:
                 (((timesteps[t])['gridpoints'])['Es'])[grdpt] = 0.5
+                print("NOT GOOD! E_min == E_max")
             else:
                 E_temp = (((timesteps[t])['gridpoints'])['Es'])[grdpt]
                 (((timesteps[t])['gridpoints'])['Es'])[grdpt] = ((E_temp-E_min)/(E_max-E_min))
+                print("E_normed is: " + str((((timesteps[t])['gridpoints'])['Es'])[grdpt]))
             if B_min == B_max:
                 (((timesteps[t])['gridpoints'])['Bs'])[grdpt] = 0.5
+                print("NOT GOOD! B_min == B_max")
             else:
                 B_temp = (((timesteps[t])['gridpoints'])['Bs'])[grdpt]
                 (((timesteps[t])['gridpoints'])['Bs'])[grdpt] = ((B_temp-B_min)/(B_max-B_min))
+                print("B_normed is: " + str((((timesteps[t])['gridpoints'])['Bs'])[grdpt]))
         # normalize particle data:        
         # for ptcl in xrange(0, len(((timesteps[t])['particles'])['ps'])):
         for ptcl in xrange(0, numParticles):
