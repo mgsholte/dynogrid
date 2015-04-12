@@ -43,7 +43,7 @@ void push_particles(grid_point ***grid, List part_list) {
 	if (!list_has_next(part_list))
 			return;
     particle *curr = list_get_next(&part_list);
-	node *prev = part_list.sentinel;
+	Node *prev = part_list.sentinel;
     double ux, uy, uz;
     double root;
     int xl, yu, zn;
