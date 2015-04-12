@@ -397,7 +397,7 @@ def plotDataForSingleTimeStep3D(gridpoints, particles, itNum, nx, ny, nz, dx, dy
    
     legend = ax1.legend(loc='upper right', shadow=True)
     plt.colorbar(cb1)
-    plt.colorbar(cb2)
+    # plt.colorbar(cb2)
 #     plt.show()
     if os.access(path, os.F_OK):
         os.chdir(path)
