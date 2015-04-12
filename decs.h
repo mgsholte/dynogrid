@@ -36,9 +36,9 @@ double time; // changes every iteration
 #define y_max (1e-4)
 #define z_max (1e-4)
 
-#define nx (100)
-#define ny (100)
-#define nz (100)
+#define nx (20)
+#define ny (20)
+#define nz (20)
 
 #define dx (x_max/nx)
 #define dy (y_max/ny)
