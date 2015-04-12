@@ -58,5 +58,17 @@ double time; // changes every iteration
 #define BASE_ELECTRON_MASS (9.109e-31)
 #define BASE_PROTON_CHARGE (1.602e-19)
 #define BASE_ELECTRON_CHARGE (-1.0*BASE_PROTON_CHARGE)
+
+//laser pulse parameters
+#define sigma (5)
+#define lambda (10e-6) // 10 micron wavelength
+#define pi (3.14159265358979)
+#define wavenum (2*pi/lambda) // k, wavenumber
+#define freq (wavenum*c)
+#define E0 (8.68e13) // SI units, used Intensity=10^21 W/(cm)^2
+#define B0 (2.895e5) // used B0=E0/c
+#define y_mid (ny/2)
+#define z_mid (nz/2)
+
         
 #endif //DECS_H

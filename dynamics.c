@@ -1,4 +1,5 @@
 #include "dynamics.h"
+#include <math.h>
 
 // Currently the laser pulse is step-function-like in both x and y directions with a wavelength
 //  of 4*dx and E,B at magnitudes of 10 (in SI, I don't know if this is valid).
@@ -43,3 +44,36 @@ void update_grid(grid_point ***grid_points) {
 		}
 	}
 }
+
+// New implementation:
+// - iterate over all x? this automatically cleans up
+// - will I have explicit limits to y and z in update_grid? or will it be laser()'s
+// responsibility? laser could start with "if y or z outside (range) return;". this
+// would make laser fully self-contained. there seems no reason to put any laser pulse
+// info outside of laser, it would just be messier.
+
+void update_grid(grid_point ***grid_points) {
+	int x,y,z;
+	for (x = 0; x < nx; x++) {
+		for (y = 0; y < ny; y++) {
+			for (z = 0; z < nz; z++) {
+				laser(grid_points[x][y][z], x*dx, y*dy, z*dz, time);
+			}
+		}
+	}
+}
+
+// changes E and B at the given point and time
+void laser(grid_point grid_p, double x, double y, double z, double t) {
+	double B = B0*cos(freq*t - wavenum*x);
+	double E = E0*cos(freq*t - wavenum*x);
+	// N is the gaussian distribution factor for 3D
+	double pulse_mid = c*t;
+	double N = exp(-(pow(x-pulse_mid,2)+pow(y-y_mid,2)+pow(z-z_mid,2))/(2*pow(sigma,2)))/\
+				pow(sqrt(2*pi)*sigma,3); // note "\" = continued on next line
+	
+	grid_p.E = (vec3) { 0, N*E, 0 };
+	grid_p.B = (vec3) { 0, 0, N*B };
+}
+
+
