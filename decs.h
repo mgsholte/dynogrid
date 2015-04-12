@@ -36,6 +36,7 @@ double time; // changes every iteration
 #define y_max (1e-4)
 #define z_max (1e-4)
 
+// number of grid cells in each direction
 #define nx (20)
 #define ny (20)
 #define nz (20)
