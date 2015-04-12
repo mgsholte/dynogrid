@@ -215,11 +215,11 @@ def getGridData3D(numFiles, ext, nx, ny, nz):
         # Zs = list()
         # Bs = list()
         # Es = list()
-        Xs = np.zeros((numLines, 1), dtype=np.float64)
-        Ys = np.zeros((numLines, 1), dtype=np.float64)
-        Zs = np.zeros((numLines, 1), dtype=np.float64)
-        Bs = np.zeros((numLines, 1), dtype=np.float64)
-        Es = np.zeros((numLines, 1), dtype=np.float64)
+        Xs = np.empty(numLines, dtype=np.float64)
+        Ys = np.empty(numLines, dtype=np.float64)
+        Zs = np.empty(numLines, dtype=np.float64)
+        Bs = np.empty(numLines, dtype=np.float64)
+        Es = np.empty(numLines, dtype=np.float64)
         with open(fname, 'r') as grid_file:
             # grid_file_lines = grid_file.readlines() # grid_file_lines is a list of the lines in grid_file
             line_ct = -1
@@ -247,13 +247,17 @@ def getGridData3D(numFiles, ext, nx, ny, nz):
                 # Zs.append(zcoord)
                 # Es.append(E)
                 # Bs.append(B)
-                Xs[lin]
+                Xs[line_ct - 5] = xcoord
+                Ys[line_ct - 5] = ycoord
+                Zs[line_ct - 5] = zcoord
+                Es[line_ct - 5] = E
+                Bs[line_ct - 5] = B
                 # store data in a dictionary:
         gridpoints = {'Xs':Xs, 'Ys':Ys, 'Zs':Zs, 'Es':Es, 'Bs':Bs}
         timesteps.append({'gridpoints':gridpoints,'particles':''})
     return timesteps, E_min, E_max, B_min, B_max
         
-def getParticleData3D(numFiles, timesteps, ext):
+def getParticleData3D(numFiles, timesteps, ext, numParticles):
     p_min = 0.0
     p_max = 0.0        
     # suck in all the particles files and parse the text for the relevant data:            
@@ -261,17 +265,17 @@ def getParticleData3D(numFiles, timesteps, ext):
     for i in xrange(0, numFiles):
         fname = str(i) + str(fname_particles)
         particles = dict()
-        Xs = list()
-        Ys = list()
-        Zs = list()
-        ps = list()
+        Xs = np.empty(numParticles, dtype=np.float64)
+        Ys = np.empty(numParticles, dtype=np.float64)
+        Zs = np.empty(numParticles, dtype=np.float64)
+        ps = np.empty(numParticles, dtype=np.float64)
         with open(fname, 'r') as particle_file:
             particles = list()
             particle_file_lines = particle_file.readlines() # grid_file_lines is a list of the lines in grid_file
-            line_ct = 0
+            line_ct = -1
             for line in particle_file_lines:
                 line_ct += 1
-                if line_ct <= 5:
+                if line_ct < 5:
                     continue
                 # parse eachline to get needed data:
                 eachline = line.split(',') # eachline is a list of the results of the split
@@ -284,20 +288,21 @@ def getParticleData3D(numFiles, timesteps, ext):
                 if p > p_max:
                     p_max = p
                 # store data in a dictionary:
-                Xs.append(xcoord)
-                Ys.append(ycoord)
-                Zs.append(zcoord)
-                ps.append(p)
+                Xs[line_ct-5] = xcoord
+                Xs[line_ct-5] = ycoord
+                Xs[line_ct-5] = zccord
+                ps[line_ct-5] = p
         particles = {'Xs':Xs, 'Ys':Ys, 'Zs':Zs, 'ps':ps}
         (timesteps[i])['particles'] = particles
     return timesteps, p_min, p_max
         
         
-def normalizeData(timesteps, E_min, E_max, B_min, B_max, p_min, p_max):
+def normalizeData(timesteps, E_min, E_max, B_min, B_max, p_min, p_max, nx, ny, nz, numParticles):
     # (x-min)/(max-min)
     for t in xrange(0, len(timesteps)):
         # normalize gridpoint data:
-        for grdpt in xrange(0, len(((timesteps[t])['gridpoints'])['Es'])):
+        # for grdpt in xrange(0, len(((timesteps[t])['gridpoints'])['Es'])):
+        for grdpt in xrange(0, (nx*ny*nz)):
             # normalize E and B in each gridpoint dictionary:
             if E_min == E_max:
                 (((timesteps[t])['gridpoints'])['Es'])[grdpt] = 0.5
@@ -310,7 +315,8 @@ def normalizeData(timesteps, E_min, E_max, B_min, B_max, p_min, p_max):
                 B_temp = (((timesteps[t])['gridpoints'])['Bs'])[grdpt]
                 (((timesteps[t])['gridpoints'])['Bs'])[grdpt] = ((B_temp-B_min)/(B_max-B_min))
         # normalize particle data:        
-        for ptcl in xrange(0, len(((timesteps[t])['particles'])['ps'])):
+        # for ptcl in xrange(0, len(((timesteps[t])['particles'])['ps'])):
+        for ptcl in xrange(0, numParticles):
             # normalize p in each particle dictionary:
             if p_min == p_max:
                 (((timesteps[t])['particles'])['ps'])[ptcl] = 0.5
@@ -375,11 +381,16 @@ def plotDataForSingleTimeStep3D(gridpoints, particles, itNum, nx, ny, nz, dx, dy
 
     fig = plt.figure(figsize=(12,7))
     ax1 = fig.add_subplot(111, projection='3d')
-    gridpoints_Xs = np.array(gridpoints['Xs'])
-    gridpoints_Ys = np.array(gridpoints['Ys'])
-    gridpoints_Zs = np.array(gridpoints['Zs'])
-    gridpoints_Es = np.array(gridpoints['Es'])
-    gridpoints_Bs = np.array(gridpoints['Bs'])
+    # gridpoints_Xs = np.array(gridpoints['Xs'])
+    # gridpoints_Ys = np.array(gridpoints['Ys'])
+    # gridpoints_Zs = np.array(gridpoints['Zs'])
+    # gridpoints_Es = np.array(gridpoints['Es'])
+    # gridpoints_Bs = np.array(gridpoints['Bs'])
+    gridpoints_Xs = gridpoints['Xs']
+    gridpoints_Ys = gridpoints['Ys']
+    gridpoints_Zs = gridpoints['Zs']
+    gridpoints_Es = gridpoints['Es']
+    gridpoints_Bs = gridpoints['Bs']
 
     fig.suptitle(title, fontsize='20')
     SM = cm.ScalarMappable()
@@ -397,10 +408,10 @@ def plotDataForSingleTimeStep3D(gridpoints, particles, itNum, nx, ny, nz, dx, dy
     elif E_or_B == 'E':
         cb1 = ax1.scatter(gridpoints_Xs, gridpoints_Ys, gridpoints_Zs, s=40, c=gridpoints_Es, marker=u'o', cmap='binary', linewidths=0, alpha=.1, label='E Field')
 
-    particles_Xs = np.array(particles['Xs'])
-    particles_Ys = np.array(particles['Ys'])
-    particles_Zs = np.array(particles['Zs'])
-    particles_ps = np.array(particles['ps'])
+    particles_Xs = particles['Xs']
+    particles_Ys = particles['Ys']
+    particles_Zs = particles['Zs']
+    particles_ps = particles['ps']
     cb2 = ax1.scatter(particles_Xs, particles_Ys, particles_Zs, c=particles_ps, marker=u'o', cmap='coolwarm', linewidths=.3, label='Particles, mapped by momentum')
    
     legend = ax1.legend(loc='upper right', shadow=True)

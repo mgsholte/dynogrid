@@ -31,6 +31,8 @@ if(dim == 2):
     dy = float((((line.split(","))[1]).split("="))[1])
     line = params_file_lines[3]
     numFiles = int((line.split("="))[1])
+    line = params_file_lines[4]
+    numParticles = int((line.split("="))[1])
 if(dim == 3):
     params_file_lines = params_file.readlines() # params_file_lines is a list of the lines in params_file
     line = params_file_lines[1]
@@ -43,6 +45,8 @@ if(dim == 3):
     dz = float((((line.split(","))[2]).split("="))[1])
     line = params_file_lines[3]
     numFiles = int((line.split("="))[1])
+    line = params_file_lines[4]
+    numParticles = int((line.split("="))[1])
 params_file.close()
 
 # # gather inputs for creating "fake" files:
@@ -85,16 +89,16 @@ if(fakes == 'y'):
 if(dim == 2):
     timesteps, E_min, E_max, B_min, B_max = fn.getGridData2D(numFiles, ext)
 elif(dim == 3):
-    timesteps, E_min, E_max, B_min, B_max = fn.getGridData3D(numFiles, ext)
+    timesteps, E_min, E_max, B_min, B_max = fn.getGridData3D(numFiles, ext, nx, ny, nz)
     
 # suck in all the particles files and parse the text for the relevant data:
 if(dim == 2):
     timesteps, p_min, p_max, = fn.getParticleData2D(numFiles, timesteps, ext)
 elif (dim == 3):
-    timesteps, p_min, p_max, = fn.getParticleData3D(numFiles, timesteps, ext)
+    timesteps, p_min, p_max, = fn.getParticleData3D(numFiles, timesteps, ext, numParticles)
     
 # normalize data:
-timesteps = fn.normalizeData(timesteps, E_min, E_max, B_min, B_max, p_min, p_max)
+timesteps = fn.normalizeData(timesteps, E_min, E_max, B_min, B_max, p_min, p_max, nx, ny, nz, numParticles)
     
 # plot data:    
 if(dim == 2):

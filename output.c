@@ -95,6 +95,7 @@ void output_data2D(int itNum, int numFiles, grid_point ***grid_points, List part
 
 void output_data3D(int itNum, int numFiles, grid_point ***grid_points, List particles) {
 	char *f_extension = "data";
+    int numParticles = list_length(particles);
     // create a file to output the grid data to:
 	if (itNum == 0) {
 		char params[256];
@@ -111,6 +112,7 @@ void output_data3D(int itNum, int numFiles, grid_point ***grid_points, List part
 		fprintf(params_file, "nx=%d,ny=%d,nz=%d\n", nx, ny, nz);
 		fprintf(params_file, "dx=%lg,dy=%lg,dz=%lg\n", dx, dy, dz);
 		fprintf(params_file, "numFiles=%d\n", numFiles);
+        fprintf(params_file, "numParticles=%d\n", numParticles);
 		fclose(params_file);
 	}
 
