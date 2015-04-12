@@ -115,14 +115,14 @@ void push_particles(grid_point ***grid, List part_list) {
         uzm = uz + cmratio * E.z;
 
         // Do the Borris rotation and update momenta to u_+, from Birdsall and Langdon
-        root = cmratio = sqrt(uxm*uxm + uym*uym + uzm*uzm + 1.0);
+        root = cmratio / sqrt(uxm*uxm + uym*uym + uzm*uzm + 1.0);
 
         taux = B.x*root;
-        taux2 *= taux;
+        taux2 = taux*taux;
         tauy = B.y*root;
-        tauy2 *= tauy;
+        tauy2 = tauy*tauy;
         tauz = B.z*root;
-        tauz2 *= tauz;
+        tauz2 = tauz*tauz;
 
         tau = 1. / (1. + taux2 + tauy2 + tauz2);
 
