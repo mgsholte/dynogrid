@@ -15,6 +15,14 @@ void list_add(List *list, particle *payload) {
 	(list->sentinel)->next = new_node;
 }
 
+// remove the node that comes after prev
+void list_pop(List *list, Node *prev) {
+	Node *x = prev->next;
+	list->iter = x->next;
+	prev->next = x->next;
+	free(x);
+}
+
 void list_reset_iter(List *l) {
 	l->iter = l->sentinel->next;
 }
