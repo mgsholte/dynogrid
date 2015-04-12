@@ -87,7 +87,7 @@ void push_particles(grid_point ***grid, List part_list) {
 		// Check if out of bounds
 		if (((curr->pos).x <= 0 || (curr->pos).y <= 0) || (curr->pos).z <= 0){
 			if (((curr->pos).x >= x_max || (curr->pos).y >= y_max) || (curr->pos).z >= z_max){
-				list_pop(prev, &part_list);
+				list_pop(&part_list, prev);
 				//move on to the next one
 				if (list_has_next(part_list)){
 					curr = list_get_next(&part_list);
@@ -147,7 +147,7 @@ void push_particles(grid_point ***grid, List part_list) {
 		// Check if out of bounds
 		if (((curr->pos).x <= 0 || (curr->pos).y <= 0) || (curr->pos).z <= 0){
 			if (((curr->pos).x >= x_max || (curr->pos).y >= y_max) || (curr->pos).z >= z_max){
-				list_pop(prev, &part_list);
+				list_pop(&part_list, prev);
 				//move on to the next one
 				if (list_has_next(part_list)){
 					curr = list_get_next(&part_list);
