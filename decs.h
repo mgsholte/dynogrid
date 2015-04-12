@@ -67,8 +67,8 @@ double time; // changes every iteration
 #define freq (wavenum*c)
 #define E0 (8.68e13) // SI units, used Intensity=10^21 W/(cm)^2
 #define B0 (2.895e5) // used B0=E0/c
-#define y_mid (ny/2)
-#define z_mid (nz/2)
+#define y_mid (y_max/2)
+#define z_mid (z_max/2)
 
         
 #endif //DECS_H
