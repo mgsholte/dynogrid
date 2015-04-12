@@ -198,7 +198,7 @@ def getParticleData2D(numFiles, timesteps, ext):
 
 
 def getGridData3D(numFiles, ext, nx, ny, nz):
-    numLines = nx*ny*nz
+    numLines = int(nx*ny*nz)
     timesteps = list()
     # suck in all the gridpoint files and parse the text for the relevant data:
     E_min = 0.0
@@ -290,7 +290,7 @@ def getParticleData3D(numFiles, timesteps, ext, numParticles):
                 # store data in a dictionary:
                 Xs[line_ct-5] = xcoord
                 Xs[line_ct-5] = ycoord
-                Xs[line_ct-5] = zccord
+                Xs[line_ct-5] = zcoord
                 ps[line_ct-5] = p
         particles = {'Xs':Xs, 'Ys':Ys, 'Zs':Zs, 'ps':ps}
         (timesteps[i])['particles'] = particles
@@ -302,7 +302,7 @@ def normalizeData(timesteps, E_min, E_max, B_min, B_max, p_min, p_max, nx, ny, n
     for t in xrange(0, len(timesteps)):
         # normalize gridpoint data:
         # for grdpt in xrange(0, len(((timesteps[t])['gridpoints'])['Es'])):
-        for grdpt in xrange(0, (nx*ny*nz)):
+        for grdpt in xrange(0, int(nx*ny*nz)):
             # normalize E and B in each gridpoint dictionary:
             if E_min == E_max:
                 (((timesteps[t])['gridpoints'])['Es'])[grdpt] = 0.5
