@@ -234,7 +234,7 @@ def getGridData3D(numFiles, ext, nx, ny, nz):
                 zcoord = float(eachline[2])
                 E = float(eachline[3])
                 B = float(eachline[4])
-                print("E is: " + str(E) + "\tB is: " + str(B))
+                # print("E is: " + str(E) + "\tB is: " + str(B))
                 if E < E_min:
                     E_min = E
                 if E > E_max:
@@ -284,6 +284,7 @@ def getParticleData3D(numFiles, timesteps, ext, numParticles):
                 ycoord = float(eachline[2])
                 zcoord = float(eachline[3])
                 p = float(eachline[4])
+                print("p_xcoord is: " + str(xcoord) + "\tp_ycoord is: " + str(ycoord) + "\tp_zcoord is: " + str(zcoord))
                 print("p is: " + str(p))
                 if p < p_min:
                     p_min = p
@@ -291,8 +292,8 @@ def getParticleData3D(numFiles, timesteps, ext, numParticles):
                     p_max = p
                 # store data in a dictionary:
                 Xs[line_ct-5] = xcoord
-                Xs[line_ct-5] = ycoord
-                Xs[line_ct-5] = zcoord
+                Ys[line_ct-5] = ycoord
+                Zs[line_ct-5] = zcoord
                 ps[line_ct-5] = p
         particles = {'Xs':Xs, 'Ys':Ys, 'Zs':Zs, 'ps':ps}
         (timesteps[i])['particles'] = particles
@@ -308,28 +309,29 @@ def normalizeData(timesteps, E_min, E_max, B_min, B_max, p_min, p_max, nx, ny, n
             # normalize E and B in each gridpoint dictionary:
             if E_min == E_max:
                 (((timesteps[t])['gridpoints'])['Es'])[grdpt] = 0.5
-                print("NOT GOOD! E_min == E_max")
+                # print("NOT GOOD! E_min == E_max")
             else:
                 E_temp = (((timesteps[t])['gridpoints'])['Es'])[grdpt]
                 (((timesteps[t])['gridpoints'])['Es'])[grdpt] = ((E_temp-E_min)/(E_max-E_min))
-                print("E_normed is: " + str((((timesteps[t])['gridpoints'])['Es'])[grdpt]))
+                # print("E_normed is: " + str((((timesteps[t])['gridpoints'])['Es'])[grdpt]))
             if B_min == B_max:
                 (((timesteps[t])['gridpoints'])['Bs'])[grdpt] = 0.5
-                print("NOT GOOD! B_min == B_max")
+                # print("NOT GOOD! B_min == B_max")
             else:
                 B_temp = (((timesteps[t])['gridpoints'])['Bs'])[grdpt]
                 (((timesteps[t])['gridpoints'])['Bs'])[grdpt] = ((B_temp-B_min)/(B_max-B_min))
-                print("B_normed is: " + str((((timesteps[t])['gridpoints'])['Bs'])[grdpt]))
+                # print("B_normed is: " + str((((timesteps[t])['gridpoints'])['Bs'])[grdpt]))
         # normalize particle data:        
         # for ptcl in xrange(0, len(((timesteps[t])['particles'])['ps'])):
         for ptcl in xrange(0, numParticles):
             # normalize p in each particle dictionary:
             if p_min == p_max:
                 (((timesteps[t])['particles'])['ps'])[ptcl] = 0.5
+                print("p_normed is: " + str((((timesteps[t])['particles'])['ps'])[ptcl]))
             else:
                 p_temp = (((timesteps[t])['particles'])['ps'])[ptcl]
                 (((timesteps[t])['particles'])['ps'])[ptcl] = ((p_temp-p_min)/(p_max-p_min))
-    
+                print("p_normed is: " + str((((timesteps[t])['particles'])['ps'])[ptcl]))
     return timesteps
 
 
@@ -356,9 +358,9 @@ def plotDataForSingleTimeStep2D(gridpoints, particles, itNum, nx, ny, dx, dy, pa
     plt.xlim(0, nx)
     plt.ylim(0, ny)
     if E_or_B == 'B':
-        cb1 = ax1.scatter(gridpoints_Xs, gridpoints_Ys, s=40, c=gridpoints_Bs, marker=u'o', cmap='binary', linewidths=0, alpha=.3, label='B Field')
+        cb1 = ax1.scatter(gridpoints_Xs, gridpoints_Ys, c=gridpoints_Bs, marker=u'o', cmap='binary', linewidths=0, alpha=.1, label='B Field')
     elif E_or_B == 'E':
-        cb1 = ax1.scatter(gridpoints_Xs, gridpoints_Ys, s=40, c=gridpoints_Es, marker=u'o', cmap='binary', linewidths=0, alpha=.3, label='E Field')
+        cb1 = ax1.scatter(gridpoints_Xs, gridpoints_Ys, c=gridpoints_Es, marker=u'o', cmap='binary', linewidths=0, alpha=.3, label='E Field')
 
     particles_Xs = np.array(particles['Xs'])
     particles_Ys = np.array(particles['Ys'])
@@ -393,8 +395,8 @@ def plotDataForSingleTimeStep3D(gridpoints, particles, itNum, nx, ny, nz, dx, dy
     # gridpoints_Es = np.array(gridpoints['Es'])
     # gridpoints_Bs = np.array(gridpoints['Bs'])
     gridpoints_Xs = gridpoints['Xs']
-    gridpoints_Ys = gridpoints['Ys']
-    gridpoints_Zs = gridpoints['Zs']
+    gridpoints_Ys = gridpoints['Ys'] # HACK (not anymore)
+    gridpoints_Zs = gridpoints['Zs'] # HACK (not anymore)
     gridpoints_Es = gridpoints['Es']
     gridpoints_Bs = gridpoints['Bs']
 
@@ -412,13 +414,17 @@ def plotDataForSingleTimeStep3D(gridpoints, particles, itNum, nx, ny, nz, dx, dy
     if E_or_B == 'B':
         cb1 = ax1.scatter(gridpoints_Xs, gridpoints_Ys, gridpoints_Zs, c=gridpoints_Bs, marker=u'.', cmap='binary', linewidths=0, alpha=.1, label='B Field')
     elif E_or_B == 'E':
-        cb1 = ax1.scatter(gridpoints_Xs, gridpoints_Ys, gridpoints_Zs, c=gridpoints_Es, marker=u',', cmap='binary', linewidths=0, alpha=.1, label='E Field')
+        cb1 = ax1.scatter(gridpoints_Xs, gridpoints_Ys, gridpoints_Zs, c=gridpoints_Es, marker=u'.', cmap='binary', linewidths=0, alpha=.1, label='E Field')
 
-    particles_Xs = particles['Xs']
-    particles_Ys = particles['Ys']
-    particles_Zs = particles['Zs']
-    particles_ps = particles['ps']
-    cb2 = ax1.scatter(particles_Xs, particles_Ys, particles_Zs, c=particles_ps, marker=u'o', cmap='coolwarm', linewidths=.3, label='Particles, mapped by momentum')
+    # particles_Xs = particles['Xs']
+    # particles_Ys = particles['Ys']
+    # particles_Zs = particles['Zs']
+    # particles_ps = particles['ps']
+    for i in xrange(0, len(particles['Xs'])):
+        print("particles['Xs']["+str(i)+"] is: " + str(particles['Xs'][i]))
+        print("particles['Ys']["+str(i)+"] is: " + str(particles['Ys'][i]))
+        print("particles['Zs']["+str(i)+"] is: " + str(particles['Zs'][i]))
+    cb2 = ax1.scatter(particles['Xs'], particles['Ys'], particles['Zs'], c=particles['ps'], marker=u'o', cmap='coolwarm', linewidths=.3, label='Particles, mapped by momentum')
    
     legend = ax1.legend(loc='upper right', shadow=True)
     plt.colorbar(cb1)

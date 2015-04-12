@@ -32,6 +32,8 @@ typedef struct {
 
 double time; // changes every iteration
 
+#define t_end (3.3333e-13)
+
 #define x_max (1e-4)
 #define y_max (1e-4)
 #define z_max (1e-4)
