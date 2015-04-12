@@ -11,7 +11,7 @@ int main(int argc, char *argv[]) {
 	// read as inputs in the future
 	int nSteps = 1000;
 	//int nx = 100, ny = 100, nz = 100;
-	int part_per_cell = 10;
+	int part_per_cell = 5;
 	int output_freq = nSteps/10;
 	//vec2 ul = {45, 45}, lr = {55, 55};  // upper left, lower right coordinates defining the rectangle where particles begin in the simulation
 	vec3 ulf = {.46*x_max, .46*y_max, .46*z_max};
