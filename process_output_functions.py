@@ -364,7 +364,7 @@ def plotDataForSingleTimeStep3D(gridpoints, particles, itNum, nx, ny, nz, dx, dy
         title = "B_field_" + str(itNum)
     elif E_or_B == 'E':
         title = "E_field_" + str(itNum)    
-    
+
     fig = plt.figure(figsize=(12,7))
     ax1 = fig.add_subplot(111, projection='3d')
     gridpoints_Xs = np.array(gridpoints['Xs'])
@@ -398,13 +398,14 @@ def plotDataForSingleTimeStep3D(gridpoints, particles, itNum, nx, ny, nz, dx, dy
     legend = ax1.legend(loc='upper right', shadow=True)
     plt.colorbar(cb1)
     plt.colorbar(cb2)
-    plt.show()
+
+    #plt.show()
     if os.access(path, os.F_OK):
         os.chdir(path)
     else:
         os.mkdir(path)
         os.chdir(path)
-    # fig.savefig(title)
+    fig.savefig(title)
     plt.close()
 
     

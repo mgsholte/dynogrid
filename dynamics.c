@@ -59,14 +59,14 @@ void update_grid(grid_point ***grid_points) {
 	for (x = 0; x < nx; x++) {
 		for (y = 0; y < ny; y++) {
 			for (z = 0; z < nz; z++) {
-				laser(grid_points[x][y][z], x*dx, y*dy, z*dz, time);
+				laser(&grid_points[x][y][z], x*dx, y*dy, z*dz, time);
 			}
 		}
 	}
 }
 
 // changes E and B at the given point and time
-void laser(grid_point grid_p, double x, double y, double z, double t) {
+void laser(grid_point *grid_p, double x, double y, double z, double t) {
 	double B = B0*cos(freq*t - wavenum*x);
 	double E = E0*cos(freq*t - wavenum*x);
 	// N is the gaussian distribution factor for 3D
@@ -74,8 +74,8 @@ void laser(grid_point grid_p, double x, double y, double z, double t) {
 	double N = exp(-(pow(x-pulse_mid,2)+pow(y-y_mid,2)+pow(z-z_mid,2))/(2*pow(sigma,2)))/\
 				pow(sqrt(2*pi)*sigma,3); // note "\" = continued on next line
 	
-	grid_p.E = (vec3) { 0, N*E, 0 };
-	grid_p.B = (vec3) { 0, 0, N*B };
+	grid_p->E = (vec3) { 0, N*E, 0 };
+	grid_p->B = (vec3) { 0, 0, N*B };
 }
 
 

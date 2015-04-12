@@ -138,9 +138,9 @@ void output_data3D(int itNum, int numFiles, grid_point ***grid_points, List part
 		for(y = 0; y < ny; y++){
             for(z = 0; z < nz; z++){
                 //calculate the L2 norm of the E field vector:
-                double E = pow(pow((grid_points[x][y][z].E).x, 2.0) + pow((grid_points[x][y][z].E).y, 2.0) + pow((grid_points[x][y][z].E).z, 2.0), 0.5);
+                double E = sqrt(pow((grid_points[x][y][z].E).x, 2.0) + pow((grid_points[x][y][z].E).y, 2.0) + pow((grid_points[x][y][z].E).z, 2.0));
                 //calculate the L2 norm of the B field vector:
-                double B = pow(pow((grid_points[x][y][z].B).x, 2.0) + pow((grid_points[x][y][z].B).y, 2.0) + pow((grid_points[x][y][z].B).z, 2.0), 0.5);
+                double B = sqrt(pow((grid_points[x][y][z].B).x, 2.0) + pow((grid_points[x][y][z].B).y, 2.0) + pow((grid_points[x][y][z].B).z, 2.0));
                 
                 /*write one line to file per grid point in this format:
                 xcoord,ycoord,zcoord,E,B
@@ -177,7 +177,7 @@ void output_data3D(int itNum, int numFiles, grid_point ***grid_points, List part
         particle *ptc = list_get_next(&particles);
         // printf("Anything here");
         //calculate the L2 norm of the p vector:
-        double p = pow(pow((ptc->p).x, 2.0) + pow((ptc->p).y, 2.0) + pow((ptc->p).z, 2.0), 0.5);
+        double p = sqrt(pow((ptc->p).x, 2.0) + pow((ptc->p).y, 2.0) + pow((ptc->p).z, 2.0));
         /*write one line to file per particle in this format:
             ptcl:#,pos_x,pos_y,pos_z,p
         */
