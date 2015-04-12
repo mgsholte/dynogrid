@@ -36,7 +36,7 @@ double time; // changes every iteration
 #define y_max (1e-4)
 #define z_max (1e-4)
 
-#define nx (100)
+#define nx (100) // number of cells; nx+1 is number of grid points
 #define ny (100)
 #define nz (100)
 
