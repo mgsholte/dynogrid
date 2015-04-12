@@ -11,13 +11,13 @@ static inline double rand_float( double low, double high ) {
 
 // inits all grid points to 0 in E and B
 grid_point*** init_grid() {
-	grid_point ***grid_points = (grid_point***) malloc( nx * sizeof(grid_point**) ); // allocate an array of pointers to rows-depthwise
+	grid_point ***grid_points = (grid_point***) malloc( (nx+1) * sizeof(grid_point**) ); // allocate an array of pointers to rows-depthwise
 	int i, j, k;
-	for (i = 0; i < nx; ++i) {
-		grid_points[i] = (grid_point**) malloc( ny * sizeof(grid_point*) );  // allocate the row
-		for (j = 0; j < ny; ++j) {
-			grid_points[i][j] = (grid_point*) malloc( nz * sizeof(grid_point) );  // allocate the row
-			for (k = 0; k < nz; ++k) {
+	for (i = 0; i <= nx; ++i) {
+		grid_points[i] = (grid_point**) malloc( (ny+1) * sizeof(grid_point*) );  // allocate the row
+		for (j = 0; j <= ny; ++j) {
+			grid_points[i][j] = (grid_point*) malloc( (nz+1) * sizeof(grid_point) );  // allocate the row
+			for (k = 0; k <= nz; ++k) {
 				// all grid points are initialized with no field
 				grid_points[i][j][k].E = (vec3) {0,0,0};
 				grid_points[i][j][k].B = (vec3) {0,0,0};
