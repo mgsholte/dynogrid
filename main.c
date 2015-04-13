@@ -9,7 +9,7 @@ int main(int argc, char *argv[]) {
 	int i;  // loop index variable
 
 	// read as inputs in the future
-	int nSteps = ceil(dt/t_end);
+	int nSteps = ceil(t_end/dt);
 	//int nx = 100, ny = 100, nz = 100;
 	int part_per_cell = 5;
 	int output_freq = nSteps/10;
