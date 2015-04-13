@@ -401,8 +401,11 @@ def plotDataForSingleTimeStep3D(gridpoints, particles, itNum, nx, ny, nz, dx, dy
     gridpoints_Bs = gridpoints['Bs']
 
     fig.suptitle(title, fontsize='20')
-    SM = cm.ScalarMappable()
-    cMap = SM.get_cmap()
+    # SM = cm.ScalarMappable()
+    # cMap = SM.get_cmap()
+    myCmap = cm.get_cmap("binary")
+    myCmap.set_under('w', 0)
+
                         
     ax1.set_xlabel('X', fontsize=16)
     ax1.set_ylabel('Y', fontsize=16)
@@ -412,9 +415,9 @@ def plotDataForSingleTimeStep3D(gridpoints, particles, itNum, nx, ny, nz, dx, dy
     ax1.set_zlim(0, nz*dz)
     
     if E_or_B == 'B':
-        cb1 = ax1.scatter(gridpoints_Xs, gridpoints_Ys, gridpoints_Zs, c=gridpoints_Bs, marker=u'.', cmap='binary', linewidths=0, alpha=.1, label='B Field')
+        cb1 = ax1.scatter(gridpoints_Xs, gridpoints_Ys, gridpoints_Zs, c=gridpoints_Bs, marker=u'.', cmap=myCmap, linewidths=0, alpha=.1, label='B Field')
     elif E_or_B == 'E':
-        cb1 = ax1.scatter(gridpoints_Xs, gridpoints_Ys, gridpoints_Zs, c=gridpoints_Es, marker=u'.', cmap='binary', linewidths=0, alpha=.1, label='E Field')
+        cb1 = ax1.scatter(gridpoints_Xs, gridpoints_Ys, gridpoints_Zs, c=gridpoints_Es, marker=u'.', cmap=myCmap, linewidths=0, alpha=.1, label='E Field')
 
     # particles_Xs = particles['Xs']
     # particles_Ys = particles['Ys']
