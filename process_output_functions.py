@@ -369,7 +369,7 @@ def plotDataForSingleTimeStep2D(gridpoints, particles, itNum, nx, ny, dx, dy, pa
 
     legend = ax1.legend(loc='upper right', shadow=True)
     plt.colorbar(cb1)
-    plt.colorbar(cb2)
+    # plt.colorbar(cb2)
 #     plt.show()
     if os.access(path, os.F_OK):
         os.chdir(path)
@@ -415,9 +415,9 @@ def plotDataForSingleTimeStep3D(gridpoints, particles, itNum, nx, ny, nz, dx, dy
     ax1.set_zlim(0, nz*dz)
     
     if E_or_B == 'B':
-        cb1 = ax1.scatter(gridpoints_Xs, gridpoints_Ys, gridpoints_Zs, c=gridpoints_Bs, marker=u'.', cmap=myCmap, vmin=.2, linewidths=0, alpha=.1, label='B Field')
+        cb1 = ax1.scatter(gridpoints_Xs, gridpoints_Ys, gridpoints_Zs, c=gridpoints_Bs, marker=u'.', cmap=myCmap, vmin=.1, linewidths=0, alpha=.05, label='B Field')
     elif E_or_B == 'E':
-        cb1 = ax1.scatter(gridpoints_Xs, gridpoints_Ys, gridpoints_Zs, c=gridpoints_Es, marker=u'.', cmap=myCmap, vmin=.5, linewidths=0, alpha=.1, label='E Field')
+        cb1 = ax1.scatter(gridpoints_Xs, gridpoints_Ys, gridpoints_Zs, c=gridpoints_Es, marker=u'.', cmap=myCmap, vmin=.2, linewidths=0, alpha=.05, label='E Field')
 
     # particles_Xs = particles['Xs']
     # particles_Ys = particles['Ys']
@@ -431,7 +431,7 @@ def plotDataForSingleTimeStep3D(gridpoints, particles, itNum, nx, ny, nz, dx, dy
    
     legend = ax1.legend(loc='upper right', shadow=True)
     plt.colorbar(cb1)
-    plt.colorbar(cb2)
+    # plt.colorbar(cb2)
 
     #plt.show()
     if os.access(path, os.F_OK):
