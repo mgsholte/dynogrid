@@ -24,7 +24,8 @@ vec3 interp(vec3 field00, vec3 field01, vec3 field10, vec3 field11, double xlf, 
 // 3D Interpalation helper
 vec3 interp3(vec3 field000, vec3 field001, vec3 field010, vec3 field100, vec3 field011, vec3 field101, vec3 field110, vec3 field111, double xlf, double yuf, double znf){
 	vec3 interped;
-	double norm = 1./(dx*dy*dz);
+    // double norm = 1./(dx*dy*dz);
+    double norm = 1.;
 	double xrf = 1.-xlf;
 	double ydf = 1. - yuf;
 	double zff = 1. - znf;
