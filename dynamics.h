@@ -8,7 +8,7 @@
 #define lambda (5e-6) // 1 micron wavelength
 #define pi (3.14159265358979)
 #define wavenum (2*pi/lambda) // k, wavenumber
-#define freq (wavenum*c)
+#define freq (wavenum*C)
 #define E0 (8.68e13) // SI units, used Intensity=10^21 W/(cm)^2
 #define B0 (2.895e5) // used B0=E0/c
 #define y_mid (y_max/2.0)

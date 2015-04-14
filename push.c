@@ -59,7 +59,7 @@ void push_particles(grid_point ***grid, List part_list) {
 	double idz = 1./dz;
     double idt = 1./dt;
     double dto2 = dt/2.;
-    double dtco2 = c * dto2;
+    double dtco2 = C * dto2;
     double dtfac = .5*dt ;//times some weighting factor, that I think is 1 anyways
     double third = 1./3.;
     double idty = idt*idy;
@@ -70,7 +70,7 @@ void push_particles(grid_point ***grid, List part_list) {
     //loop over all the particles
     while (true){
 		double cmratio = curr->charge/curr->mass;
-        part_mc = c*curr->mass;
+        part_mc = C*curr->mass;
         ipart_mc = 1./part_mc;
 
         // u is gamma*v, see Birdsall and Langdon sectoin 15-4

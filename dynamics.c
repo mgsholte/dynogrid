@@ -70,7 +70,7 @@ void laser(grid_point *grid_p, double x, double y, double z, double t) {
 	double B = B0*cos(freq*t - wavenum*x);
 	double E = E0*cos(freq*t - wavenum*x);
 	// N is the gaussian distribution factor for 3D
-	double pulse_mid = c*t;
+	double pulse_mid = C*t;
 	double N = exp(-(pow(x-pulse_mid,2)+pow(y-y_mid,2)+pow(z-z_mid,2))/(2*pow(sigma,2)));
 	
 	grid_p->E = (vec3) { 0, N*E, 0 };
