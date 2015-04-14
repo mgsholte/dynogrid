@@ -8,7 +8,7 @@
 
 
 void output_data2D(int itNum, grid_point ***grid_points, List particles) {
-	fprintf("ERROR: output_data2D not implemented");
+	printf("ERROR: output_data2D not implemented\n");
 	0/0; // method not supposed to be implemented
 }
 
