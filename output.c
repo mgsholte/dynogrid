@@ -5,7 +5,7 @@
 #include "grid.h"
 #include "list.h"
 
-static double norm(vec3 v) {
+static inline const double norm(const vec3 v) {
 	return sqrt(v.x*v.x + v.y*v.y + v.z*v.z);
 }
 
@@ -18,20 +18,19 @@ static inline void testPFile(FILE *pfile, char *fname) {
 
 // grid_points and particles are the stuff to print
 // suffix is the suffix used in naming the output files
-void output_grid_impl(grid_point ***grid_points, List particles, const char suffix[], int maxSteps) {
-	int itNum = round_i(time/dt);
+void output_grid_impl(int itNum, int numFiles, grid_point ***grid_points, List particles, const char suffix[]) {
 	int suffix_len = strlen(suffix);
 
 	// the # of chars needed to represent the biggest iteration # as a string. all iter #s will be padded to this value
-	int width_iter_num = round_i(log10(maxSteps));
+	int width_iter_num = round_i(log10(numFiles)+1);
 	// the file name. reused for all files so it needs to be large enough to hold the longest name. +1 at end holds string terminator
     char fname[width_iter_num+7+suffix_len+1];
 	FILE *pfile;
 
 	static bool shouldInitHeader = true;
     // create header file only once
-	if (shouldInitHeader) {
-		shouldInitHeader = false;
+	if (shouldWriteHeader) {
+		shouldWriteHeader = false;
 
 		// set name to header and open
 		sprintf(fname, "params.%s", suffix);
@@ -40,10 +39,11 @@ void output_grid_impl(grid_point ***grid_points, List particles, const char suff
 		// test to ensure that the file was successfully created
 		testPFile(pfile, fname);
 
-		fprintf(pfile, "format: nx,ny,nz\\ndx,dy,dz\\ndt\n");
-		fprintf(pfile, "%d,%d,%d\n", nx, ny, nz);
-		fprintf(pfile, "%lg,%lg,%lg\n", dx, dy, dz);
-		fprintf(pfile, "%lg\n", dt);
+		fprintf(pfile, "params.data\n");
+		fprintf(pfile, "nx=%d,ny=%d,nz=%d\n", nx, ny, nz);
+		fprintf(pfile, "dx=%lg,dy=%lg,dz=%lg\n", dx, dy, dz);
+		fprintf(pfile, "numFiles=%d\n", numFiles);
+		fprintf(pfile, "numParticles=%d\n", numParticles);
 		fclose(pfile);
 	}
 

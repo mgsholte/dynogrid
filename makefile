@@ -1,5 +1,5 @@
-CC = mpicc
-CFLAGS = -O3
+CC = mpicxx
+CFLAGS = -O3 -w
 LFLAGS = -O3
 
 OBJS := $(patsubst %.c,%.o,$(wildcard *.c))
@@ -14,10 +14,10 @@ dynogrid: $(OBJS)
 	$(CC) -c $(CFLAGS) $^ -o $@
 
 push.c: dynamics.h decs.h
-	
+	@touch $@
 
 %.c: %.h decs.h
-	
+	@touch $@
 
 .PHONY: run
 run: dynogrid

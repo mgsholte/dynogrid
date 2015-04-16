@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <stdio.h>
 
 #include "decs.h"
 #include "grid.h"
@@ -24,6 +25,7 @@ grid_point*** init_grid() {
 			}
 		}
 	}
+	printf("gridpts[20][20][20].E.x = %lg\n", grid_points[20][20][20].E.x);
 	return grid_points;
 }
 

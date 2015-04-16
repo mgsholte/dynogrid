@@ -3,7 +3,7 @@
 
 //Definitions go here to avoid clutter elsewhere
 
-typedef enum { false, true } bool;
+//typedef enum { false, true } bool;
 
 // a 2D vector
 typedef struct {
@@ -28,9 +28,9 @@ typedef struct {
 	// double rho; // average charge density at grid point
 } grid_point;
 
-#define c (3e8)
+#define C (3e8)
 
-double time; // changes every iteration
+extern double time; // changes every iteration
 
 #define t_end (3.3333e-13)
 
@@ -39,16 +39,17 @@ double time; // changes every iteration
 #define z_max (1e-4)
 
 // number of cells in each direction; nx+1 is number of grid points
-#define nx (50) 
-#define ny (50)
-#define nz (50)
+#define nx (20) 
+#define ny (20)
+#define nz (20)
 
 #define dx (x_max/nx)
 #define dy (y_max/ny)
 #define dz (z_max/nz)
 
-// Use the smallest of dx, dy, or dz!!!
-#define dt (dz/c)
+
+// the time step
+extern const double dt;
 
 #define round_i(x) ((int) (x+0.5))
 //inline int round_i(double x) {

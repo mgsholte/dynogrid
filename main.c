@@ -1,11 +1,23 @@
 #include <stdio.h>
+#include <math.h>
 
 #include "decs.h"
 #include "grid.h"
 #include "dynamics.h"
 #include "list.h"
 
+static const double min(const double x, const double y, const double z) {
+	return (x < y)
+			? (x < z ? x : z)
+			: (y < z ? y : z);
+}
+
+const double dt = min(dx, dy, dz)/C;
+double time = 0.0;
+
 int main(int argc, char *argv[]) {
+	//dt = min(dx,dy,dz)/C;
+
 	int i;  // loop index variable
 
 	// read as inputs in the future
