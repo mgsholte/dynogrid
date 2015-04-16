@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "grid.h"
 #include "list.h"
@@ -24,10 +25,10 @@ void output_grid_impl(int itNum, int numFiles, grid_point ***grid_points, List p
 	// the # of chars needed to represent the biggest iteration # as a string. all iter #s will be padded to this value
 	int width_iter_num = round_i(log10(numFiles)+1);
 	// the file name. reused for all files so it needs to be large enough to hold the longest name. +1 at end holds string terminator
-    char fname[width_iter_num+7+suffix_len+1];
+    char fname[width_iter_num+11+suffix_len+1];
 	FILE *pfile;
 
-	static bool shouldInitHeader = true;
+	static bool shouldWriteHeader = true;
     // create header file only once
 	if (shouldWriteHeader) {
 		shouldWriteHeader = false;
@@ -40,10 +41,9 @@ void output_grid_impl(int itNum, int numFiles, grid_point ***grid_points, List p
 		testPFile(pfile, fname);
 
 		fprintf(pfile, "params.data\n");
-		fprintf(pfile, "nx=%d,ny=%d,nz=%d\n", nx, ny, nz);
+		fprintf(pfile, "nx=%d,ny=%d,nz=%d\n", nx+1, ny+1, nz+1);
 		fprintf(pfile, "dx=%lg,dy=%lg,dz=%lg\n", dx, dy, dz);
 		fprintf(pfile, "numFiles=%d\n", numFiles);
-		fprintf(pfile, "numParticles=%d\n", numParticles);
 		fclose(pfile);
 	}
 
@@ -58,6 +58,7 @@ void output_grid_impl(int itNum, int numFiles, grid_point ***grid_points, List p
     int x,y,z;
 	double magE, magB;
 	// print |E|, |B| for each grid point
+	fprintf(pfile, "|E|, |B|\n");
 	for(x = 0; x <= nx; x++) {
 		for(y = 0; y <= ny; y++) {
             for(z = 0; z <= nz; z++) {
@@ -73,12 +74,13 @@ void output_grid_impl(int itNum, int numFiles, grid_point ***grid_points, List p
 
 	// PARTICLE OUTPUT
 	// set file name to particle file and open
-	sprintf(fname, "%d_ptcls.%s", itNum, suffix);
+	sprintf(fname, "%d_particles.%s", itNum, suffix);
 	pfile = fopen(fname, "w");
 
     // test to ensure that the file was actually created and exists: 
 	testPFile(pfile, fname);
 
+	fprintf(pfile, "x, y, z, |p|\n");
 	// print # of particles as a header
 	fprintf(pfile, "%d\n", list_length(particles));
     list_reset_iter(&particles);

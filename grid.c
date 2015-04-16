@@ -84,7 +84,7 @@ List init_particles(vec3 origin, vec3 dims, int part_per_cell) {
 }
 
 void output_grid(int itNum, int numFiles, grid_point ***grid_points, List particles) {
-	output_data3D(itNum, numFiles, grid_points, particles);
+	output_grid_impl(itNum, numFiles, grid_points, particles, "data");
 	//TODO: it should be true that itNum == time/dt. maybe we don't need to pass the itNum variable as an argument
 	// int itNum = round_i(time/dt);
 }
