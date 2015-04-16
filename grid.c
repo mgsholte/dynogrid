@@ -10,22 +10,32 @@ static inline double rand_float( double low, double high ) {
 }
 
 // inits all grid points to 0 in E and B
-grid_point*** init_grid() {
-	grid_point ***grid_points = (grid_point***) malloc( (nx+1) * sizeof(grid_point**) ); // allocate an array of pointers to rows-depthwise
-	int i, j, k;
+grid_cell*** init_grid() {
+	grid_cell ***grid_cells = (grid_cell***) malloc( (nx+1) * sizeof(grid_cell**) ); // allocate an array of pointers to rows-depthwise
+	int i, j, k, n;
 	for (i = 0; i <= nx; ++i) {
-		grid_points[i] = (grid_point**) malloc( (ny+1) * sizeof(grid_point*) );  // allocate the row
+		grid_cells[i] = (grid_cell**) malloc( (ny+1) * sizeof(grid_cell*) );  // allocate the row
 		for (j = 0; j <= ny; ++j) {
-			grid_points[i][j] = (grid_point*) malloc( (nz+1) * sizeof(grid_point) );  // allocate the row
+			grid_cells[i][j] = (grid_cell*) malloc( (nz+1) * sizeof(grid_cell) );  // allocate the row
+			// initialize only the upper-left-forward grid_point (points[0] represents (x,y,z)==000)
 			for (k = 0; k <= nz; ++k) {
-				// all grid points are initialized with no field
-				grid_points[i][j][k].E = (vec3) {0,0,0};
-				grid_points[i][j][k].B = (vec3) {0,0,0};
-				// grid_points[i][j][k].has_children = false;	
+				grid_cells[i][j][k].points[0] = malloc( sizeof(grid_point) );
+				(grid_cells[i][j][k].points[0])->E = (vec3) {0,0,0};
+				(grid_cells[i][j][k].points[0])->B = (vec3) {0,0,0};
+				grid_cells[i][j][k].children = NULL;
+			}
+			// make other 7 points point to neighbors
+			for (k = 0; k < nz; ++k) {
+				if (i<nx && j<ny && k<nz) {
+					// n should be thought of as binary (n for "neighbors")
+					for (n = 1; n < 8; ++n) {
+						grid_cells[i][j][k].points[n] = grid_cells[i+(n&1)][j+(n&2)/2][k+(n&4)/4].points[0];
+					}
+				}
 			}
 		}
 	}
-	return grid_points;
+	return grid_cells;
 }
 
 // populates particles randomly within each grid cell inside the bounds of the specified prism. particles are evenly distrubuted across the cells

@@ -54,12 +54,12 @@ void update_grid(grid_point ***grid_points) {
 // would make laser fully self-contained. there seems no reason to put any laser pulse
 // info outside of laser, it would just be messier.
 
-void update_grid(grid_point ***grid_points) {
+void update_grid(grid_cell ***grid_cells) {
 	int x,y,z;
 	for (x = 0; x < nx; x++) {
 		for (y = 0; y < ny; y++) {
 			for (z = 0; z < nz; z++) {
-				laser(&grid_points[x][y][z], x*dx, y*dy, z*dz, time);
+				laser(&(grid_cells[x][y][z].points[0]), x*dx, y*dy, z*dz, time);
 			}
 		}
 	}
