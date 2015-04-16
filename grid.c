@@ -21,6 +21,7 @@ grid_point*** init_grid() {
 				// all grid points are initialized with no field
 				grid_points[i][j][k].E = (vec3) {0,0,0};
 				grid_points[i][j][k].B = (vec3) {0,0,0};
+				// grid_points[i][j][k].has_children = false;	
 			}
 		}
 	}
