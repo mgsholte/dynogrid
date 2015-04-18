@@ -66,6 +66,7 @@ void push_particles(grid_cell ***grid, List part_list) {
     double idtx = idt*idy;
     double idxy = idx*idy;
     double tau, taux, taux2, tauy, tauy2, tauz, tauz2;
+    grid_point** point;
     
     //loop over all the particles
     while (true){
@@ -113,8 +114,8 @@ void push_particles(grid_cell ***grid, List part_list) {
         point = grid[xl][yu][zn].points;
 
         //Do interpolation with the new grid_cell
-        E = interp3(point[0].E, point[1].E, point[2].E, point[4].E, point[3].E, point[5].E, point[6].E, point[7].E, xlf, yuf, znf);
-        B = interp3(point[0].B, point[1].B, point[2].B, point[4].B, point[3].B, point[5].B, point[6].B, point[7].B, xlf, yuf, znf);
+        E = interp3(point[0]->E, point[1]->E, point[2]->E, point[4]->E, point[3]->E, point[5]->E, point[6]->E, point[7]->E, xlf, yuf, znf);
+        B = interp3(point[0]->B, point[1]->B, point[2]->B, point[4]->B, point[3]->B, point[5]->B, point[6]->B, point[7]->B, xlf, yuf, znf);
         
         // Update momenta to u_-, from Birdsall and Langdon
         uxm = ux + cmratio * E.x;
