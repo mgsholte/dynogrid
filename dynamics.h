@@ -18,6 +18,6 @@ void update_grid(grid_cell ***grid_cells);
 
 void laser(grid_point *grid_p, double x, double y, double z, double t);
 
-void push_particles(grid_point ***grid, List part_list);
+void push_particles(grid_cell ***grid, List part_list);
 
 #endif //DYNAMICS_H
