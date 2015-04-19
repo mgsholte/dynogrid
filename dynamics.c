@@ -22,7 +22,7 @@ void update_grid(grid_cell ***grid_cells) {
 		for (y = 0; y < ny; y++) {
 			for (z = 0; z < nz; z++) {
 				update_grid_cell(grid_cells[x][y][z]);
-				laser(&(grid_cells[x][y][z].points[0]), x*dx, y*dy, z*dz, time);
+				laser(grid_cells[x][y][z].points[0], x*dx, y*dy, z*dz, time);
 			}
 		}
 	}
