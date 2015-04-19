@@ -13,29 +13,30 @@ vec3 interp(vec3 field00, vec3 field01, vec3 field10, vec3 field11, double xlf, 
     double xrf = 1. - xlf;
     double ydf = 1.- yuf;
     // Not sure if these are proper vec3 accesses.  May need to unroll.
-        // Bilinear interpolation from Wikipedia.  There are certainly
-        // better interpolation methods to use for PIC codes.
+    // Bilinear interpolation from Wikipedia.  There are certainly
+    // better interpolation methods to use for PIC codes.
     interped.x = norm * ( field00.x*xrf*yuf + field10.x*xlf*yuf + field01.x*xrf*ydf + field11.x*xlf*ydf);
     interped.y = norm * ( field00.y*xrf*yuf + field10.y*xlf*yuf + field01.y*xrf*ydf + field11.y*xlf*ydf);
     interped.z = norm * ( field00.z*xrf*yuf + field10.z*xlf*yuf + field01.z*xrf*ydf + field11.z*xlf*ydf);
-	return interped;
+    return interped;
 }
 
 // 3D Interpalation helper
 vec3 interp3(vec3 field000, vec3 field001, vec3 field010, vec3 field100, vec3 field011, vec3 field101, vec3 field110, vec3 field111, double xlf, double yuf, double znf){
-	vec3 interped;
-	double norm = 1./(dx*dy*dz);
-	double xrf = 1.-xlf;
-	double ydf = 1. - yuf;
-	double zff = 1. - znf;
-	interped.x = norm * (field000.x*xlf*yuf*znf + field001.x*xlf*yuf*zff + field010.x*xlf*ydf*znf + field100.x*xrf*yuf*znf + field011.x*xlf*ydf*zff + field101.x*xrf*yuf*zff + field110.x*xrf*ydf*znf + field111.x*xrf*ydf*zff);
-	interped.y = norm * (field000.y*xlf*yuf*znf + field001.y*xlf*yuf*zff + field010.y*xlf*ydf*znf + field100.y*xrf*yuf*znf + field011.y*xlf*ydf*zff + field101.y*xrf*yuf*zff + field110.y*xrf*ydf*znf + field111.y*xrf*ydf*zff);
-	interped.z = norm * (field000.z*xlf*yuf*znf + field001.z*xlf*yuf*zff + field010.z*xlf*ydf*znf + field100.z*xrf*yuf*znf + field011.z*xlf*ydf*zff + field101.z*xrf*yuf*zff + field110.z*xrf*ydf*znf + field111.z*xrf*ydf*zff);
-	return interped;
+    vec3 interped;
+    // double norm = 1./(dx*dy*dz);
+    double norm = 1.;
+    double xrf = 1.-xlf;
+    double ydf = 1. - yuf;
+    double zff = 1. - znf;
+    interped.x = norm * (field000.x*xlf*yuf*znf + field001.x*xlf*yuf*zff + field010.x*xlf*ydf*znf + field100.x*xrf*yuf*znf + field011.x*xlf*ydf*zff + field101.x*xrf*yuf*zff + field110.x*xrf*ydf*znf + field111.x*xrf*ydf*zff);
+    interped.y = norm * (field000.y*xlf*yuf*znf + field001.y*xlf*yuf*zff + field010.y*xlf*ydf*znf + field100.y*xrf*yuf*znf + field011.y*xlf*ydf*zff + field101.y*xrf*yuf*zff + field110.y*xrf*ydf*znf + field111.y*xrf*ydf*zff);
+    interped.z = norm * (field000.z*xlf*yuf*znf + field001.z*xlf*yuf*zff + field010.z*xlf*ydf*znf + field100.z*xrf*yuf*znf + field011.z*xlf*ydf*zff + field101.z*xrf*yuf*zff + field110.z*xrf*ydf*znf + field111.z*xrf*ydf*zff);
+    return interped;
 }
 
 // Particle pusher!!!!
-void push_particles(grid_point ***grid, List part_list) {
+void push_particles(grid_cell ***grid, List part_list) {
 
 	list_reset_iter(&part_list);
 
@@ -47,7 +48,7 @@ void push_particles(grid_point ***grid, List part_list) {
     double ux, uy, uz;
     double root;
     int xl, yu, zn;
-	double xlf, yuf, znf;
+    double xlf, yuf, znf;
     vec3 E, B;
     double uxm, uym, uzm;
     double uxp, uyp, uzp;
@@ -55,59 +56,98 @@ void push_particles(grid_point ***grid, List part_list) {
     //  Just copying multiplication factors from EPOCH
     double idx = 1./dx;
     double idy = 1./dy;
-	double idz = 1./dz;
+    double idz = 1./dz;
     double idt = 1./dt;
     double dto2 = dt/2.;
-    double dtco2 = c * dto2;
+    double dtco2 = C * dto2;
     double dtfac = .5*dt ;//times some weighting factor, that I think is 1 anyways
     double third = 1./3.;
     double idty = idt*idy;
     double idtx = idt*idy;
     double idxy = idx*idy;
-	double tau, taux, taux2, tauy, tauy2, tauz, tauz2;
+    double tau, taux, taux2, tauy, tauy2, tauz, tauz2;
+    grid_point** point;
     
     //loop over all the particles
     while (true){
 		double cmratio = curr->charge/curr->mass;
-        part_mc = c*curr->mass;
+        part_mc = C*curr->mass;
         ipart_mc = 1./part_mc;
 
         // u is gamma*v, see Birdsall and Langdon sectoin 15-4
-		ux = (curr->p).x * ipart_mc;
-		uy = (curr->p).y * ipart_mc;
-		uz = (curr->p).z * ipart_mc;
-		//Calculate velocity
-		root = dtco2 / sqrt(ux*ux + uy*uy + uz*uz + 1.);
+	ux = (curr->p).x * ipart_mc;
+	uy = (curr->p).y * ipart_mc;
+	uz = (curr->p).z * ipart_mc;
+	//Calculate velocity
+	root = dtco2 / sqrt(ux*ux + uy*uy + uz*uz + 1.);
 
-		//Move half timestep
-		(curr->pos).x += ux * root;
-		(curr->pos).y += uy * root;
-		(curr->pos).z += uz * root;
+	//Move half timestep
+	(curr->pos).x += ux * root;
+	(curr->pos).y += uy * root;
+	(curr->pos).z += uz * root;
 
-		// Check if out of bounds
-		if ((((curr->pos).x <= 0 || (curr->pos).y <= 0) || (curr->pos).z <= 0) || (((curr->pos).x >= x_max || (curr->pos).y >= y_max) || (curr->pos).z >= z_max)){
-			list_pop(&part_list, prev);
-			//move on to the next one
-			if (list_has_next(part_list)){
-				curr = list_get_next(&part_list);
-				continue;
-			}
-			else{
-				list_reset_iter(&part_list);
-				return;
-			}
-		}
+	// Check if out of bounds
+	if ((((curr->pos).x <= 0 || (curr->pos).y <= 0) || (curr->pos).z <= 0) || (((curr->pos).x >= x_max || (curr->pos).y >= y_max) || (curr->pos).z >= z_max)){
+	    list_pop(&part_list, prev);
+	    //move on to the next one
+	    if (list_has_next(part_list)){
+		curr = list_get_next(&part_list);
+		continue;
+	    }
+	    else{
+	    	list_reset_iter(&part_list);
+		return;
+	    }
+	}
 
-		//Do interpolation to find e and b here.
+	//Do interpolation to find e and b here.
         // x-left and y-up indices
         xl = floor((curr->pos).x * idx);
         yu = floor((curr->pos).y * idy);
-		zn = floor((curr->pos).z * idz);
+	zn = floor((curr->pos).z * idz);
         xlf = ((curr->pos).x - xl*dx) / dx;
         yuf = ((curr->pos).y - yu*dy) / dy;
-		znf = ((curr->pos).z - zn*dz) / dz;
-        E = interp3(grid[xl][yu][zn].E, grid[xl][yu][zn+1].E, grid[xl][yu+1][zn].E, grid[xl+1][yu][zn].E, grid[xl][yu+1][zn+1].E, grid[xl+1][yu][zn+1].E, grid[xl][yu+1][zn+1].E, grid[xl+1][yu+1][zn+1].E, xlf, yuf, znf);
-        B = interp3(grid[xl][yu][zn].B, grid[xl][yu][zn+1].B, grid[xl][yu+1][zn].B, grid[xl+1][yu][zn].B, grid[xl][yu+1][zn+1].B, grid[xl+1][yu][zn+1].B, grid[xl][yu+1][zn+1].B, grid[xl+1][yu+1][zn+1].B, xlf, yuf, znf);
+	znf = ((curr->pos).z - zn*dz) / dz;
+        /*E = interp3(grid[xl][yu][zn].E, grid[xl][yu][zn+1].E, grid[xl][yu+1][zn].E, grid[xl+1][yu][zn].E, grid[xl][yu+1][zn+1].E, grid[xl+1][yu][zn+1].E, grid[xl][yu+1][zn+1].E, grid[xl+1][yu+1][zn+1].E, xlf, yuf, znf);
+        B = interp3(grid[xl][yu][zn].B, grid[xl][yu][zn+1].B, grid[xl][yu+1][zn].B, grid[xl+1][yu][zn].B, grid[xl][yu+1][zn+1].B, grid[xl+1][yu][zn+1].B, grid[xl][yu+1][zn+1].B, grid[xl+1][yu+1][zn+1].B, xlf, yuf, znf);*/
+
+        point = grid[xl][yu][zn].points;
+
+		//Find the finest cell that contains the particle
+		while (cell->children != NULL){
+			if (xlf < .5){
+				if (yuf < .5){
+					if (znf < .5){
+						cell = cell->children[0];
+						xlf*=2;
+						yuf*=2;
+						znf*=2;
+					}
+					else{
+						cell = cell->children[4];
+						xlf*=2;
+						yuf*=2;
+						znf=(znf-.5)*2;
+					}
+				}
+				else{
+					if (znf < .5){
+						cell = cell->children[0];
+						xlf*=2;
+						yuf=(yuf-.5)*2;
+						znf*=2;
+					}
+					else{
+						cell = cell->children[4];
+						xlf*=2;
+						yuf=(yuf-.5)*2;
+						znf=(znf-.5)*2;
+					}
+				
+
+        //Do interpolation with the new grid_cell
+        E = interp3(point[0]->E, point[1]->E, point[2]->E, point[4]->E, point[3]->E, point[5]->E, point[6]->E, point[7]->E, xlf, yuf, znf);
+        B = interp3(point[0]->B, point[1]->B, point[2]->B, point[4]->B, point[3]->B, point[5]->B, point[6]->B, point[7]->B, xlf, yuf, znf);
         
         // Update momenta to u_-, from Birdsall and Langdon
         uxm = ux + cmratio * E.x;
@@ -115,14 +155,14 @@ void push_particles(grid_point ***grid, List part_list) {
         uzm = uz + cmratio * E.z;
 
         // Do the Borris rotation and update momenta to u_+, from Birdsall and Langdon
-        root = cmratio = sqrt(uxm*uxm + uym*uym + uzm*uzm + 1.0);
+        root = cmratio / sqrt(uxm*uxm + uym*uym + uzm*uzm + 1.0);
 
         taux = B.x*root;
-        taux2 *= taux;
+        taux2 = taux*taux;
         tauy = B.y*root;
-        tauy2 *= tauy;
+        tauy2 = tauy*tauy;
         tauz = B.z*root;
-        tauz2 *= tauz;
+        tauz2 = tauz*tauz;
 
         tau = 1. / (1. + taux2 + tauy2 + tauz2);
 
@@ -136,25 +176,25 @@ void push_particles(grid_point ***grid, List part_list) {
         uz = uzp + cmratio*E.z;
 
         // Full push
-		root = dtco2 / sqrt(ux*ux + uy*uy + uz*uz + 1.);
+	root = dtco2 / sqrt(ux*ux + uy*uy + uz*uz + 1.);
 
         (curr->pos).x += ux*root;
         (curr->pos).y += uy*root;
-		(curr->pos).z += uz*root;
+	(curr->pos).z += uz*root;
 
-		// Check if out of bounds
-		if ((((curr->pos).x <= 0 || (curr->pos).y <= 0) || (curr->pos).z <= 0) || (((curr->pos).x >= x_max || (curr->pos).y >= y_max) || (curr->pos).z >= z_max)){
-			list_pop(&part_list, prev);
-			//move on to the next one
-			if (list_has_next(part_list)){
-				curr = list_get_next(&part_list);
-				continue;
-			}
-			else{
-				list_reset_iter(&part_list);
-				return;
-			}
-		}
+	// Check if out of bounds
+	if ((((curr->pos).x <= 0 || (curr->pos).y <= 0) || (curr->pos).z <= 0) || (((curr->pos).x >= x_max || (curr->pos).y >= y_max) || (curr->pos).z >= z_max)){
+            list_pop(&part_list, prev);
+	    //move on to the next one
+	    if (list_has_next(part_list)){
+	        curr = list_get_next(&part_list);
+		continue;
+	    }
+	    else{
+		list_reset_iter(&part_list);
+		return;
+	    }
+	}
 
         // Store
         (curr->p).x = ux*part_mc;
@@ -164,14 +204,14 @@ void push_particles(grid_point ***grid, List part_list) {
 		
         //This is where the current and charge density would be calculatted.
 
-		//move on to the next one
-		if (list_has_next(part_list)){
-			prev = part_list.iter;
-			curr = list_get_next(&part_list);
-		}
-		else{
-			list_reset_iter(&part_list);
-			return;
-		}
+	//move on to the next one
+	if (list_has_next(part_list)){
+            prev = part_list.iter;
+	    curr = list_get_next(&part_list);
+	}
+	else{
+	    list_reset_iter(&part_list);
+	    return;
+	}
     }
 }
