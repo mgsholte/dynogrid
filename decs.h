@@ -29,12 +29,12 @@ typedef struct {
 } grid_point;
 
 typedef struct {
-	grid_point* points[8];
-	grid_cell** children
+	grid_point *points[8];
+	struct grid_cell **children;
 } grid_cell;
 
 
-#define c (3e8)
+#define C (3e8)
 
 double time; // changes every iteration
 
@@ -54,7 +54,7 @@ double time; // changes every iteration
 #define dz (z_max/nz)
 
 // Use the smallest of dx, dy, or dz!!!
-#define dt (dz/c)
+#define dt (dz/C)
 
 #define round_i(x) ((int) (x+0.5))
 //inline int round_i(double x) {
