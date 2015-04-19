@@ -28,10 +28,12 @@ typedef struct {
 	// double rho; // average charge density at grid point
 } grid_point;
 
-typedef struct {
+struct grid_cell {
 	grid_point *points[8];
 	struct grid_cell **children;
-} grid_cell;
+};
+
+typedef struct grid_cell grid_cell;
 
 
 #define C (3e8)
