@@ -1,5 +1,7 @@
-#include "dynamics.h"
+#include <stdlib.h>
 #include <math.h>
+
+#include "dynamics.h"
 
 // changes E and B at the given point and time
 void laser(grid_point *grid_p, double x, double y, double z, double t) {
@@ -35,7 +37,7 @@ void update_grid_cell(grid_cell* cell){
 /*	A grid_cell should only coarsen if it has exactly 1 level of decendants
 	(i.e. has children, but does not have grandchildrend or greatgranchildren, etc.
 	AND it meets the coarsening criteria based on its E and B fields */
-bool coarsen(grid_cell* cell, ){
+bool coarsen(grid_cell* cell){
 	// BASE CASE:
 	if(cell->children == NULL){
 		/*	coarsening always happens one level up, so if you don't have any children
@@ -46,7 +48,8 @@ bool coarsen(grid_cell* cell, ){
 	else if(cell->children != NULL){
 		// check to see if there are any decendants beyond immediate children:
 		bool have_grandchildren = false;
-		bool chidrens_responses[8];
+		//TODO: make a bool8 type that encodes 8 bools in a single char. make functions for manipulating said type
+		bool childrens_responses[8];
 		bool childs_response;
 		int child_num;
 		for(child_num = 0; child_num < 8; child_num++){

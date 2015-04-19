@@ -30,7 +30,7 @@ int main(int argc, char *argv[]) {
 		push_particles(grid_cells, particles);
 		update_grid(grid_cells);  // add the laser, etc.
 		if (i % output_freq == 0) {
-			output_grid((i/output_freq), (nSteps/output_freq), grid_points, particles);
+			output_grid((i/output_freq), (nSteps/output_freq), grid_cells, particles);
 		}
 	}
 
