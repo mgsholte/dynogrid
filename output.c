@@ -7,12 +7,12 @@
 #include "grid.h"
 
 
-void output_data2D(int itNum, grid_point ***grid_points, List particles) {
+void output_data2D(int itNum, grid_cell ***grid_cells, List particles) {
 	printf("ERROR: output_data2D not implemented\n");
 	0/0; // method not supposed to be implemented
 }
 
-void output_data3D(int itNum, int numFiles, grid_point ***grid_points, List particles) {
+void output_data3D(int itNum, int numFiles, grid_cell ***grid_cells, List particles) {
 	char *f_extension = "data";
     int numParticles = list_length(particles);
     // create a file to output the grid data to:
@@ -55,22 +55,23 @@ void output_data3D(int itNum, int numFiles, grid_point ***grid_points, List part
     fprintf(grid_file, "Time=%lg\n", time);
     fprintf(grid_file, "TimeStep=%lg\n", dt);
     fprintf(grid_file, "GridSize:nx=%d,ny=%d,nz=%d\n", nx, ny, nz);
+	//TODO: update this logic to output grid cells rather than grid points
+	fprintf(grid_file, "not yet implemented for adaptive grid");
+	/*
 	for(x = 0; x < nx; x++){
 		for(y = 0; y < ny; y++){
             for(z = 0; z < nz; z++){
                 //calculate the L2 norm of the E field vector:
-                double E = sqrt(pow((grid_points[x][y][z].E).x, 2.0) + pow((grid_points[x][y][z].E).y, 2.0) + pow((grid_points[x][y][z].E).z, 2.0));
+                double E = sqrt(pow((grid_cells[x][y][z].E).x, 2.0) + pow((grid_cells[x][y][z].E).y, 2.0) + pow((grid_cells[x][y][z].E).z, 2.0));
                 //calculate the L2 norm of the B field vector:
-                double B = sqrt(pow((grid_points[x][y][z].B).x, 2.0) + pow((grid_points[x][y][z].B).y, 2.0) + pow((grid_points[x][y][z].B).z, 2.0));
+                double B = sqrt(pow((grid_cells[x][y][z].B).x, 2.0) + pow((grid_cells[x][y][z].B).y, 2.0) + pow((grid_cells[x][y][z].B).z, 2.0));
                 
-                /*write one line to file per grid point in this format:
-                xcoord,ycoord,zcoord,E,B
-                */
                 fprintf(grid_file, "%lg,%lg,%lg,%lg,%lg\n", ((double)x * dx), ((double)y * dy), ((double)z * dz), E, B);
                 // fprintf(grid_file, "%d,%d,%d,%lg,%lg\n", x, y, z, E, B);
             }//end innermost for
         }//end middle for
     }//end outer for
+	*/
     fclose(grid_file);
 
     // PARTICLE DATA:
