@@ -14,10 +14,10 @@ dynogrid: $(OBJS)
 	$(CC) -c $(CFLAGS) $^ -o $@
 
 push.c: dynamics.h decs.h
-	
+	@touch $@
 
 %.c: %.h decs.h
-	
+	@touch $@
 
 .PHONY: run
 run: dynogrid
