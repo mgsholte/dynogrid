@@ -1,3 +1,5 @@
+#include <stdlib.h>
+
 #include "decs.h"
 #include "math.h"
 #include "list.h"
