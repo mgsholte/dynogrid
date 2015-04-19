@@ -1,5 +1,4 @@
 #include <stdlib.h>
-#include <stdio.h>
 
 #include "decs.h"
 #include "grid.h"
@@ -38,7 +37,6 @@ grid_cell*** init_grid() {
 			}
 		}
 	}
-	printf("init_grid marker 3\n");
 	return grid_cells;
 }
 
