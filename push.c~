@@ -67,6 +67,7 @@ void push_particles(grid_cell ***grid, List part_list) {
     double idxy = idx*idy;
     double tau, taux, taux2, tauy, tauy2, tauz, tauz2;
     grid_point** point;
+	grid_cell* cell;
     
     //loop over all the particles
     while (true){
@@ -101,17 +102,18 @@ void push_particles(grid_cell ***grid, List part_list) {
 	}
 
 	//Do interpolation to find e and b here.
-        // x-left and y-up indices
+        // x-left, y-up, and z-near indices
         xl = floor((curr->pos).x * idx);
         yu = floor((curr->pos).y * idy);
 	zn = floor((curr->pos).z * idz);
+	// x-right fraction, ...
         xlf = ((curr->pos).x - xl*dx) / dx;
         yuf = ((curr->pos).y - yu*dy) / dy;
 	znf = ((curr->pos).z - zn*dz) / dz;
         /*E = interp3(grid[xl][yu][zn].E, grid[xl][yu][zn+1].E, grid[xl][yu+1][zn].E, grid[xl+1][yu][zn].E, grid[xl][yu+1][zn+1].E, grid[xl+1][yu][zn+1].E, grid[xl][yu+1][zn+1].E, grid[xl+1][yu+1][zn+1].E, xlf, yuf, znf);
         B = interp3(grid[xl][yu][zn].B, grid[xl][yu][zn+1].B, grid[xl][yu+1][zn].B, grid[xl+1][yu][zn].B, grid[xl][yu+1][zn+1].B, grid[xl+1][yu][zn+1].B, grid[xl][yu+1][zn+1].B, grid[xl+1][yu+1][zn+1].B, xlf, yuf, znf);*/
 
-        point = grid[xl][yu][zn].points;
+        cell = &(grid[xl][yu][zn]);
 
 		//Find the finest cell that contains the particle
 		while (cell->children != NULL){
@@ -132,17 +134,52 @@ void push_particles(grid_cell ***grid, List part_list) {
 				}
 				else{
 					if (znf < .5){
-						cell = cell->children[0];
+						cell = cell->children[2];
 						xlf*=2;
 						yuf=(yuf-.5)*2;
 						znf*=2;
 					}
 					else{
-						cell = cell->children[4];
+						cell = cell->children[6];
 						xlf*=2;
 						yuf=(yuf-.5)*2;
 						znf=(znf-.5)*2;
 					}
+				}
+			}
+			else{
+				if (yuf < .5){
+					if (znf < .5){
+						cell = cell->children[1];
+						xlf=(xlf-.5)*2;
+						yuf*=2;
+						znf*=2;
+					}
+					else{
+						cell = cell->children[5];
+						xlf=(xlf-.5)*2;
+						yuf*=2;
+						znf=(znf-.5)*2;
+					}
+				}
+				else{
+					if (znf < .5){
+						cell = cell->children[3];
+						xlf=(xlf-.5)*2;
+						yuf=(yuf-.5)*2;
+						znf*=2;
+					}
+					else{
+						cell = cell->children[7];
+						xlf=(xlf-.5)*2;
+						yuf=(yuf-.5)*2;
+						znf=(znf-.5)*2;
+					}
+				}
+			}
+		}
+
+		point = &(cell->points[0]);
 				
 
         //Do interpolation with the new grid_cell

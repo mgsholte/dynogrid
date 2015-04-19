@@ -48,7 +48,7 @@ void push_particles(grid_cell ***grid, List part_list) {
     double ux, uy, uz;
     double root;
     int xl, yu, zn;
-    double xlf, yuf, znf;
+    double xrf, ydf, zff;
     vec3 E, B;
     double uxm, uym, uzm;
     double uxp, uyp, uzp;
@@ -102,77 +102,78 @@ void push_particles(grid_cell ***grid, List part_list) {
 	}
 
 	//Do interpolation to find e and b here.
-        // x-left and y-up indices
+        // x-left, y-up, and z-near indices
         xl = floor((curr->pos).x * idx);
         yu = floor((curr->pos).y * idy);
 	zn = floor((curr->pos).z * idz);
-        xlf = ((curr->pos).x - xl*dx) / dx;
-        yuf = ((curr->pos).y - yu*dy) / dy;
-	znf = ((curr->pos).z - zn*dz) / dz;
-        /*E = interp3(grid[xl][yu][zn].E, grid[xl][yu][zn+1].E, grid[xl][yu+1][zn].E, grid[xl+1][yu][zn].E, grid[xl][yu+1][zn+1].E, grid[xl+1][yu][zn+1].E, grid[xl][yu+1][zn+1].E, grid[xl+1][yu+1][zn+1].E, xlf, yuf, znf);
-        B = interp3(grid[xl][yu][zn].B, grid[xl][yu][zn+1].B, grid[xl][yu+1][zn].B, grid[xl+1][yu][zn].B, grid[xl][yu+1][zn+1].B, grid[xl+1][yu][zn+1].B, grid[xl][yu+1][zn+1].B, grid[xl+1][yu+1][zn+1].B, xlf, yuf, znf);*/
+	// x-right fraction, ...
+        xrf = ((curr->pos).x - xl*dx) / dx;
+        ydf = ((curr->pos).y - yu*dy) / dy;
+	zff = ((curr->pos).z - zn*dz) / dz;
+        /*E = interp3(grid[xl][yu][zn].E, grid[xl][yu][zn+1].E, grid[xl][yu+1][zn].E, grid[xl+1][yu][zn].E, grid[xl][yu+1][zn+1].E, grid[xl+1][yu][zn+1].E, grid[xl][yu+1][zn+1].E, grid[xl+1][yu+1][zn+1].E, xrf, ydf, zff);
+        B = interp3(grid[xl][yu][zn].B, grid[xl][yu][zn+1].B, grid[xl][yu+1][zn].B, grid[xl+1][yu][zn].B, grid[xl][yu+1][zn+1].B, grid[xl+1][yu][zn+1].B, grid[xl][yu+1][zn+1].B, grid[xl+1][yu+1][zn+1].B, xrf, ydf, zff);*/
 
         cell = &(grid[xl][yu][zn]);
 
 		//Find the finest cell that contains the particle
 		while (cell->children != NULL){
-			if (xlf < .5){
-				if (yuf < .5){
-					if (znf < .5){
+			if (xrf < .5){
+				if (ydf < .5){
+					if (zff < .5){
 						cell = cell->children[0];
-						xlf*=2;
-						yuf*=2;
-						znf*=2;
+						xrf*=2;
+						ydf*=2;
+						zff*=2;
 					}
 					else{
 						cell = cell->children[4];
-						xlf*=2;
-						yuf*=2;
-						znf=(znf-.5)*2;
+						xrf*=2;
+						ydf*=2;
+						zff=(zff-.5)*2;
 					}
 				}
 				else{
-					if (znf < .5){
+					if (zff < .5){
 						cell = cell->children[2];
-						xlf*=2;
-						yuf=(yuf-.5)*2;
-						znf*=2;
+						xrf*=2;
+						ydf=(ydf-.5)*2;
+						zff*=2;
 					}
 					else{
 						cell = cell->children[6];
-						xlf*=2;
-						yuf=(yuf-.5)*2;
-						znf=(znf-.5)*2;
+						xrf*=2;
+						ydf=(ydf-.5)*2;
+						zff=(zff-.5)*2;
 					}
 				}
 			}
 			else{
-				if (yuf < .5){
-					if (znf < .5){
+				if (ydf < .5){
+					if (zff < .5){
 						cell = cell->children[1];
-						xlf=(xlf-.5)*2;
-						yuf*=2;
-						znf*=2;
+						xrf=(xrf-.5)*2;
+						ydf*=2;
+						zff*=2;
 					}
 					else{
 						cell = cell->children[5];
-						xlf=(xlf-.5)*2;
-						yuf*=2;
-						znf=(znf-.5)*2;
+						xrf=(xrf-.5)*2;
+						ydf*=2;
+						zff=(zff-.5)*2;
 					}
 				}
 				else{
-					if (znf < .5){
+					if (zff < .5){
 						cell = cell->children[3];
-						xlf=(xlf-.5)*2;
-						yuf=(yuf-.5)*2;
-						znf*=2;
+						xrf=(xrf-.5)*2;
+						ydf=(ydf-.5)*2;
+						zff*=2;
 					}
 					else{
 						cell = cell->children[7];
-						xlf=(xlf-.5)*2;
-						yuf=(yuf-.5)*2;
-						znf=(znf-.5)*2;
+						xrf=(xrf-.5)*2;
+						ydf=(ydf-.5)*2;
+						zff=(zff-.5)*2;
 					}
 				}
 			}
@@ -182,8 +183,8 @@ void push_particles(grid_cell ***grid, List part_list) {
 				
 
         //Do interpolation with the new grid_cell
-        E = interp3(point[0]->E, point[1]->E, point[2]->E, point[4]->E, point[3]->E, point[5]->E, point[6]->E, point[7]->E, xlf, yuf, znf);
-        B = interp3(point[0]->B, point[1]->B, point[2]->B, point[4]->B, point[3]->B, point[5]->B, point[6]->B, point[7]->B, xlf, yuf, znf);
+        E = interp3(point[0]->E, point[1]->E, point[2]->E, point[4]->E, point[3]->E, point[5]->E, point[6]->E, point[7]->E, 1.-xrf, 1.-ydf, 1.-zff);
+        B = interp3(point[0]->B, point[1]->B, point[2]->B, point[4]->B, point[3]->B, point[5]->B, point[6]->B, point[7]->B, 1.-xrf, 1.-ydf, 1.-zff);
         
         // Update momenta to u_-, from Birdsall and Langdon
         uxm = ux + cmratio * E.x;
