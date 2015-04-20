@@ -1,4 +1,5 @@
 #include <stdlib.h>
+
 #include "list.h"
 
 List list_init() {
@@ -19,8 +20,8 @@ void list_add(List *list, particle *payload) {
 // remove the node that comes after prev
 void list_pop(List *list, Node *prev) {
 	Node *x = prev->next;
-	list->iter = prev;
 	prev->next = x->next;
+	list->iter = prev->next;
 	free(x);
 }
 

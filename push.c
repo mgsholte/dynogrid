@@ -45,8 +45,6 @@ void push_particles(grid_cell ***grid, List part_list) {
     // Declare variables!
 	if (!list_has_next(part_list))
 			return;
-    particle *curr = list_get_next(&part_list);
-	Node *prev = part_list.sentinel;
     double ux, uy, uz;
     double root;
     int xl, yu, zn;
@@ -70,8 +68,11 @@ void push_particles(grid_cell ***grid, List part_list) {
     double tau, taux, taux2, tauy, tauy2, tauz, tauz2;
 	grid_cell* cell;
     
+	Node *prev = part_list.sentinel;
+	particle *curr;
     //loop over all the particles
-    while (true){
+    while (list_has_next(part_list)) {
+		curr = list_get_next(&part_list);
 		double cmratio = curr->charge/curr->mass;
         part_mc = C*curr->mass;
         ipart_mc = 1./part_mc;
@@ -91,15 +92,7 @@ void push_particles(grid_cell ***grid, List part_list) {
 		// Check if out of bounds
 		if ((((curr->pos).x <= 0 || (curr->pos).y <= 0) || (curr->pos).z <= 0) || (((curr->pos).x >= x_max || (curr->pos).y >= y_max) || (curr->pos).z >= z_max)){
 			list_pop(&part_list, prev);
-			//move on to the next one
-			if (list_has_next(part_list)){
-			curr = list_get_next(&part_list);
 			continue;
-			}
-			else{
-				list_reset_iter(&part_list);
-			return;
-			}
 		}
 
 		//Do interpolation to find e and b here.
@@ -219,16 +212,8 @@ void push_particles(grid_cell ***grid, List part_list) {
 
 		// Check if out of bounds
 		if ((((curr->pos).x <= 0 || (curr->pos).y <= 0) || (curr->pos).z <= 0) || (((curr->pos).x >= x_max || (curr->pos).y >= y_max) || (curr->pos).z >= z_max)){
-				list_pop(&part_list, prev);
-			//move on to the next one
-			if (list_has_next(part_list)){
-				curr = list_get_next(&part_list);
+			list_pop(&part_list, prev);
 			continue;
-			}
-			else{
-			list_reset_iter(&part_list);
-			return;
-			}
 		}
 
         // Store
@@ -240,13 +225,6 @@ void push_particles(grid_cell ***grid, List part_list) {
         //This is where the current and charge density would be calculatted.
 
 		//move on to the next one
-		if (list_has_next(part_list)){
-			prev = curr;
-			curr = list_get_next(&part_list);
-		}
-		else{
-			list_reset_iter(&part_list);
-			return;
-		}
+		prev = prev->next;
     }
 }

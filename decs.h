@@ -19,7 +19,6 @@ typedef struct {
 typedef struct {
 	vec3 pos, p;  // position, momentum
     double mass, charge, weight;  // weight is the number of actual particles this instance represents
-	//particle *next;  // treat the particles as a list. this points to the next particle in the list
 } particle;
 
 typedef struct {
