@@ -67,5 +67,6 @@ double time; // changes every iteration
 #define BASE_ELECTRON_MASS (9.109e-31)
 #define BASE_PROTON_CHARGE (1.602e-19)
 #define BASE_ELECTRON_CHARGE (-1.0*BASE_PROTON_CHARGE)
+#define THRESHOLD (1.0) // threshold for refining 
 
 #endif //DECS_H
