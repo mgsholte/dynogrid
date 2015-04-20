@@ -20,17 +20,19 @@ grid_cell*** init_grid() {
 			// initialize only the upper-left-forward grid_point (points[0] represents (x,y,z)==000)
 			for (k = 0; k <= nz; ++k) {
 				grid_cells[i][j][k].points[0] = malloc( sizeof(grid_point) );
-				(grid_cells[i][j][k].points[0])->E = (vec3) {0,0,0};
-				(grid_cells[i][j][k].points[0])->B = (vec3) {0,0,0};
+				grid_cells[i][j][k].points[0]->E = (vec3) {0,0,0};
+				grid_cells[i][j][k].points[0]->B = (vec3) {0,0,0};
 				grid_cells[i][j][k].children = NULL;
 			}
-			// make other 7 points point to neighbors
+		}
+	}
+	// make other 7 grid_point pointers of each grid cell point to grid points allocated by neighbors. except for right/upper/back boundaries
+	for (i = 0; i < nx; ++i) {
+		for (j = 0; j < ny; ++j) {
 			for (k = 0; k < nz; ++k) {
-				if (i<nx && j<ny && k<nz) {
-					// n should be thought of as binary (n for "neighbors")
-					for (n = 1; n < 8; ++n) {
-						grid_cells[i][j][k].points[n] = grid_cells[i+(n&1)][j+(n&2)/2][k+(n&4)/4].points[0];
-					}
+				// n should be thought of as binary (n for "neighbors")
+				for (n = 1; n < 8; ++n) {
+					grid_cells[i][j][k].points[n] = grid_cells[i+(n&1)][j+(n&2)/2][k+(n&4)/4].points[0];
 				}
 			}
 		}
@@ -92,8 +94,8 @@ List init_particles(vec3 origin, vec3 dims, int part_per_cell) {
 	return particles;
 }
 
-void output_grid(int itNum, int numFiles, grid_point ***grid_points, List particles) {
-	output_data3D(itNum, numFiles, grid_points, particles);
+void output_grid(int itNum, int numFiles, grid_cell ***grid_cells, List particles) {
+	output_data3D(itNum, numFiles, grid_cells, particles);
 	//TODO: it should be true that itNum == time/dt. maybe we don't need to pass the itNum variable as an argument
 	// int itNum = round_i(time/dt);
 }

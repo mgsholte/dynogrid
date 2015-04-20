@@ -19,7 +19,6 @@ typedef struct {
 typedef struct {
 	vec3 pos, p;  // position, momentum
     double mass, charge, weight;  // weight is the number of actual particles this instance represents
-	//particle *next;  // treat the particles as a list. this points to the next particle in the list
 } particle;
 
 typedef struct {
@@ -28,13 +27,15 @@ typedef struct {
 	// double rho; // average charge density at grid point
 } grid_point;
 
-typedef struct {
-	grid_point* points[8];
-	grid_cell** children
-} grid_cell;
+struct grid_cell {
+	grid_point *points[8];
+	struct grid_cell **children;
+};
+
+typedef struct grid_cell grid_cell;
 
 
-#define c (3e8)
+#define C (3e8)
 
 double time; // changes every iteration
 
@@ -45,16 +46,16 @@ double time; // changes every iteration
 #define z_max (1e-4)
 
 // number of cells in each direction; nx+1 is number of grid points
-#define nx (50) 
-#define ny (50)
-#define nz (50)
+#define nx (20) 
+#define ny (20)
+#define nz (20)
 
 #define dx (x_max/nx)
 #define dy (y_max/ny)
 #define dz (z_max/nz)
 
 // Use the smallest of dx, dy, or dz!!!
-#define dt (dz/c)
+#define dt (dz/C)
 
 #define round_i(x) ((int) (x+0.5))
 //inline int round_i(double x) {

@@ -1,3 +1,5 @@
+#include <stdlib.h>
+
 #include "decs.h"
 #include "math.h"
 #include "list.h"
@@ -43,12 +45,10 @@ void push_particles(grid_cell ***grid, List part_list) {
     // Declare variables!
 	if (!list_has_next(part_list))
 			return;
-    particle *curr = list_get_next(&part_list);
-	Node *prev = part_list.sentinel;
     double ux, uy, uz;
     double root;
     int xl, yu, zn;
-    double xlf, yuf, znf;
+    double xrf, ydf, zff;
     vec3 E, B;
     double uxm, uym, uzm;
     double uxp, uyp, uzp;
@@ -66,56 +66,116 @@ void push_particles(grid_cell ***grid, List part_list) {
     double idtx = idt*idy;
     double idxy = idx*idy;
     double tau, taux, taux2, tauy, tauy2, tauz, tauz2;
-    grid_point** point;
+	grid_cell* cell;
     
+	Node *prev = part_list.sentinel;
+	particle *curr;
     //loop over all the particles
-    while (true){
+    while (list_has_next(part_list)) {
+		curr = list_get_next(&part_list);
 		double cmratio = curr->charge/curr->mass;
         part_mc = C*curr->mass;
         ipart_mc = 1./part_mc;
 
         // u is gamma*v, see Birdsall and Langdon sectoin 15-4
-	ux = (curr->p).x * ipart_mc;
-	uy = (curr->p).y * ipart_mc;
-	uz = (curr->p).z * ipart_mc;
-	//Calculate velocity
-	root = dtco2 / sqrt(ux*ux + uy*uy + uz*uz + 1.);
+		ux = (curr->p).x * ipart_mc;
+		uy = (curr->p).y * ipart_mc;
+		uz = (curr->p).z * ipart_mc;
+		//Calculate velocity
+		root = dtco2 / sqrt(ux*ux + uy*uy + uz*uz + 1.);
 
-	//Move half timestep
-	(curr->pos).x += ux * root;
-	(curr->pos).y += uy * root;
-	(curr->pos).z += uz * root;
+		//Move half timestep
+		(curr->pos).x += ux * root;
+		(curr->pos).y += uy * root;
+		(curr->pos).z += uz * root;
 
-	// Check if out of bounds
-	if ((((curr->pos).x <= 0 || (curr->pos).y <= 0) || (curr->pos).z <= 0) || (((curr->pos).x >= x_max || (curr->pos).y >= y_max) || (curr->pos).z >= z_max)){
-	    list_pop(&part_list, prev);
-	    //move on to the next one
-	    if (list_has_next(part_list)){
-		curr = list_get_next(&part_list);
-		continue;
-	    }
-	    else{
-	    	list_reset_iter(&part_list);
-		return;
-	    }
-	}
+		// Check if out of bounds
+		if ((((curr->pos).x <= 0 || (curr->pos).y <= 0) || (curr->pos).z <= 0) || (((curr->pos).x >= x_max || (curr->pos).y >= y_max) || (curr->pos).z >= z_max)){
+			list_pop(&part_list, prev);
+			continue;
+		}
 
-	//Do interpolation to find e and b here.
-        // x-left and y-up indices
+		//Do interpolation to find e and b here.
+        // x-left, y-up, and z-near indices
         xl = floor((curr->pos).x * idx);
         yu = floor((curr->pos).y * idy);
-	zn = floor((curr->pos).z * idz);
-        xlf = ((curr->pos).x - xl*dx) / dx;
-        yuf = ((curr->pos).y - yu*dy) / dy;
-	znf = ((curr->pos).z - zn*dz) / dz;
-        /*E = interp3(grid[xl][yu][zn].E, grid[xl][yu][zn+1].E, grid[xl][yu+1][zn].E, grid[xl+1][yu][zn].E, grid[xl][yu+1][zn+1].E, grid[xl+1][yu][zn+1].E, grid[xl][yu+1][zn+1].E, grid[xl+1][yu+1][zn+1].E, xlf, yuf, znf);
-        B = interp3(grid[xl][yu][zn].B, grid[xl][yu][zn+1].B, grid[xl][yu+1][zn].B, grid[xl+1][yu][zn].B, grid[xl][yu+1][zn+1].B, grid[xl+1][yu][zn+1].B, grid[xl][yu+1][zn+1].B, grid[xl+1][yu+1][zn+1].B, xlf, yuf, znf);*/
+		zn = floor((curr->pos).z * idz);
+		// x-right fraction, ...
+        xrf = ((curr->pos).x - xl*dx) / dx;
+        ydf = ((curr->pos).y - yu*dy) / dy;
+		zff = ((curr->pos).z - zn*dz) / dz;
+        /*E = interp3(grid[xl][yu][zn].E, grid[xl][yu][zn+1].E, grid[xl][yu+1][zn].E, grid[xl+1][yu][zn].E, grid[xl][yu+1][zn+1].E, grid[xl+1][yu][zn+1].E, grid[xl][yu+1][zn+1].E, grid[xl+1][yu+1][zn+1].E, xrf, ydf, zff);
+        B = interp3(grid[xl][yu][zn].B, grid[xl][yu][zn+1].B, grid[xl][yu+1][zn].B, grid[xl+1][yu][zn].B, grid[xl][yu+1][zn+1].B, grid[xl+1][yu][zn+1].B, grid[xl][yu+1][zn+1].B, grid[xl+1][yu+1][zn+1].B, xrf, ydf, zff);*/
 
-        point = grid[xl][yu][zn].points;
+        cell = &(grid[xl][yu][zn]);
+
+		//Find the finest cell that contains the particle
+		while (cell->children != NULL){
+			if (xrf < .5){
+				if (ydf < .5){
+					if (zff < .5){
+						cell = cell->children[0];
+						xrf*=2;
+						ydf*=2;
+						zff*=2;
+					}
+					else{
+						cell = cell->children[4];
+						xrf*=2;
+						ydf*=2;
+						zff=(zff-.5)*2;
+					}
+				}
+				else{
+					if (zff < .5){
+						cell = cell->children[2];
+						xrf*=2;
+						ydf=(ydf-.5)*2;
+						zff*=2;
+					}
+					else{
+						cell = cell->children[6];
+						xrf*=2;
+						ydf=(ydf-.5)*2;
+						zff=(zff-.5)*2;
+					}
+				}
+			}
+			else{
+				if (ydf < .5){
+					if (zff < .5){
+						cell = cell->children[1];
+						xrf=(xrf-.5)*2;
+						ydf*=2;
+						zff*=2;
+					}
+					else{
+						cell = cell->children[5];
+						xrf=(xrf-.5)*2;
+						ydf*=2;
+						zff=(zff-.5)*2;
+					}
+				}
+				else{
+					if (zff < .5){
+						cell = cell->children[3];
+						xrf=(xrf-.5)*2;
+						ydf=(ydf-.5)*2;
+						zff*=2;
+					}
+					else{
+						cell = cell->children[7];
+						xrf=(xrf-.5)*2;
+						ydf=(ydf-.5)*2;
+						zff=(zff-.5)*2;
+					}
+				}
+			}
+		}
 
         //Do interpolation with the new grid_cell
-        E = interp3(point[0]->E, point[1]->E, point[2]->E, point[4]->E, point[3]->E, point[5]->E, point[6]->E, point[7]->E, xlf, yuf, znf);
-        B = interp3(point[0]->B, point[1]->B, point[2]->B, point[4]->B, point[3]->B, point[5]->B, point[6]->B, point[7]->B, xlf, yuf, znf);
+        E = interp3(cell->points[0]->E, cell->points[1]->E, cell->points[2]->E, cell->points[4]->E, cell->points[3]->E, cell->points[5]->E, cell->points[6]->E, cell->points[7]->E, 1.-xrf, 1.-ydf, 1.-zff);
+        B = interp3(cell->points[0]->B, cell->points[1]->B, cell->points[2]->B, cell->points[4]->B, cell->points[3]->B, cell->points[5]->B, cell->points[6]->B, cell->points[7]->B, 1.-xrf, 1.-ydf, 1.-zff);
         
         // Update momenta to u_-, from Birdsall and Langdon
         uxm = ux + cmratio * E.x;
@@ -144,25 +204,17 @@ void push_particles(grid_cell ***grid, List part_list) {
         uz = uzp + cmratio*E.z;
 
         // Full push
-	root = dtco2 / sqrt(ux*ux + uy*uy + uz*uz + 1.);
+		root = dtco2 / sqrt(ux*ux + uy*uy + uz*uz + 1.);
 
         (curr->pos).x += ux*root;
         (curr->pos).y += uy*root;
-	(curr->pos).z += uz*root;
+		(curr->pos).z += uz*root;
 
-	// Check if out of bounds
-	if ((((curr->pos).x <= 0 || (curr->pos).y <= 0) || (curr->pos).z <= 0) || (((curr->pos).x >= x_max || (curr->pos).y >= y_max) || (curr->pos).z >= z_max)){
-            list_pop(&part_list, prev);
-	    //move on to the next one
-	    if (list_has_next(part_list)){
-	        curr = list_get_next(&part_list);
-		continue;
-	    }
-	    else{
-		list_reset_iter(&part_list);
-		return;
-	    }
-	}
+		// Check if out of bounds
+		if ((((curr->pos).x <= 0 || (curr->pos).y <= 0) || (curr->pos).z <= 0) || (((curr->pos).x >= x_max || (curr->pos).y >= y_max) || (curr->pos).z >= z_max)){
+			list_pop(&part_list, prev);
+			continue;
+		}
 
         // Store
         (curr->p).x = ux*part_mc;
@@ -172,14 +224,7 @@ void push_particles(grid_cell ***grid, List part_list) {
 		
         //This is where the current and charge density would be calculatted.
 
-	//move on to the next one
-	if (list_has_next(part_list)){
-            prev = part_list.iter;
-	    curr = list_get_next(&part_list);
-	}
-	else{
-	    list_reset_iter(&part_list);
-	    return;
-	}
+		//move on to the next one
+		prev = prev->next;
     }
 }
