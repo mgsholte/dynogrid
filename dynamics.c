@@ -17,12 +17,16 @@ void laser(grid_point *grid_p, double x, double y, double z, double t) {
 
 void recursive_laser(grid_cell *cell, double x_spat, double y_spat, double z_spat, int depth, double t){
 	//BASE CASE:
-	int cn; //cn for child number
+	int cn; //cn stands for child number
 	if(cell->children == NULL){
-		//cell has no children, so apply laser:
+		//cell has no children, so apply laser to each of the cell's gridpoints:
 		for(cn = 0; cn < 8; cn++){
-			laser(cell->points[cn],)
-		}
+			laser(cell->points[cn], x_spat+(cn&1)*dx/pow(2.0,depth),
+									y_spat+((cn&2)/2)*dy/pow(2.0,depth),
+									z_spat+((cn&4)/4)*dz/pow(2.0,depth), time); // ??? (cn&1)/4 or (cn&4)/4
+									// z_spat+((cn&1)/4)*dz/pow(2.0,depth), time);
+		}//end for
+		return;
 	}
 	//RECURSIVE STEP:
 	else{
@@ -30,12 +34,10 @@ void recursive_laser(grid_cell *cell, double x_spat, double y_spat, double z_spa
 		for(cn = 0; cn < 8; cn++){
 			recursive_laser(cell->children[cn], x_spat+(cn&1)*dx/pow(2.0,depth+1),
 										   		y_spat+((cn&2)/2)*dy/pow(2.0,depth+1),
-										   		z_spat+((cn&1)/4)*dz/pow(2.0,depth+1), depth+1, time);
+										   		z_spat+((cn&4)/4)*dz/pow(2.0,depth+1), depth+1, time);
+										   		// z_spat+((cn&1)/4)*dz/pow(2.0,depth+1), depth+1, time);
 		}//end for
 	}//end if else
-
-
-
 }//end recursive_laser function
 
 
@@ -44,7 +46,7 @@ void update_grid(grid_cell ***grid_cells) {
 	for (x = 0; x < nx; x++) {
 		for (y = 0; y < ny; y++) {
 			for (z = 0; z < nz; z++) {
-				recursive_laser(grid_cells[x][y][z].points[0], x*dx, y*dy, z*dz, time);
+				recursive_laser(grid_cells[x][y][z].points[0], x*dx, y*dy, z*dz, 0, time);
 				update_grid_cell(grid_cells[x][y][z], x, y, z);
 			}
 		}
@@ -135,7 +137,8 @@ void refine(grid_cell* cell, double x_spat, double y_spat, double z_spat, int de
 			for(cn = 0; cn < 8; cn++){
 				refine(cell->children[cn], x_spat+(cn&1)*dx/pow(2.0,depth+1),
 										   y_spat+((cn&2)/2)*dy/pow(2.0,depth+1),
-										   z_spat+((cn&1)/4)*dz/pow(2.0,depth+1), depth+1);
+										   z_spat+((cn&4)/4)*dz/pow(2.0,depth+1), depth+1);
+										   // z_spat+((cn&1)/4)*dz/pow(2.0,depth+1), depth+1);
 			}//end for 
 		}else{
 			return;
@@ -147,7 +150,8 @@ void refine(grid_cell* cell, double x_spat, double y_spat, double z_spat, int de
 			for(cn = 0; cn < 8; cn++){
 				refine(cell->children[cn], x_spat+(cn&1)*dx/pow(2.0,depth+1),
 										   y_spat+((cn&2)/2)*dy/pow(2.0,depth+1),
-										   z_spat+((cn&1)/4)*dz/pow(2.0,depth+1), depth+1);
+										   z_spat+((cn&4)/4)*dz/pow(2.0,depth+1), depth+1);
+										   // z_spat+((cn&1)/4)*dz/pow(2.0,depth+1), depth+1);
 			}//end for 
 	}else{
 		printf("ERROR! This should never happen\n"); //TODO: remove after debugging
