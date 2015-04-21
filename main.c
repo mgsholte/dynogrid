@@ -12,8 +12,7 @@ static const double min(const double x, const double y, const double z) {
 			: (y < z ? y : z);
 }
 
-const double dt = min(dx, dy, dz)/C;
-double time = 0.0;
+double time = 0.;
 
 int main(int argc, char *argv[]) {
 	//dt = min(dx,dy,dz)/C;

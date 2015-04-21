@@ -1,5 +1,5 @@
-CC = mpicxx
-CFLAGS = -O3 -w
+CC = mpicc
+CFLAGS = -g
 LFLAGS = -O3
 
 OBJS := $(patsubst %.c,%.o,$(wildcard *.c))
