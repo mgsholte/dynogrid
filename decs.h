@@ -3,7 +3,7 @@
 
 //Definitions go here to avoid clutter elsewhere
 
-//typedef enum { false, true } bool;
+typedef enum { false, true } bool;
 
 // a 2D vector
 typedef struct {
@@ -19,7 +19,6 @@ typedef struct {
 typedef struct {
 	vec3 pos, p;  // position, momentum
     double mass, charge, weight;  // weight is the number of actual particles this instance represents
-	//particle *next;  // treat the particles as a list. this points to the next particle in the list
 } particle;
 
 typedef struct {
@@ -28,9 +27,15 @@ typedef struct {
 	// double rho; // average charge density at grid point
 } grid_point;
 
+struct grid_cell {
+	grid_point *points[8];
+	struct grid_cell **children;
+};
+typedef struct grid_cell grid_cell;
+
 #define C (3e8)
 
-extern double time; // changes every iteration
+double time; // changes every iteration
 
 #define t_end (3.3333e-13)
 
@@ -47,9 +52,8 @@ extern double time; // changes every iteration
 #define dy (y_max/ny)
 #define dz (z_max/nz)
 
-
-// the time step
-extern const double dt;
+// Use the smallest of dx, dy, or dz!!!
+#define dt (dz/C)
 
 #define round_i(x) ((int) (x+0.5))
 //inline int round_i(double x) {
@@ -62,5 +66,6 @@ extern const double dt;
 #define BASE_ELECTRON_MASS (9.109e-31)
 #define BASE_PROTON_CHARGE (1.602e-19)
 #define BASE_ELECTRON_CHARGE (-1.0*BASE_PROTON_CHARGE)
+#define THRESHOLD (1.0) // threshold for refining 
 
 #endif //DECS_H

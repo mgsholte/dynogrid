@@ -1,0 +1,20 @@
+// All Pseudocode in here
+
+update_grid
+	foreach (grid_cell)
+		update_grid_cell(grid_cell)
+	end
+	
+update_grid_cell(grid_cell)
+	if (grid_cell.children != NULL)
+		bool want_coarsen = ask_to_coarsen(grid_cell)
+		if (want_coarsen)
+			coarsen(grid_cell)
+		else
+			foreach (child)
+				update_grid_cell(child)
+			end
+		end
+	else
+		bool refined = ask_to_refine(grid_cell)
+		(unfinished)

@@ -1,3 +1,5 @@
+#include <stdlib.h>
+
 #include "decs.h"
 #include "math.h"
 #include "list.h"
@@ -13,42 +15,40 @@ vec3 interp(vec3 field00, vec3 field01, vec3 field10, vec3 field11, double xlf, 
     double xrf = 1. - xlf;
     double ydf = 1.- yuf;
     // Not sure if these are proper vec3 accesses.  May need to unroll.
-        // Bilinear interpolation from Wikipedia.  There are certainly
-        // better interpolation methods to use for PIC codes.
+    // Bilinear interpolation from Wikipedia.  There are certainly
+    // better interpolation methods to use for PIC codes.
     interped.x = norm * ( field00.x*xrf*yuf + field10.x*xlf*yuf + field01.x*xrf*ydf + field11.x*xlf*ydf);
     interped.y = norm * ( field00.y*xrf*yuf + field10.y*xlf*yuf + field01.y*xrf*ydf + field11.y*xlf*ydf);
     interped.z = norm * ( field00.z*xrf*yuf + field10.z*xlf*yuf + field01.z*xrf*ydf + field11.z*xlf*ydf);
-	return interped;
+    return interped;
 }
 
 // 3D Interpalation helper
 vec3 interp3(vec3 field000, vec3 field001, vec3 field010, vec3 field100, vec3 field011, vec3 field101, vec3 field110, vec3 field111, double xlf, double yuf, double znf){
-	vec3 interped;
+    vec3 interped;
     // double norm = 1./(dx*dy*dz);
     double norm = 1.;
-	double xrf = 1.-xlf;
-	double ydf = 1. - yuf;
-	double zff = 1. - znf;
-	interped.x = norm * (field000.x*xlf*yuf*znf + field001.x*xlf*yuf*zff + field010.x*xlf*ydf*znf + field100.x*xrf*yuf*znf + field011.x*xlf*ydf*zff + field101.x*xrf*yuf*zff + field110.x*xrf*ydf*znf + field111.x*xrf*ydf*zff);
-	interped.y = norm * (field000.y*xlf*yuf*znf + field001.y*xlf*yuf*zff + field010.y*xlf*ydf*znf + field100.y*xrf*yuf*znf + field011.y*xlf*ydf*zff + field101.y*xrf*yuf*zff + field110.y*xrf*ydf*znf + field111.y*xrf*ydf*zff);
-	interped.z = norm * (field000.z*xlf*yuf*znf + field001.z*xlf*yuf*zff + field010.z*xlf*ydf*znf + field100.z*xrf*yuf*znf + field011.z*xlf*ydf*zff + field101.z*xrf*yuf*zff + field110.z*xrf*ydf*znf + field111.z*xrf*ydf*zff);
-	return interped;
+    double xrf = 1.-xlf;
+    double ydf = 1. - yuf;
+    double zff = 1. - znf;
+    interped.x = norm * (field000.x*xlf*yuf*znf + field001.x*xlf*yuf*zff + field010.x*xlf*ydf*znf + field100.x*xrf*yuf*znf + field011.x*xlf*ydf*zff + field101.x*xrf*yuf*zff + field110.x*xrf*ydf*znf + field111.x*xrf*ydf*zff);
+    interped.y = norm * (field000.y*xlf*yuf*znf + field001.y*xlf*yuf*zff + field010.y*xlf*ydf*znf + field100.y*xrf*yuf*znf + field011.y*xlf*ydf*zff + field101.y*xrf*yuf*zff + field110.y*xrf*ydf*znf + field111.y*xrf*ydf*zff);
+    interped.z = norm * (field000.z*xlf*yuf*znf + field001.z*xlf*yuf*zff + field010.z*xlf*ydf*znf + field100.z*xrf*yuf*znf + field011.z*xlf*ydf*zff + field101.z*xrf*yuf*zff + field110.z*xrf*ydf*znf + field111.z*xrf*ydf*zff);
+    return interped;
 }
 
 // Particle pusher!!!!
-void push_particles(grid_point ***grid, List part_list) {
+void push_particles(grid_cell ***grid, List part_list) {
 
 	list_reset_iter(&part_list);
 
     // Declare variables!
 	if (!list_has_next(part_list))
 			return;
-    particle *curr = list_get_next(&part_list);
-	Node *prev = part_list.sentinel;
     double ux, uy, uz;
     double root;
     int xl, yu, zn;
-	double xlf, yuf, znf;
+    double xrf, ydf, zff;
     vec3 E, B;
     double uxm, uym, uzm;
     double uxp, uyp, uzp;
@@ -56,7 +56,7 @@ void push_particles(grid_point ***grid, List part_list) {
     //  Just copying multiplication factors from EPOCH
     double idx = 1./dx;
     double idy = 1./dy;
-	double idz = 1./dz;
+    double idz = 1./dz;
     double idt = 1./dt;
     double dto2 = dt/2.;
     double dtco2 = C * dto2;
@@ -65,10 +65,14 @@ void push_particles(grid_point ***grid, List part_list) {
     double idty = idt*idy;
     double idtx = idt*idy;
     double idxy = idx*idy;
-	double tau, taux, taux2, tauy, tauy2, tauz, tauz2;
+    double tau, taux, taux2, tauy, tauy2, tauz, tauz2;
+	grid_cell* cell;
     
+	Node *prev = part_list.sentinel;
+	particle *curr;
     //loop over all the particles
-    while (true){
+    while (list_has_next(part_list)) {
+		curr = list_get_next(&part_list);
 		double cmratio = curr->charge/curr->mass;
         part_mc = C*curr->mass;
         ipart_mc = 1./part_mc;
@@ -88,27 +92,90 @@ void push_particles(grid_point ***grid, List part_list) {
 		// Check if out of bounds
 		if ((((curr->pos).x <= 0 || (curr->pos).y <= 0) || (curr->pos).z <= 0) || (((curr->pos).x >= x_max || (curr->pos).y >= y_max) || (curr->pos).z >= z_max)){
 			list_pop(&part_list, prev);
-			//move on to the next one
-			if (list_has_next(part_list)){
-				curr = list_get_next(&part_list);
-				continue;
-			}
-			else{
-				list_reset_iter(&part_list);
-				return;
-			}
+			continue;
 		}
 
 		//Do interpolation to find e and b here.
-        // x-left and y-up indices
+        // x-left, y-up, and z-near indices
         xl = floor((curr->pos).x * idx);
         yu = floor((curr->pos).y * idy);
 		zn = floor((curr->pos).z * idz);
-        xlf = ((curr->pos).x - xl*dx) / dx;
-        yuf = ((curr->pos).y - yu*dy) / dy;
-		znf = ((curr->pos).z - zn*dz) / dz;
-        E = interp3(grid[xl][yu][zn].E, grid[xl][yu][zn+1].E, grid[xl][yu+1][zn].E, grid[xl+1][yu][zn].E, grid[xl][yu+1][zn+1].E, grid[xl+1][yu][zn+1].E, grid[xl][yu+1][zn+1].E, grid[xl+1][yu+1][zn+1].E, xlf, yuf, znf);
-        B = interp3(grid[xl][yu][zn].B, grid[xl][yu][zn+1].B, grid[xl][yu+1][zn].B, grid[xl+1][yu][zn].B, grid[xl][yu+1][zn+1].B, grid[xl+1][yu][zn+1].B, grid[xl][yu+1][zn+1].B, grid[xl+1][yu+1][zn+1].B, xlf, yuf, znf);
+		// x-right fraction, ...
+        xrf = ((curr->pos).x - xl*dx) / dx;
+        ydf = ((curr->pos).y - yu*dy) / dy;
+		zff = ((curr->pos).z - zn*dz) / dz;
+        /*E = interp3(grid[xl][yu][zn].E, grid[xl][yu][zn+1].E, grid[xl][yu+1][zn].E, grid[xl+1][yu][zn].E, grid[xl][yu+1][zn+1].E, grid[xl+1][yu][zn+1].E, grid[xl][yu+1][zn+1].E, grid[xl+1][yu+1][zn+1].E, xrf, ydf, zff);
+        B = interp3(grid[xl][yu][zn].B, grid[xl][yu][zn+1].B, grid[xl][yu+1][zn].B, grid[xl+1][yu][zn].B, grid[xl][yu+1][zn+1].B, grid[xl+1][yu][zn+1].B, grid[xl][yu+1][zn+1].B, grid[xl+1][yu+1][zn+1].B, xrf, ydf, zff);*/
+
+        cell = &(grid[xl][yu][zn]);
+
+		//Find the finest cell that contains the particle
+		while (cell->children != NULL){
+			if (xrf < .5){
+				if (ydf < .5){
+					if (zff < .5){
+						cell = cell->children[0];
+						xrf*=2;
+						ydf*=2;
+						zff*=2;
+					}
+					else{
+						cell = cell->children[4];
+						xrf*=2;
+						ydf*=2;
+						zff=(zff-.5)*2;
+					}
+				}
+				else{
+					if (zff < .5){
+						cell = cell->children[2];
+						xrf*=2;
+						ydf=(ydf-.5)*2;
+						zff*=2;
+					}
+					else{
+						cell = cell->children[6];
+						xrf*=2;
+						ydf=(ydf-.5)*2;
+						zff=(zff-.5)*2;
+					}
+				}
+			}
+			else{
+				if (ydf < .5){
+					if (zff < .5){
+						cell = cell->children[1];
+						xrf=(xrf-.5)*2;
+						ydf*=2;
+						zff*=2;
+					}
+					else{
+						cell = cell->children[5];
+						xrf=(xrf-.5)*2;
+						ydf*=2;
+						zff=(zff-.5)*2;
+					}
+				}
+				else{
+					if (zff < .5){
+						cell = cell->children[3];
+						xrf=(xrf-.5)*2;
+						ydf=(ydf-.5)*2;
+						zff*=2;
+					}
+					else{
+						cell = cell->children[7];
+						xrf=(xrf-.5)*2;
+						ydf=(ydf-.5)*2;
+						zff=(zff-.5)*2;
+					}
+				}
+			}
+		}
+
+        //Do interpolation with the new grid_cell
+        E = interp3(cell->points[0]->E, cell->points[1]->E, cell->points[2]->E, cell->points[4]->E, cell->points[3]->E, cell->points[5]->E, cell->points[6]->E, cell->points[7]->E, 1.-xrf, 1.-ydf, 1.-zff);
+        B = interp3(cell->points[0]->B, cell->points[1]->B, cell->points[2]->B, cell->points[4]->B, cell->points[3]->B, cell->points[5]->B, cell->points[6]->B, cell->points[7]->B, 1.-xrf, 1.-ydf, 1.-zff);
         
         // Update momenta to u_-, from Birdsall and Langdon
         uxm = ux + cmratio * E.x;
@@ -146,15 +213,7 @@ void push_particles(grid_point ***grid, List part_list) {
 		// Check if out of bounds
 		if ((((curr->pos).x <= 0 || (curr->pos).y <= 0) || (curr->pos).z <= 0) || (((curr->pos).x >= x_max || (curr->pos).y >= y_max) || (curr->pos).z >= z_max)){
 			list_pop(&part_list, prev);
-			//move on to the next one
-			if (list_has_next(part_list)){
-				curr = list_get_next(&part_list);
-				continue;
-			}
-			else{
-				list_reset_iter(&part_list);
-				return;
-			}
+			continue;
 		}
 
         // Store
@@ -166,13 +225,6 @@ void push_particles(grid_point ***grid, List part_list) {
         //This is where the current and charge density would be calculatted.
 
 		//move on to the next one
-		if (list_has_next(part_list)){
-			prev = part_list.iter;
-			curr = list_get_next(&part_list);
-		}
-		else{
-			list_reset_iter(&part_list);
-			return;
-		}
+		prev = prev->next;
     }
 }

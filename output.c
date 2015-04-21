@@ -59,6 +59,8 @@ void output_grid_impl(int itNum, int numFiles, grid_point ***grid_points, List p
 	double magE, magB;
 	// print |E|, |B| for each grid point
 	fprintf(pfile, "|E|, |B|\n");
+	fprintf(pfile, "not yet implemented for adaptive grid\n");
+	/* TODO: make work for grid cells
 	for(x = 0; x <= nx; x++) {
 		for(y = 0; y <= ny; y++) {
             for(z = 0; z <= nz; z++) {
@@ -70,6 +72,7 @@ void output_grid_impl(int itNum, int numFiles, grid_point ***grid_points, List p
             }
         }
     }
+	*/
     fclose(pfile);
 
 	// PARTICLE OUTPUT
@@ -91,3 +94,4 @@ void output_grid_impl(int itNum, int numFiles, grid_point ***grid_points, List p
     }
     fclose(pfile);
 }
+
