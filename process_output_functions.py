@@ -197,7 +197,7 @@ def getParticleData2D(numFiles, timesteps, ext):
     return timesteps, p_min, p_max
 
 
-def getGridData3D(numFiles, ext, nx, ny, nz):
+def getGridData3D(numFiles, ext, nx, ny, nz, dx, dy, dz):
     numLines = int(nx*ny*nz)
     timesteps = list()
     # suck in all the gridpoint files and parse the text for the relevant data:
@@ -215,9 +215,10 @@ def getGridData3D(numFiles, ext, nx, ny, nz):
         # Zs = list()
         # Bs = list()
         # Es = list()
-        Xs = np.empty(numLines, dtype=np.float64)
-        Ys = np.empty(numLines, dtype=np.float64)
-        Zs = np.empty(numLines, dtype=np.float64)
+        Xs, Ys, Zs = np.mgrid[0:nx*dx:dx, 0:ny*dy:dy, 0:nz*dz:dz]
+#        Xs = np.empty(numLines, dtype=np.float64)
+#        Ys = np.empty(numLines, dtype=np.float64)
+#        Zs = np.empty(numLines, dtype=np.float64)
         Bs = np.empty(numLines, dtype=np.float64)
         Es = np.empty(numLines, dtype=np.float64)
         with open(fname, 'r') as grid_file:
@@ -225,40 +226,44 @@ def getGridData3D(numFiles, ext, nx, ny, nz):
             line_ct = -1
             for line in grid_file:
                 line_ct += 1
-                if line_ct < 5:
+                if line_ct < 1:
                     continue
                 # parse eachline to get needed data:
                 eachline = line.split(',') # eachline is a list of the results of the split
-                xcoord = float(eachline[0])
-                ycoord = float(eachline[1])
-                zcoord = float(eachline[2])
-                E = float(eachline[3])
-                B = float(eachline[4])
+#                xcoord = float(eachline[0])
+#                ycoord = float(eachline[1])
+#                zcoord = float(eachline[2])
+#                E = float(eachline[3])
+#                B = float(eachline[4])
+                E = float(eachline[0])
+                B = float(eachline[1])
                 # print("E is: " + str(E) + "\tB is: " + str(B))
-                if E < E_min:
-                    E_min = E
-                if E > E_max:
-                    E_max = E
-                if B < B_min:
-                    B_min = B
-                if B > B_max:
-                    B_max = B
+                E = max(E_max, min(E_min, E))
+                B = max(B_max, min(B_min, B))
+#                if E < E_min:
+#                    E_min = E
+#                if E > E_max:
+#                    E_max = E
+#                if B < B_min:
+#                    B_min = B
+#                if B > B_max:
+#                    B_max = B
                 # Xs.append(xcoord)
                 # Ys.append(ycoord)
                 # Zs.append(zcoord)
                 # Es.append(E)
                 # Bs.append(B)
-                Xs[line_ct - 5] = xcoord
-                Ys[line_ct - 5] = ycoord
-                Zs[line_ct - 5] = zcoord
-                Es[line_ct - 5] = E
-                Bs[line_ct - 5] = B
+#                Xs[line_ct - 5] = xcoord
+#                Ys[line_ct - 5] = ycoord
+#                Zs[line_ct - 5] = zcoord
+                Es[line_ct - 1] = E
+                Bs[line_ct - 1] = B
                 # store data in a dictionary:
-        gridpoints = {'Xs':Xs, 'Ys':Ys, 'Zs':Zs, 'Es':Es, 'Bs':Bs}
+        gridpoints = {'Xs':Xs.flatten(), 'Ys':Ys.flatten(), 'Zs':Zs.flatten(), 'Es':Es, 'Bs':Bs}
         timesteps.append({'gridpoints':gridpoints,'particles':''})
     return timesteps, E_min, E_max, B_min, B_max
         
-def getParticleData3D(numFiles, timesteps, ext, numParticles):
+def getParticleData3D(numFiles, timesteps, ext):
     p_min = 0.0
     p_max = 0.0        
     # suck in all the particles files and parse the text for the relevant data:            
@@ -266,24 +271,21 @@ def getParticleData3D(numFiles, timesteps, ext, numParticles):
     for i in xrange(0, numFiles):
         fname = str(i) + str(fname_particles)
         particles = dict()
-        Xs = np.empty(numParticles, dtype=np.float64)
-        Ys = np.empty(numParticles, dtype=np.float64)
-        Zs = np.empty(numParticles, dtype=np.float64)
-        ps = np.empty(numParticles, dtype=np.float64)
         with open(fname, 'r') as particle_file:
+            particle_file.readline()
+            numParticles = int(particle_file.readline())
+            Xs = np.empty(numParticles, dtype=np.float64)
+            Ys = np.empty(numParticles, dtype=np.float64)
+            Zs = np.empty(numParticles, dtype=np.float64)
+            ps = np.empty(numParticles, dtype=np.float64)
             particles = list()
-            particle_file_lines = particle_file.readlines() # grid_file_lines is a list of the lines in grid_file
-            line_ct = -1
-            for line in particle_file_lines:
-                line_ct += 1
-                if line_ct < 5:
-                    continue
+            for lnum, line in enumerate(particle_file):
                 # parse eachline to get needed data:
                 eachline = line.split(',') # eachline is a list of the results of the split
-                xcoord = float(eachline[1])
-                ycoord = float(eachline[2])
-                zcoord = float(eachline[3])
-                p = float(eachline[4])
+                xcoord = float(eachline[0])
+                ycoord = float(eachline[1])
+                zcoord = float(eachline[2])
+                p = float(eachline[3])
                 # print("p_xcoord is: " + str(xcoord) + "\tp_ycoord is: " + str(ycoord) + "\tp_zcoord is: " + str(zcoord))
                 # print("p is: " + str(p))
                 if p < p_min:
@@ -291,16 +293,16 @@ def getParticleData3D(numFiles, timesteps, ext, numParticles):
                 if p > p_max:
                     p_max = p
                 # store data in a dictionary:
-                Xs[line_ct-5] = xcoord
-                Ys[line_ct-5] = ycoord
-                Zs[line_ct-5] = zcoord
-                ps[line_ct-5] = p
+                Xs[lnum] = xcoord
+                Ys[lnum] = ycoord
+                Zs[lnum] = zcoord
+                ps[lnum] = p
         particles = {'Xs':Xs, 'Ys':Ys, 'Zs':Zs, 'ps':ps}
         (timesteps[i])['particles'] = particles
     return timesteps, p_min, p_max
         
         
-def normalizeData(timesteps, E_min, E_max, B_min, B_max, p_min, p_max, nx, ny, nz, numParticles):
+def normalizeData(timesteps, E_min, E_max, B_min, B_max, p_min, p_max, nx, ny, nz):
     # (x-min)/(max-min)
     for t in xrange(0, len(timesteps)):
         # normalize gridpoint data:
@@ -323,6 +325,7 @@ def normalizeData(timesteps, E_min, E_max, B_min, B_max, p_min, p_max, nx, ny, n
                 # print("B_normed is: " + str((((timesteps[t])['gridpoints'])['Bs'])[grdpt]))
         # normalize particle data:        
         # for ptcl in xrange(0, len(((timesteps[t])['particles'])['ps'])):
+        numParticles = len(timesteps[t]['particles']['ps'])
         for ptcl in xrange(0, numParticles):
             # normalize p in each particle dictionary:
             if p_min == p_max:

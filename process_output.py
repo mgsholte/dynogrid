@@ -10,9 +10,6 @@ import os
 
 
 # gather inputs for creating "fake" files:
-fakes = raw_input("create fake files? \t")
-if(fakes == "y"):
-    numParticles = int(raw_input("how many particles? \t"))
 dim = int(raw_input("dim? \t"))
 vidLen = int(raw_input("video length in secs? \t"))
 simID = raw_input("simID? \t\t\t")
@@ -45,60 +42,28 @@ if(dim == 3):
     dz = float((((line.split(","))[2]).split("="))[1])
     line = params_file_lines[3]
     numFiles = int((line.split("="))[1])
-    line = params_file_lines[4]
-    numParticles = int((line.split("="))[1])
+#    line = params_file_lines[4]
+#    numParticles = int((line.split("="))[1])
 params_file.close()
-
-# # gather inputs for creating "fake" files:
-# fakes = raw_input("create fake files? \t")
-# ext = raw_input("extension? \t\t")
-# nx = int(raw_input("nx? \t\t\t"))
-# ny = int(raw_input("ny? \t\t\t"))
-# nz = int(raw_input("nz? \t\t\t"))
-# numParticles = int(raw_input("how many particles? \t"))
-# numFiles = int(raw_input("how many files? \t"))
-# vidLen = int(raw_input("video length in secs? \t"))
-# win_or_linux = raw_input("windows or linux? \t")
-# simID = raw_input("simID? \t\t\t")
-# # makevid = raw_input("make video? (y,n) \t")
-
-# nx = 100
-# ny = 100
-# nz = 100
-# numParticles = 1000
-# numFiles = 50
-# vidLen = 10
-# win_or_linux = "win"
 
 cur_dir = os.getcwd()
 path_name = "sim_" + str(simID)
 path = os.path.join(cur_dir, path_name)
 
-if(fakes == 'y'):
-    print("\n\nCreating fake files...")
-    # generate fake output files to test visualization functionality with:
-    if nz > 0:
-        dim = 3
-        fn.createTestOutputFiles_ALL3D(nx, ny, nz, numParticles, numFiles, ext)
-    else:
-        dim = 2
-        fn.createTestOutputFiles_ALL2D(nx, ny, numParticles, numFiles, ext)
-    print("*****************************\n")
-    
 # suck in all the gridpoint files and parse the text for the relevant data:
 if(dim == 2):
     timesteps, E_min, E_max, B_min, B_max = fn.getGridData2D(numFiles, ext)
 elif(dim == 3):
-    timesteps, E_min, E_max, B_min, B_max = fn.getGridData3D(numFiles, ext, nx, ny, nz)
+    timesteps, E_min, E_max, B_min, B_max = fn.getGridData3D(numFiles, ext, nx, ny, nz, dx, dy, dz)
     
 # suck in all the particles files and parse the text for the relevant data:
 if(dim == 2):
     timesteps, p_min, p_max, = fn.getParticleData2D(numFiles, timesteps, ext)
 elif (dim == 3):
-    timesteps, p_min, p_max, = fn.getParticleData3D(numFiles, timesteps, ext, numParticles)
+    timesteps, p_min, p_max, = fn.getParticleData3D(numFiles, timesteps, ext)
     
 # normalize data:
-timesteps = fn.normalizeData(timesteps, E_min, E_max, B_min, B_max, p_min, p_max, nx, ny, nz, numParticles)
+timesteps = fn.normalizeData(timesteps, E_min, E_max, B_min, B_max, p_min, p_max, nx, ny, nz)
     
 # plot data:    
 if(dim == 2):

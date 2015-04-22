@@ -10,6 +10,9 @@ grid_cell*** init_grid();
 // return the list of particles. put 'part_per_cell' particles in each grid cell within the rectangular prism with the specified origin and dimensions. the origin is the upper-left-front-most point of the prism
 List init_particles(vec3 origin, vec3 dims, int part_per_cell);
 
+bool coarsen(grid_cell *cell);
+void refine(grid_cell* cell, double x_spat, double y_spat, double z_spat, int depth);
+
 // print fields and particles at iteration i
 void output_grid(int itNum, int numFiles, grid_cell ***grid_cells, List particles);
 
