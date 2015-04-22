@@ -41,10 +41,9 @@ particle* list_get_next(List *l) {
 }
 
 static int node_length(Node *sentinel, Node *cur, int acc) {
-	if (cur == sentinel)
-		return acc;
-	else
-		return node_length(sentinel, cur->next, acc+1);
+	return (cur == sentinel)
+		? acc
+		: node_length(sentinel, cur->next, acc+1);
 }
 
 int list_length(List list) {
