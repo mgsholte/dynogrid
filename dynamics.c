@@ -3,7 +3,7 @@
 
 #include "dynamics.h"
 
-static const double inv_sigma_sq_2 = 1./(2*pow(sigma,2));
+static const double inv_sigma_sq_2 = 1./(2*sigma*sigma);
 
 // changes E and B at the given point and time
 void laser(grid_point *grid_p, double x, double y, double z, double t) {
