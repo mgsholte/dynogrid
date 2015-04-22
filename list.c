@@ -17,16 +17,17 @@ void list_add(List *list, particle *payload) {
 	(list->sentinel)->next = new_node;
 }
 
-// remove the node that comes after prev
-void list_pop(List *list, Node *prev) {
-	Node *x = prev->next;
-	prev->next = x->next;
-	list->iter = prev->next;
-	free(x);
+// remove the node currently being iterated
+void list_pop(List *l) {
+	Node *x = l->prev->next;  // get node to be removed
+	prev->next = x->next;     // unlink it
+	l->iter = prev->next;  // reset iterator
+	free(x);                  // free node allocation
 }
 
 void list_reset_iter(List *l) {
 	l->iter = l->sentinel->next;
+	l->prev = l->sentinel;
 }
 
 bool list_has_next(List l) {
@@ -36,6 +37,7 @@ bool list_has_next(List l) {
 particle* list_get_next(List *l) {
 	particle *ans = l->iter->payload;
 	l->iter = l->iter->next;
+	l->prev = l->prev->next;
 
 	return ans;
 }

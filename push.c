@@ -68,7 +68,6 @@ void push_particles(grid_cell ***grid, List part_list) {
     double tau, taux, taux2, tauy, tauy2, tauz, tauz2;
 	grid_cell* cell;
     
-	Node *prev = part_list.sentinel;
 	particle *curr;
     //loop over all the particles
     while (list_has_next(part_list)) {
@@ -91,7 +90,7 @@ void push_particles(grid_cell ***grid, List part_list) {
 
 		// Check if out of bounds
 		if ((((curr->pos).x <= 0 || (curr->pos).y <= 0) || (curr->pos).z <= 0) || (((curr->pos).x >= x_max || (curr->pos).y >= y_max) || (curr->pos).z >= z_max)){
-			list_pop(&part_list, prev);
+			list_pop(&part_list);
 			continue;
 		}
 
@@ -212,7 +211,7 @@ void push_particles(grid_cell ***grid, List part_list) {
 
 		// Check if out of bounds
 		if ((((curr->pos).x <= 0 || (curr->pos).y <= 0) || (curr->pos).z <= 0) || (((curr->pos).x >= x_max || (curr->pos).y >= y_max) || (curr->pos).z >= z_max)){
-			list_pop(&part_list, prev);
+			list_pop(&part_list);
 			continue;
 		}
 
@@ -223,8 +222,5 @@ void push_particles(grid_cell ***grid, List part_list) {
 
 		
         //This is where the current and charge density would be calculatted.
-
-		//move on to the next one
-		prev = prev->next;
     }
 }

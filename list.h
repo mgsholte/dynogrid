@@ -12,12 +12,13 @@ typedef struct Node {
 typedef struct {
 	Node *sentinel;  // dummy node which marks the beginning and end of the list
 	Node *iter;      // pointer to next node returned when iterating over the list
+	Node *prev;      // allows for popping the current element during an iteration
 } List;
 
 // list modification
 List list_init();
 void list_add(List *list, particle *payload);
-void list_pop(List *list, Node *prev);
+void list_pop(List *list);
 
 // list iteration
 void list_reset_iter(List *l);
