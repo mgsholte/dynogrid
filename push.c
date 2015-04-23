@@ -42,8 +42,6 @@ void push_particles(grid_cell ***grid, List part_list) {
 	list_reset_iter(&part_list);
 	if (!list_has_next(part_list))
 			return;
-	particle *curr;
-	curr = list_get_next(&part_list);
 
     // Declare variables!
     double ux, uy, uz;
@@ -69,8 +67,12 @@ void push_particles(grid_cell ***grid, List part_list) {
     double tau, taux, taux2, tauy, tauy2, tauz, tauz2;
 	grid_cell* cell;
     
+	particle *curr;
     //loop over all the particles
-    do {
+    while (list_has_next(part_list)) {
+		curr = list_get_next(&part_list);
+
+		printf("push: label 1\n");
 		double cmratio = curr->charge/curr->mass;
         part_mc = C*curr->mass;
         ipart_mc = 1./part_mc;
@@ -87,11 +89,13 @@ void push_particles(grid_cell ***grid, List part_list) {
 		(curr->pos).y += uy * root;
 		(curr->pos).z += uz * root;
 
+		printf("push: label 2\n");
 		// Check if out of bounds
 		if ((((curr->pos).x <= 0 || (curr->pos).y <= 0) || (curr->pos).z <= 0) || (((curr->pos).x >= x_max || (curr->pos).y >= y_max) || (curr->pos).z >= z_max)){
 			list_pop(&part_list);
 			continue;
 		}
+		printf("push: label 3\n");
 
 		//Do interpolation to find e and b here.
         // x-left, y-up, and z-near indices
@@ -107,8 +111,10 @@ void push_particles(grid_cell ***grid, List part_list) {
 
         cell = &(grid[xl][yu][zn]);
 
+		printf("push: label 4\n");
 		//Find the finest cell that contains the particle
 		while (cell->children != NULL){
+			printf("push: label 5\n");
 			if (xrf < .5){
 				if (ydf < .5){
 					if (zff < .5){
@@ -171,6 +177,7 @@ void push_particles(grid_cell ***grid, List part_list) {
 			}
 		}
 
+		printf("push: label 6\n");
         //Do interpolation with the new grid_cell
         E = interp3(cell->points[0]->E, cell->points[1]->E, cell->points[2]->E, cell->points[4]->E, cell->points[3]->E, cell->points[5]->E, cell->points[6]->E, cell->points[7]->E, 1.-xrf, 1.-ydf, 1.-zff);
         B = interp3(cell->points[0]->B, cell->points[1]->B, cell->points[2]->B, cell->points[4]->B, cell->points[3]->B, cell->points[5]->B, cell->points[6]->B, cell->points[7]->B, 1.-xrf, 1.-ydf, 1.-zff);
@@ -213,6 +220,7 @@ void push_particles(grid_cell ***grid, List part_list) {
 			list_pop(&part_list);
 			continue;
 		}
+		printf("push: label 7\n");
 
         // Store
         (curr->p).x = ux*part_mc;
@@ -221,6 +229,6 @@ void push_particles(grid_cell ***grid, List part_list) {
 
 		
         //This is where the current and charge density would be calculatted.
-		curr = list_get_next(&part_list);
-    } while (list_has_next(part_list));
+		printf("push: label 8\n");
+    } 
 }
