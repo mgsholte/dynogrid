@@ -109,8 +109,8 @@ void output_grid_impl(int itNum, int numFiles, grid_cell ***grid_cells, List par
 
 
                 //calculate the L2 norms of the fields
-				magE = norm(grid_points[x][y][z].E);
-				magB = norm(grid_points[x][y][z].B);
+	      //magE = norm(grid_points[x][y][z].E);
+	      //magB = norm(grid_points[x][y][z].B);
 
                 fprintf(pfile, "%lg,%lg\n", magE, magB);
             }

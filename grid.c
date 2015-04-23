@@ -141,7 +141,8 @@ static void execute_coarsen(grid_cell* cell){
 
 void execute_refine(grid_cell* cell, double x_spat, double y_spat, double z_spat, int depth){
 	// create 8 new children
-	grid_cell *children_cells[8];
+	grid_cell **children_cells;
+	children_cells = (grid_cell**) malloc( 8*sizeof(grid_cell*) );
 	int i, j, k, m;
 	for(i  = 0; i < 8; ++i){
 		children_cells[i] = (grid_cell*) malloc( sizeof(grid_cell) );
@@ -151,7 +152,7 @@ void execute_refine(grid_cell* cell, double x_spat, double y_spat, double z_spat
 	// creating all needed points (27 total), referencing 8 back to parent's points,
 	//  allocating the rest, then having all the child cells reference these 27 "master" points
 	grid_point* children_points[3][3][3];
-	children_points[0][0][0] = cell->points[0];
+	//children_points[0][0][0] = cell->points[0];
 	for (j = 0; j < 8; ++j){
 		children_points[(j&1)*2][(j&2)][(j&4)/2] = cell->points[j];
 	}
