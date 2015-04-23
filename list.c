@@ -20,9 +20,10 @@ void list_add(List *list, particle *payload) {
 // remove the node currently being iterated
 void list_pop(List *l) {
 	Node *x = l->prev->next;  // get node to be removed
-	prev->next = x->next;     // unlink it
-	l->iter = prev->next;  // reset iterator
-	free(x);                  // free node allocation
+	l->prev->next = x->next;  // unlink it
+	l->iter = x->next;        // reset iterator
+	free(x->payload);         // free the particle at the deleted node
+	free(x);                  // free node itself
 }
 
 void list_reset_iter(List *l) {

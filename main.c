@@ -6,7 +6,7 @@
 #include "dynamics.h"
 #include "list.h"
 
-static const double min(const double x, const double y, const double z) {
+static double min(const double x, const double y, const double z) {
 	return (x < y)
 			? (x < z ? x : z)
 			: (y < z ? y : z);
