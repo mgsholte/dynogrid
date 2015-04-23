@@ -66,6 +66,10 @@ double time; // changes every iteration
 #define BASE_ELECTRON_MASS (9.109e-31)
 #define BASE_PROTON_CHARGE (1.602e-19)
 #define BASE_ELECTRON_CHARGE (-1.0*BASE_PROTON_CHARGE)
-#define THRESHOLD (1.0) // threshold for refining 
+
+#define E0 (8.68e13) // SI units, used Intensity=10^21 W/(cm)^2
+#define B0 (2.895e5) // used B0=E0/c
+#define THRESHOLD_E (0.05*E0) // threshold for refining E
+#define THRESHOLD_B (0.05*B0) // threshold for refining B
 
 #endif //DECS_H

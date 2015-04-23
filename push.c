@@ -39,12 +39,11 @@ vec3 interp3(vec3 field000, vec3 field001, vec3 field010, vec3 field100, vec3 fi
 
 // Particle pusher!!!!
 void push_particles(grid_cell ***grid, List part_list) {
-
 	list_reset_iter(&part_list);
-
-    // Declare variables!
 	if (!list_has_next(part_list))
 			return;
+
+    // Declare variables!
     double ux, uy, uz;
     double root;
     int xl, yu, zn;
@@ -72,6 +71,7 @@ void push_particles(grid_cell ***grid, List part_list) {
     //loop over all the particles
     while (list_has_next(part_list)) {
 		curr = list_get_next(&part_list);
+
 		double cmratio = curr->charge/curr->mass;
         part_mc = C*curr->mass;
         ipart_mc = 1./part_mc;
@@ -222,5 +222,5 @@ void push_particles(grid_cell ***grid, List part_list) {
 
 		
         //This is where the current and charge density would be calculatted.
-    }
+    } 
 }

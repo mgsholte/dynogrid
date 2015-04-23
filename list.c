@@ -6,7 +6,7 @@ List list_init() {
 	Node *sentinel = (Node*) malloc(sizeof(Node));
 	sentinel->next = sentinel;
 
-	return (List) { sentinel, sentinel };
+	return (List) { sentinel, sentinel, sentinel };
 }
 
 void list_add(List *list, particle *payload) {
@@ -20,26 +20,27 @@ void list_add(List *list, particle *payload) {
 // remove the node currently being iterated
 void list_pop(List *l) {
 	Node *x = l->prev->next;  // get node to be removed
-	l->prev->next = x->next;     // unlink it
-	l->iter = l->prev->next;  // reset iterator
-	free(x);                  // free node allocation
+	l->prev->next = x->next;  // unlink it
+	l->iter = x->next;        // reset iterator
+	free(x->payload);         // free the particle at the deleted node
+	free(x);                  // free node itself
 }
 
 void list_reset_iter(List *l) {
-	l->iter = l->sentinel->next;
+	l->iter = l->sentinel;
 	l->prev = l->sentinel;
 }
 
 bool list_has_next(List l) {
-	return l.iter != l.sentinel;
+	return l.iter->next != l.sentinel;
 }
 
+//NB: should point to the node whose payload it returns. it must start off as the sentinel after a reset
 particle* list_get_next(List *l) {
-	particle *ans = l->iter->payload;
+	l->prev = l->iter;
 	l->iter = l->iter->next;
-	l->prev = l->prev->next;
 
-	return ans;
+	return l->iter->payload;
 }
 
 static int node_length(Node *sentinel, Node *cur, int acc) {
