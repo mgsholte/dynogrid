@@ -114,7 +114,7 @@ static bool need_to_refine(grid_cell* cell){
 			E_dif_x = ((cell->points[i])->E).x - ((cell->points[j])->E).x;
 			E_dif_y = ((cell->points[i])->E).y - ((cell->points[j])->E).y;
 			E_dif_z = ((cell->points[i])->E).z - ((cell->points[j])->E).z;
-			if((B_dif_x > THRESHOLD) || (B_dif_y > THRESHOLD) || (B_dif_z > THRESHOLD) || (E_dif_x > THRESHOLD) || (E_dif_y > THRESHOLD) || (E_dif_z > THRESHOLD)){
+			if((B_dif_x > THRESHOLD_B) || (B_dif_y > THRESHOLD_B) || (B_dif_z > THRESHOLD_B) || (E_dif_x > THRESHOLD_E) || (E_dif_y > THRESHOLD_E) || (E_dif_z > THRESHOLD_E)){
 				return true;
 			}
 		}//end inner for
@@ -213,7 +213,7 @@ bool coarsen(grid_cell* cell){
 		if(have_grandchildren == true){
 			return false;
 		} else { // I have children, but no grandchildren
-			if(need_to_refine(cell) != true){
+			if(need_to_refine(cell) == false) {
 				execute_coarsen(cell);
 				/*	now I'm the smallest, since I just executed the coarsen,
 					so I return false to keep the recursion chain going */
