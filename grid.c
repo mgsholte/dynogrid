@@ -96,33 +96,27 @@ List init_particles(vec3 origin, vec3 dims, int part_per_cell) {
 	return particles;
 }
 
-static bool need_to_refine(grid_cell* cell){
-	int i;
-	int j;
-	double B_dif_x;
-	double B_dif_y;
-	double B_dif_z;
-	double E_dif_x;
-	double E_dif_y;
-	double E_dif_z;
-	for(i =0; i < 8; i++){
-		for(j = 7; j > i; j--){
-			B_dif_x = ((cell->points[i])->B).x - ((cell->points[j])->B).x;
-			B_dif_y = ((cell->points[i])->B).y - ((cell->points[j])->B).y;
-			B_dif_z = ((cell->points[i])->B).z - ((cell->points[j])->B).z;
-
-			E_dif_x = ((cell->points[i])->E).x - ((cell->points[j])->E).x;
-			E_dif_y = ((cell->points[i])->E).y - ((cell->points[j])->E).y;
-			E_dif_z = ((cell->points[i])->E).z - ((cell->points[j])->E).z;
-			if((B_dif_x > THRESHOLD_B) || (B_dif_y > THRESHOLD_B) || (B_dif_z > THRESHOLD_B) || (E_dif_x > THRESHOLD_E) || (E_dif_y > THRESHOLD_E) || (E_dif_z > THRESHOLD_E)){
-				return true;
-			}
+static bool need_to_coarsen(grid_cell* cell) {
+	int i, j;
+	grid_point a, b;
+	for(i =0; i < 8; i++) {
+		for(j = 7; j > i; j--) {
+			a = *(cell->points[i]);
+			b = *(cell->points[j]);
+			if (abs(a.B.x - b.B.x) < 0.20*THRESHOLD_B
+				&& abs(a.B.y - b.B.y) < 0.20*THRESHOLD_B
+				&& abs(a.B.z - b.B.z) < 0.20*THRESHOLD_B
+				&& abs(a.E.x - b.E.x) < 0.20*THRESHOLD_E
+				&& abs(a.E.y - b.E.y) < 0.20*THRESHOLD_E
+				&& abs(a.E.z - b.E.z) < 0.20*THRESHOLD_E) {
+					return true;
+				}
 		}//end inner for
 	}//end outer for
 	return false;
 }//end need_to_refine function
 
-static void execute_coarsen(grid_cell* cell){
+static void execute_coarsen(grid_cell* cell) {
 	printf("executing coarsen\n");
 	int i, j;
 	for(i = 0; i < 8; i++){
@@ -139,6 +133,26 @@ static void execute_coarsen(grid_cell* cell){
 	free(cell->children);
 	cell->children == NULL;
 }//end execute_coarsen function
+
+static bool need_to_refine(grid_cell* cell) {
+	int i, j;
+	grid_point a, b;
+	for(i =0; i < 8; i++) {
+		for(j = 7; j > i; j--) {
+			a = *(cell->points[i]);
+			b = *(cell->points[j]);
+			if (abs(a.B.x - b.B.x) > THRESHOLD_B
+				|| abs(a.B.y - b.B.y) > THRESHOLD_B
+				|| abs(a.B.z - b.B.z) > THRESHOLD_B
+				|| abs(a.E.x - b.E.x) > THRESHOLD_E
+				|| abs(a.E.y - b.E.y) > THRESHOLD_E
+				|| abs(a.E.z - b.E.z) > THRESHOLD_E) {
+					return true;
+				}
+		}//end inner for
+	}//end outer for
+	return false;
+}//end need_to_refine function
 
 void execute_refine(grid_cell* cell, double x_spat, double y_spat, double z_spat, int depth){
 	printf("executing refine at depth = %d\n", depth);
@@ -192,31 +206,30 @@ void execute_refine(grid_cell* cell, double x_spat, double y_spat, double z_spat
 /*	A grid_cell should only coarsen if it has exactly 1 level of decendants
 	(i.e. has children, but does not have grandchildrend or greatgranchildren, etc.
 	AND it meets the coarsening criteria based on its E and B fields */
-bool coarsen(grid_cell* cell){
-	// BASE CASE:
+bool coarsen(grid_cell* cell) {
+	// called on a leaf. leaves can't be coarsened
 	if(cell->children == NULL){
 		/*	coarsening always happens one level up, so if you don't have any children
 			you should never coarsen, thus return false */
 		return false;
 	}
-	// RECURSIVE STEP:
-	else if(cell->children != NULL){
+	// called on an internal node. check for grand-children before coarsening
+	else {
 		// check to see if there are any decendants beyond immediate children:
 		bool have_grandchildren = false;
-		// bool chidrens_responses[8];
 		bool childs_response;
 		int child_num;
 		for(child_num = 0; child_num < 8; child_num++){
-			childs_response = coarsen(cell->children[child_num]);
-			if(childs_response == true){
-				have_grandchildren = true;
-			}
-			// childrens_responses[child_num] = childs_response; 
+			have_grandchildren = coarsen(cell->children[child_num])
+				? true
+				: have_grandchildren;
 		}
-		if(have_grandchildren == true){
+
+		if(have_grandchildren) {
+			// don't coarsen a node that has grandchildren
 			return false;
-		} else { // I have children, but no grandchildren
-			if(need_to_refine(cell) == false) {
+		} else {
+			if(need_to_coarsen(cell)) {
 				execute_coarsen(cell);
 				/*	now I'm the smallest, since I just executed the coarsen,
 					so I return false to keep the recursion chain going */
@@ -228,46 +241,29 @@ bool coarsen(grid_cell* cell){
 				return true;
 			}
 		}
-	} else{
-		printf("ERROR! This should never happen\n"); //TODO: remove after debugging
-		return false;
 	}
 }//end coarsen function
 
 /*	A grid_cell should only refine if it has no children AND it meets
 	the refining criteria based on its E and B fields */
-void refine(grid_cell* cell, double x_spat, double y_spat, double z_spat, int depth){
-	// BASE CASE:
-	if(cell->children == NULL){
-		/*	check to see if refining is needed...if yes, refine and then 
-			recursively call refine on each child cell */
-		if(need_to_refine(cell)){
+void refine(grid_cell* cell, double x_spat, double y_spat, double z_spat, int depth) {
+	// called refine on a leaf. refine if refinement condition is met
+	if(cell->children == NULL) {
+		if(need_to_refine(cell)) {
 			execute_refine(cell, x_spat, y_spat, z_spat, depth);
-			//cell now has children after refining, so refine needs to be called on each child:
-			int cn; //child num
-			for(cn = 0; cn < 8; cn++){
-				refine(cell->children[cn], x_spat+(cn&1)*dx/pow(2.0,depth+1),
-										   y_spat+((cn&2)/2)*dy/pow(2.0,depth+1),
-										   z_spat+((cn&4)/4)*dz/pow(2.0,depth+1), depth+1);
-										   // z_spat+((cn&1)/4)*dz/pow(2.0,depth+1), depth+1);
-			}//end for 
-		}else{
+		} else {
 			return;
 		}
 	}
-	// RECURSIVE STEP:
-	else if(cell->children != NULL){
-		int cn;
-		for(cn = 0; cn < 8; cn++){
-			refine(cell->children[cn], x_spat+(cn&1)*dx/pow(2.0,depth+1),
-									   y_spat+((cn&2)/2)*dy/pow(2.0,depth+1),
-									   z_spat+((cn&4)/4)*dz/pow(2.0,depth+1), depth+1);
-									   // z_spat+((cn&1)/4)*dz/pow(2.0,depth+1), depth+1);
-		}//end for 
-	}else{
-		printf("ERROR! This should never happen\n"); //TODO: remove after debugging
-	}	
-}//end refine function
+	// cell either started as an internal node or has become one via refinement. pass the refine call to the children to see if they need to split
+	int cn;
+	for(cn = 0; cn < 8; cn++){
+		refine(cell->children[cn], x_spat+(cn&1)*dx/pow(2.0,depth+1),
+								   y_spat+((cn&2)/2)*dy/pow(2.0,depth+1),
+								   z_spat+((cn&4)/4)*dz/pow(2.0,depth+1), depth+1);
+								   // z_spat+((cn&1)/4)*dz/pow(2.0,depth+1), depth+1);
+	}//end for 
+}
 	
 void output_grid(int itNum, int numFiles, grid_cell ***grid_cells, List particles) {
 	output_grid_impl(itNum, numFiles, grid_cells, particles, "data");

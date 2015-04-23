@@ -44,7 +44,7 @@ void recursive_laser(grid_cell *cell, double x_spat, double y_spat, double z_spa
 	}//end if else
 }//end recursive_laser function
 
-static void update_grid_cell(grid_cell* cell, int x, int y, int z){
+static void update_grid_cell(grid_cell* cell, int x, int y, int z) {
 	refine(cell, x*dx, y*dy, z*dz, 0);
 	coarsen(cell);
 }//end update_grid_cell function
