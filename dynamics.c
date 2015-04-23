@@ -24,7 +24,6 @@ void recursive_laser(grid_cell *cell, double x_spat, double y_spat, double z_spa
 	if(cell->children == NULL){
 		//cell has no children, so apply laser to each of the cell's gridpoints:
 		for(cn = 0; cn < 8; cn++){
-			grid_point *p = cell->points[cn];
 			laser(cell->points[cn], x_spat+(cn&1)*dx/pow(2.0,depth),
 									y_spat+((cn&2)/2)*dy/pow(2.0,depth),
 									z_spat+((cn&4)/4)*dz/pow(2.0,depth), time); // ??? (cn&1)/4 or (cn&4)/4
