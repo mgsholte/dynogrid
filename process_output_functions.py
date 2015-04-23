@@ -215,10 +215,10 @@ def getGridData3D(numFiles, ext, nx, ny, nz, dx, dy, dz):
         # Zs = list()
         # Bs = list()
         # Es = list()
-        Xs, Ys, Zs = np.mgrid[0:nx*dx:dx, 0:ny*dy:dy, 0:nz*dz:dz]
-#        Xs = np.empty(numLines, dtype=np.float64)
-#        Ys = np.empty(numLines, dtype=np.float64)
-#        Zs = np.empty(numLines, dtype=np.float64)
+        # Xs, Ys, Zs = np.mgrid[0:nx*dx:dx, 0:ny*dy:dy, 0:nz*dz:dz]
+        Xs = np.empty(numLines, dtype=np.float64)
+        Ys = np.empty(numLines, dtype=np.float64)
+        Zs = np.empty(numLines, dtype=np.float64)
         Bs = np.empty(numLines, dtype=np.float64)
         Es = np.empty(numLines, dtype=np.float64)
         with open(fname, 'r') as grid_file:
@@ -230,16 +230,16 @@ def getGridData3D(numFiles, ext, nx, ny, nz, dx, dy, dz):
                     continue
                 # parse eachline to get needed data:
                 eachline = line.split(',') # eachline is a list of the results of the split
-#                xcoord = float(eachline[0])
-#                ycoord = float(eachline[1])
-#                zcoord = float(eachline[2])
-#                E = float(eachline[3])
-#                B = float(eachline[4])
-                E = float(eachline[0])
-                B = float(eachline[1])
+                xcoord = float(eachline[0])
+                ycoord = float(eachline[1])
+                zcoord = float(eachline[2])
+                E = float(eachline[3])
+                B = float(eachline[4])
+                # E = float(eachline[0])
+                # B = float(eachline[1])
                 # print("E is: " + str(E) + "\tB is: " + str(B))
-                E = max(E_max, min(E_min, E))
-                B = max(B_max, min(B_min, B))
+                # E = max(E_max, min(E_min, E))
+                # B = max(B_max, min(B_min, B))
 #                if E < E_min:
 #                    E_min = E
 #                if E > E_max:
@@ -253,14 +253,19 @@ def getGridData3D(numFiles, ext, nx, ny, nz, dx, dy, dz):
                 # Zs.append(zcoord)
                 # Es.append(E)
                 # Bs.append(B)
-#                Xs[line_ct - 5] = xcoord
-#                Ys[line_ct - 5] = ycoord
-#                Zs[line_ct - 5] = zcoord
+                Xs[line_ct - 1] = xcoord
+                Ys[line_ct - 1] = ycoord
+                Zs[line_ct - 1] = zcoord
                 Es[line_ct - 1] = E
                 Bs[line_ct - 1] = B
                 # store data in a dictionary:
-        gridpoints = {'Xs':Xs.flatten(), 'Ys':Ys.flatten(), 'Zs':Zs.flatten(), 'Es':Es, 'Bs':Bs}
+        # gridpoints = {'Xs':Xs.flatten(), 'Ys':Ys.flatten(), 'Zs':Zs.flatten(), 'Es':Es, 'Bs':Bs}
+        gridpoints = {'Xs':Xs, 'Ys':Ys, 'Zs':Zs, 'Es':Es, 'Bs':Bs}
         timesteps.append({'gridpoints':gridpoints,'particles':''})
+        E_max = Es.max()
+        E_min = Es.min()
+        B_max = Bs.max()
+        B_min = Bs.min()
     return timesteps, E_min, E_max, B_min, B_max
         
 def getParticleData3D(numFiles, timesteps, ext):
@@ -288,10 +293,10 @@ def getParticleData3D(numFiles, timesteps, ext):
                 p = float(eachline[3])
                 # print("p_xcoord is: " + str(xcoord) + "\tp_ycoord is: " + str(ycoord) + "\tp_zcoord is: " + str(zcoord))
                 # print("p is: " + str(p))
-                if p < p_min:
-                    p_min = p
-                if p > p_max:
-                    p_max = p
+                # if p < p_min:
+                #     p_min = p
+                # if p > p_max:
+                #     p_max = p
                 # store data in a dictionary:
                 Xs[lnum] = xcoord
                 Ys[lnum] = ycoord
@@ -299,6 +304,8 @@ def getParticleData3D(numFiles, timesteps, ext):
                 ps[lnum] = p
         particles = {'Xs':Xs, 'Ys':Ys, 'Zs':Zs, 'ps':ps}
         (timesteps[i])['particles'] = particles
+        p_max = ps.max()
+        p_min = ps.min()
     return timesteps, p_min, p_max
         
         
