@@ -38,9 +38,12 @@ int main(int argc, char *argv[]) {
 
 	for(i = 0; i < nSteps; ++i) {
 		time = i*dt;
+		printf("pushing particles\n");
 		push_particles(grid_cells, particles);
+		printf("updating grid\n");
 		update_grid(grid_cells);  // add the laser, etc.
 		if (i % output_freq == 0) {
+			printf("outputting grid\n");
 			output_grid((i/output_freq), (nSteps/output_freq), grid_cells, particles);
 		}
 	}

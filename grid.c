@@ -123,6 +123,7 @@ static bool need_to_refine(grid_cell* cell){
 }//end need_to_refine function
 
 static void execute_coarsen(grid_cell* cell){
+	printf("executing coarsen\n");
 	int i, j;
 	for(i = 0; i < 8; i++){
 		for(j = 0; j < 8; j++){
@@ -140,6 +141,7 @@ static void execute_coarsen(grid_cell* cell){
 }//end execute_coarsen function
 
 void execute_refine(grid_cell* cell, double x_spat, double y_spat, double z_spat, int depth){
+	printf("executing refine at depth = %d\n", depth);
 	// create 8 new children
 	grid_cell **children_cells;
 	children_cells = (grid_cell**) malloc( 8*sizeof(grid_cell*) );
@@ -235,16 +237,12 @@ bool coarsen(grid_cell* cell){
 /*	A grid_cell should only refine if it has no children AND it meets
 	the refining criteria based on its E and B fields */
 void refine(grid_cell* cell, double x_spat, double y_spat, double z_spat, int depth){
-	printf("label 1\n");
 	// BASE CASE:
 	if(cell->children == NULL){
-		printf("label 2\n");
 		/*	check to see if refining is needed...if yes, refine and then 
 			recursively call refine on each child cell */
 		if(need_to_refine(cell)){
-			printf("label 3\n");
 			execute_refine(cell, x_spat, y_spat, z_spat, depth);
-			printf("label 4\n");
 			//cell now has children after refining, so refine needs to be called on each child:
 			int cn; //child num
 			for(cn = 0; cn < 8; cn++){
@@ -253,15 +251,12 @@ void refine(grid_cell* cell, double x_spat, double y_spat, double z_spat, int de
 										   z_spat+((cn&4)/4)*dz/pow(2.0,depth+1), depth+1);
 										   // z_spat+((cn&1)/4)*dz/pow(2.0,depth+1), depth+1);
 			}//end for 
-			printf("label 5\n");
 		}else{
-			printf("label 6\n");
 			return;
 		}
 	}
 	// RECURSIVE STEP:
 	else if(cell->children != NULL){
-		printf("label 7\n");
 		int cn;
 		for(cn = 0; cn < 8; cn++){
 			refine(cell->children[cn], x_spat+(cn&1)*dx/pow(2.0,depth+1),
@@ -269,11 +264,9 @@ void refine(grid_cell* cell, double x_spat, double y_spat, double z_spat, int de
 									   z_spat+((cn&4)/4)*dz/pow(2.0,depth+1), depth+1);
 									   // z_spat+((cn&1)/4)*dz/pow(2.0,depth+1), depth+1);
 		}//end for 
-		printf("label 8\n");
 	}else{
 		printf("ERROR! This should never happen\n"); //TODO: remove after debugging
 	}	
-	printf("label 9\n");
 }//end refine function
 	
 void output_grid(int itNum, int numFiles, grid_cell ***grid_cells, List particles) {

@@ -44,9 +44,9 @@ double time; // changes every iteration
 #define z_max (1e-4)
 
 // number of cells in each direction; nx+1 is number of grid points
-#define nx (20) 
-#define ny (20)
-#define nz (20)
+#define nx (10) 
+#define ny (10)
+#define nz (10)
 
 #define dx (x_max/nx)
 #define dy (y_max/ny)
@@ -69,7 +69,7 @@ double time; // changes every iteration
 
 #define E0 (8.68e13) // SI units, used Intensity=10^21 W/(cm)^2
 #define B0 (2.895e5) // used B0=E0/c
-#define THRESHOLD_E (0.05*E0) // threshold for refining E
-#define THRESHOLD_B (0.05*B0) // threshold for refining B
+#define THRESHOLD_E (0.25*E0) // threshold for refining E
+#define THRESHOLD_B (0.25*B0) // threshold for refining B
 
 #endif //DECS_H
