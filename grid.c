@@ -227,6 +227,7 @@ bool coarsen(grid_cell* cell){
 		}
 	} else{
 		printf("ERROR! This should never happen\n"); //TODO: remove after debugging
+		return false;
 	}
 }//end coarsen function
 
