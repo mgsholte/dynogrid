@@ -17,9 +17,38 @@ static inline void testPFile(FILE *pfile, char *fname) {
 	}
 }
 
+/*	Recursive function to output the grid_point data for each grid_cell:
+	Notes:	(1) only data for leaf grid_cell's needs to be output
+			(2) each leaf grid_cell only needs to output its (0,0) coordinate grid_point (I think...)
+*/
+void output_one_cell(grid_cell* cell, double x_spat, double y_spat, double z_spat, int depth){
+	//BASE CASE:
+	if(cell->children == NULL){
+
+
+		// RIGHTHERE(cell->points[cn], x_spat+(cn&1)*dx/pow(2.0,depth),
+		// 							y_spat+((cn&2)/2)*dy/pow(2.0,depth),
+		// 							z_spat+((cn&4)/4)*dz/pow(2.0,depth), time); // ??? (cn&1)/4 or (cn&4)/4
+		// 							// z_spat+((cn&1)/4)*dz/pow(2.0,depth), time);
+		// }//end for
+
+
+	}
+	//RECURSIVE STEP:
+	else{
+		int cn; //child num
+		for(cn = 0; cn < 8; cn++){
+			output_one_cell(cell->children[cn], x_spat+(cn&1)*dx/pow(2.0,depth+1),
+									   y_spat+((cn&2)/2)*dy/pow(2.0,depth+1),
+									   z_spat+((cn&4)/4)*dz/pow(2.0,depth+1), depth+1);
+									   // z_spat+((cn&1)/4)*dz/pow(2.0,depth+1), depth+1);
+		}//end for
+	}//end else
+}//end out_one_coarse_cell() function
+
 // grid_points and particles are the stuff to print
 // suffix is the suffix used in naming the output files
-void output_grid_impl(int itNum, int numFiles, grid_point ***grid_points, List particles, const char suffix[]) {
+void output_grid_impl(int itNum, int numFiles, grid_cell ***grid_cells, List particles, const char suffix[]) {
 	int suffix_len = strlen(suffix);
 
 	// the # of chars needed to represent the biggest iteration # as a string. all iter #s will be padded to this value
@@ -58,8 +87,8 @@ void output_grid_impl(int itNum, int numFiles, grid_point ***grid_points, List p
     int x,y,z;
 	double magE, magB;
 	// print |E|, |B| for each grid point
-	fprintf(pfile, "|E|, |B|\n");
-	fprintf(pfile, "not yet implemented for adaptive grid\n");
+	// fprintf(pfile, "|E|, |B|\n");
+	// fprintf(pfile, "not yet implemented for adaptive grid\n");
 	/* TODO: make work for grid cells
 	for(x = 0; x <= nx; x++) {
 		for(y = 0; y <= ny; y++) {
@@ -73,6 +102,21 @@ void output_grid_impl(int itNum, int numFiles, grid_point ***grid_points, List p
         }
     }
 	*/
+
+	for(x = 0; x <= nx; x++) {
+		for(y = 0; y <= ny; y++) {
+            for(z = 0; z <= nz; z++) {
+
+
+                //calculate the L2 norms of the fields
+				magE = norm(grid_points[x][y][z].E);
+				magB = norm(grid_points[x][y][z].B);
+
+                fprintf(pfile, "%lg,%lg\n", magE, magB);
+            }
+        }
+    }
+	
     fclose(pfile);
 
 	// PARTICLE OUTPUT
