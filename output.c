@@ -25,8 +25,8 @@ static inline void testPFile(FILE *pfile, char *fname) {
 void output_one_cell(grid_cell* cell, double x_spat, double y_spat, double z_spat, int depth, FILE *pfile){
 	//BASE CASE:
 	if(cell->children == NULL){
-		double E = norm(((cell->children)->points[0])->E);
-		double B = norm(((cell->children)->points[0])->B);
+		double E = norm(((cell)->points[0])->E);
+		double B = norm(((cell)->points[0])->B);
 		fprintf(pfile, "%lg,%lg,%lg,%lg,%lg\n", x_spat, y_spat, z_spat, E, B);
 	}
 	//RECURSIVE STEP:
@@ -35,7 +35,7 @@ void output_one_cell(grid_cell* cell, double x_spat, double y_spat, double z_spa
 		for(cn = 0; cn < 8; cn++){
 			output_one_cell(cell->children[cn], x_spat+(cn&1)*dx/pow(2.0,depth+1),
 									   y_spat+((cn&2)/2)*dy/pow(2.0,depth+1),
-									   z_spat+((cn&4)/4)*dz/pow(2.0,depth+1), depth+1);
+									   z_spat+((cn&4)/4)*dz/pow(2.0,depth+1), depth+1, pfile);
 									   // z_spat+((cn&1)/4)*dz/pow(2.0,depth+1), depth+1);
 		}//end for
 	}//end else
