@@ -11,7 +11,7 @@ grid_cell*** init_grid();
 List init_particles(vec3 origin, vec3 dims, int part_per_cell);
 
 bool coarsen(grid_cell *cell);
-void refine(grid_cell* cell, double x_spat, double y_spat, double z_spat, int depth);
+bool refine(grid_cell* cell, double x_spat, double y_spat, double z_spat, vec3 *h);
 
 // print fields and particles at iteration i
 void output_grid(int itNum, int numFiles, grid_cell ***grid_cells, List particles);
