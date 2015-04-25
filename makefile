@@ -1,4 +1,4 @@
-CC = clang 
+CC = gcc
 CFLAGS = -g
 LFLAGS = -O3
 
@@ -22,6 +22,10 @@ push.c: dynamics.h decs.h
 .PHONY: run
 run: dynogrid
 	@./dynogrid
+
+.PHONY: valgrind
+valgrind: dynogrid
+	@valgrind -v --leak-check=full ./dynogrid
 
 clean:
 	@/bin/rm -f *.o
