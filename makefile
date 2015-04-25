@@ -1,4 +1,4 @@
-CC = mpicc
+CC = clang 
 CFLAGS = -g
 LFLAGS = -O3
 

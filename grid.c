@@ -5,6 +5,7 @@
 #include "decs.h"
 #include "grid.h"
 #include "output.h"
+#include "dynamics.h"
 
 // return a random double value in the range [low,high]
 static inline double rand_float( double low, double high ) {
@@ -126,7 +127,7 @@ static void execute_coarsen(grid_cell* cell) {
 	int i, j;
 	for(i = 0; i < 8; i++) {
 		for(j = 0; j < 8; j++) {
-			if(i != j && (j&i == i)) { //don't free points i==j bc the parent still needs them. also, other children may have already freed one of your points so don't double free
+			if(i != j && ((j&i) == i)) { //don't free points i==j bc the parent still needs them. also, other children may have already freed one of your points so don't double free
 				//free each child's 7 points that are no longer needed:
 				free(cell->children[i]->points[j]);
 			}
@@ -197,6 +198,8 @@ static bool need_to_refine(grid_cell* cell) {
 }//end need_to_refine function
 
 void execute_refine(grid_cell* cell, double x_spat, double y_spat, double z_spat, vec3 *h) {
+	int depth = round_i(log2(dx/h->x));
+	printf("exec_refine at depth = %d\n");
 	// create 8 new children
 	grid_cell **children_cells;
 	children_cells = (grid_cell**) malloc( 8*sizeof(grid_cell*) );
