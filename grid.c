@@ -12,6 +12,10 @@ static inline double rand_float( double low, double high ) {
 	return ( (double)rand() * (high - low) ) / (double)	RAND_MAX + low;
 }
 
+static inline double log2(double x) {
+	return log(x)/log(2.);
+}
+
 static void scale_vec(vec3 *v, double factor) {
 	v->x *= factor;
 	v->y *= factor;
@@ -198,8 +202,6 @@ static bool need_to_refine(grid_cell* cell) {
 }//end need_to_refine function
 
 void execute_refine(grid_cell* cell, double x_spat, double y_spat, double z_spat, vec3 *h) {
-	int depth = round_i(log2(dx/h->x));
-	printf("exec_refine at depth = %d\n");
 	// create 8 new children
 	grid_cell **children_cells;
 	children_cells = (grid_cell**) malloc( 8*sizeof(grid_cell*) );
@@ -229,7 +231,6 @@ void execute_refine(grid_cell* cell, double x_spat, double y_spat, double z_spat
 													y_spat + k*h->y,
 													z_spat + m*h->z, time);
 				}
-				//printf("children_points[%d][%d][%d] = %p\n", j,k,m, children_points[j][k][m]);
 			}
 		}
 	}
@@ -243,12 +244,6 @@ void execute_refine(grid_cell* cell, double x_spat, double y_spat, double z_spat
 	    children_cells[i]->points[5] = children_points[1+(i&4)/4][0+(i&2)/2][1+(i&1)];
 	    children_cells[i]->points[6] = children_points[1+(i&4)/4][1+(i&2)/2][0+(i&1)];
 	    children_cells[i]->points[7] = children_points[1+(i&4)/4][1+(i&2)/2][1+(i&1)];
-		for (j = 0; j < 8; ++j) {
-			if (children_cells[i]->points[j] == NULL) {
-				printf("cell %d, point %d is null\n", i, j);
-				printf("goodbye\n");
-			}
-		}
 	}
 
 	// finally, make the cell the parent of the newly created children
