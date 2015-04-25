@@ -9,6 +9,14 @@ List list_init() {
 	return (List) { sentinel, sentinel, sentinel };
 }
 
+void list_free(List list) {
+	list_reset_iter(&list);
+	while(list_has_next(list)) {
+		list_pop(&list);
+	}
+	free(list.sentinel);
+}
+
 void list_add(List *list, particle *payload) {
 	Node *new_node = (Node*) malloc(sizeof(Node));
 

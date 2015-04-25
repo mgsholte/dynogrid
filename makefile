@@ -1,4 +1,4 @@
-CC = mpicc
+CC = clang 
 CFLAGS = -g
 LFLAGS = -O3
 
@@ -24,4 +24,5 @@ run: dynogrid
 	@./dynogrid
 
 clean:
-	@/bin/rm -rf *.o
+	@/bin/rm -f *.o
+	@/bin/rm -f dynogrid

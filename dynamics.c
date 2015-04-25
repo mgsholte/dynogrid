@@ -17,7 +17,7 @@ void laser(grid_point *grid_p, double x, double y, double z, double t) {
 	grid_p->B = (vec3) { 0, 0, N*B };
 }
 
-void recursive_laser(grid_cell *cell, double x_spat, double y_spat, double z_spat, int depth, double t){
+void recursive_laser(grid_cell *cell, double x_spat, double y_spat, double z_spat, int depth, double t) {
 	//BASE CASE:
 	int cn; //cn stands for child number
 
@@ -43,9 +43,10 @@ void recursive_laser(grid_cell *cell, double x_spat, double y_spat, double z_spa
 	}//end if else
 }//end recursive_laser function
 
-static void update_grid_cell(grid_cell* cell, int x, int y, int z){
-	refine(cell, x*dx, y*dy, z*dz, 0);
-	coarsen(cell);
+static void update_grid_cell(grid_cell* cell, int x, int y, int z) {
+	vec3 h = (vec3) {dx,dy,dz};
+	if(!refine(cell, x*dx, y*dy, z*dz, &h))
+		coarsen(cell);
 }//end update_grid_cell function
 
 void update_grid(grid_cell ***grid_cells) {
@@ -58,4 +59,13 @@ void update_grid(grid_cell ***grid_cells) {
 			}
 		}
 	}
+	/*
+	for (x = 0; x < nx; x++) {
+		for (y = 0; y < ny; y++) {
+			for (z = 0; z < nz; z++) {
+				update_grid_cell(&grid_cells[x][y][z], x, y, z);
+			}
+		}
+	}
+	*/
 }

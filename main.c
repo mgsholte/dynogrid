@@ -54,5 +54,7 @@ int main(int argc, char *argv[]) {
 	 
 	printf("simulation finished\n");
 
+	list_free(particles);
+
 	return 0;
 }
