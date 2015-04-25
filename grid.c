@@ -131,8 +131,44 @@ static void execute_coarsen(grid_cell* cell) {
 	}//end outer for
 	//free parent's children list:
 	free(cell->children);
-	cell->children == NULL;
+	cell->children = NULL;
 }//end execute_coarsen function
+
+bool coarsen(grid_cell* cell) {
+	// called on a leaf. leaves can't be coarsened
+	if(cell->children == NULL) {
+		/*	coarsening always happens one level up, so if you don't have any children
+			you should never coarsen, thus return false */
+		return false;
+	}
+	// called on an internal node. check for grand-children before coarsening
+	else {
+		// check to see if there are any decendants beyond immediate children:
+		bool have_grandchildren = false;
+		bool childs_response;
+		int child_num;
+		for(child_num = 0; child_num < 8; child_num++){
+			have_grandchildren = coarsen(cell->children[child_num])
+				? true
+				: have_grandchildren;
+		}
+
+		if(have_grandchildren) {
+			// don't coarsen a node that has grandchildren
+			return false;
+		} else if(need_to_coarsen(cell)) {
+			execute_coarsen(cell);
+			/*	now I'm the smallest, since I just executed the coarsen,
+				so I return false to keep the recursion chain going */
+			return false;
+		} else{
+			/* 	I have children but no grandchildren, but no need to coarsen,
+				so I return true to break the recursion chain so that my
+				parent knows not to coarsen */
+			return true;
+		}
+	}
+}//end coarsen function
 
 static bool need_to_refine(grid_cell* cell) {
 	int i, j;
@@ -206,44 +242,6 @@ void execute_refine(grid_cell* cell, double x_spat, double y_spat, double z_spat
 /*	A grid_cell should only coarsen if it has exactly 1 level of decendants
 	(i.e. has children, but does not have grandchildrend or greatgranchildren, etc.
 	AND it meets the coarsening criteria based on its E and B fields */
-bool coarsen(grid_cell* cell) {
-	// called on a leaf. leaves can't be coarsened
-	if(cell->children == NULL){
-		/*	coarsening always happens one level up, so if you don't have any children
-			you should never coarsen, thus return false */
-		return false;
-	}
-	// called on an internal node. check for grand-children before coarsening
-	else {
-		// check to see if there are any decendants beyond immediate children:
-		bool have_grandchildren = false;
-		bool childs_response;
-		int child_num;
-		for(child_num = 0; child_num < 8; child_num++){
-			have_grandchildren = coarsen(cell->children[child_num])
-				? true
-				: have_grandchildren;
-		}
-
-		if(have_grandchildren) {
-			// don't coarsen a node that has grandchildren
-			return false;
-		} else {
-			if(need_to_coarsen(cell)) {
-				execute_coarsen(cell);
-				/*	now I'm the smallest, since I just executed the coarsen,
-					so I return false to keep the recursion chain going */
-				return false;
-			} else{
-				/* 	I have children but no grandchildren, but no need to coarsen,
-					so I return true to break the recursion chain so that my
-					parent knows not to coarsen */
-				return true;
-			}
-		}
-	}
-}//end coarsen function
-
 /*	A grid_cell should only refine if it has no children AND it meets
 	the refining criteria based on its E and B fields */
 void refine(grid_cell* cell, double x_spat, double y_spat, double z_spat, int depth) {
