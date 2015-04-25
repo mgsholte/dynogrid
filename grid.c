@@ -156,7 +156,6 @@ bool coarsen(grid_cell* cell) {
 	else {
 		// check to see if there are any decendants beyond immediate children:
 		bool have_grandchildren = false;
-		bool childs_response;
 		int child_num;
 		for(child_num = 0; child_num < 8; child_num++){
 			have_grandchildren = coarsen(cell->children[child_num])
@@ -283,3 +282,42 @@ void output_grid(int itNum, int numFiles, grid_cell ***grid_cells, List particle
 	//TODO: it should be true that itNum == time/dt. maybe we don't need to pass the itNum variable as an argument
 	// int itNum = round_i(time/dt);
 }
+
+void cleanup(grid_cell ***grid_cells) {
+	int x,y,z,i;
+	grid_cell* cell;
+	for (x = 0; x <= nx; x++) {
+		for (y = 0; y <= ny; y++) {
+			for (z = 0; z <= nz; z++) {
+				// coarsen completely (coarsest should have no children after)
+				cell = &grid_cells[x][y][z];
+				recursive_execute_coarsen(cell);
+				
+				// only free what was malloc'd per cell in init_grid
+				free(cell->points[0]);
+			}
+			// frees cells and cell.children address
+			free(grid_cells[x][y]);
+		}
+		free(grid_cells[x]);
+	}
+	free(grid_cells);
+}
+
+void recursive_execute_coarsen(grid_cell* cell) {
+	// BASE CASE or if at coarsest cell size from the start
+	if (cell->children == NULL) {
+		return;
+	}
+	else {
+		int child_num;
+		for(child_num = 0; child_num < 8; child_num++) {
+			recursive_execute_coarsen(cell->children[child_num]);
+		}
+		execute_coarsen(cell);
+	}
+}
+	
+	
+	
+	
