@@ -24,4 +24,5 @@ run: dynogrid
 	@./dynogrid
 
 clean:
-	@/bin/rm -rf *.o
+	@/bin/rm -f *.o
+	@/bin/rm -f dynogrid
