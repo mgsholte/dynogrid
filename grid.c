@@ -137,7 +137,7 @@ static void execute_coarsen(grid_cell* cell){
 	}//end outer for
 	//free parent's children list:
 	free(cell->children);
-	cell->children == NULL;
+	cell->children = NULL;
 }//end execute_coarsen function
 
 void execute_refine(grid_cell* cell, double x_spat, double y_spat, double z_spat, int depth){
