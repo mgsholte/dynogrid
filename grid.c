@@ -109,12 +109,12 @@ static bool need_to_coarsen(grid_cell* cell) {
 		for(j = 7; j > i; j--) {
 			a = *(cell->points[i]);
 			b = *(cell->points[j]);
-			if (abs(a.B.x - b.B.x) < 0.20*THRESHOLD_B
-				&& abs(a.B.y - b.B.y) < 0.20*THRESHOLD_B
-				&& abs(a.B.z - b.B.z) < 0.20*THRESHOLD_B
-				&& abs(a.E.x - b.E.x) < 0.20*THRESHOLD_E
-				&& abs(a.E.y - b.E.y) < 0.20*THRESHOLD_E
-				&& abs(a.E.z - b.E.z) < 0.20*THRESHOLD_E) {
+			if (fabs(a.B.x - b.B.x) < 0.20*THRESHOLD_B
+				&& fabs(a.B.y - b.B.y) < 0.20*THRESHOLD_B
+				&& fabs(a.B.z - b.B.z) < 0.20*THRESHOLD_B
+				&& fabs(a.E.x - b.E.x) < 0.20*THRESHOLD_E
+				&& fabs(a.E.y - b.E.y) < 0.20*THRESHOLD_E
+				&& fabs(a.E.z - b.E.z) < 0.20*THRESHOLD_E) {
 					return true;
 				}
 		}//end inner for
@@ -124,9 +124,9 @@ static bool need_to_coarsen(grid_cell* cell) {
 
 static void execute_coarsen(grid_cell* cell) {
 	int i, j;
-	for(i = 0; i < 8; i++){
-		for(j = 0; j < 8; j++){
-			if(i != j) { //don't free points i==j bc the parent still needs them...
+	for(i = 0; i < 8; i++) {
+		for(j = 0; j < 8; j++) {
+			if(i != j && (j&i == i)) { //don't free points i==j bc the parent still needs them. also, other children may have already freed one of your points so don't double free
 				//free each child's 7 points that are no longer needed:
 				free(cell->children[i]->points[j]);
 			}
@@ -161,13 +161,13 @@ bool coarsen(grid_cell* cell) {
 
 		if(have_grandchildren) {
 			// don't coarsen a node that has grandchildren
-			return false;
+			return true;
 		} else if(need_to_coarsen(cell)) {
 			execute_coarsen(cell);
 			/*	now I'm the smallest, since I just executed the coarsen,
 				so I return false to keep the recursion chain going */
 			return false;
-		} else{
+		} else {
 			/* 	I have children but no grandchildren, but no need to coarsen,
 				so I return true to break the recursion chain so that my
 				parent knows not to coarsen */
@@ -183,12 +183,12 @@ static bool need_to_refine(grid_cell* cell) {
 		for(j = 7; j > i; j--) {
 			a = *(cell->points[i]);
 			b = *(cell->points[j]);
-			if (abs(a.B.x - b.B.x) > THRESHOLD_B
-				|| abs(a.B.y - b.B.y) > THRESHOLD_B
-				|| abs(a.B.z - b.B.z) > THRESHOLD_B
-				|| abs(a.E.x - b.E.x) > THRESHOLD_E
-				|| abs(a.E.y - b.E.y) > THRESHOLD_E
-				|| abs(a.E.z - b.E.z) > THRESHOLD_E) {
+			if (fabs(a.B.x - b.B.x) > THRESHOLD_B
+				|| fabs(a.B.y - b.B.y) > THRESHOLD_B
+				|| fabs(a.B.z - b.B.z) > THRESHOLD_B
+				|| fabs(a.E.x - b.E.x) > THRESHOLD_E
+				|| fabs(a.E.y - b.E.y) > THRESHOLD_E
+				|| fabs(a.E.z - b.E.z) > THRESHOLD_E) {
 					return true;
 				}
 		}//end inner for
@@ -197,8 +197,6 @@ static bool need_to_refine(grid_cell* cell) {
 }//end need_to_refine function
 
 void execute_refine(grid_cell* cell, double x_spat, double y_spat, double z_spat, vec3 *h) {
-	int depth = round_i(log2(dx/h->x));
-	printf("executing refine at depth %d\n", depth);
 	// create 8 new children
 	grid_cell **children_cells;
 	children_cells = (grid_cell**) malloc( 8*sizeof(grid_cell*) );
@@ -228,7 +226,7 @@ void execute_refine(grid_cell* cell, double x_spat, double y_spat, double z_spat
 													y_spat + k*h->y,
 													z_spat + m*h->z, time);
 				}
-				printf("children_points[%d][%d][%d] = %p\n", j,k,m, children_points[j][k][m]);
+				//printf("children_points[%d][%d][%d] = %p\n", j,k,m, children_points[j][k][m]);
 			}
 		}
 	}
@@ -243,9 +241,10 @@ void execute_refine(grid_cell* cell, double x_spat, double y_spat, double z_spat
 	    children_cells[i]->points[6] = children_points[1+(i&4)/4][1+(i&2)/2][0+(i&1)];
 	    children_cells[i]->points[7] = children_points[1+(i&4)/4][1+(i&2)/2][1+(i&1)];
 		for (j = 0; j < 8; ++j) {
-			if (children_cells[i]->points[j] == NULL)
+			if (children_cells[i]->points[j] == NULL) {
 				printf("cell %d, point %d is null\n", i, j);
-				printf("error %d\n", 0/0);
+				printf("goodbye\n");
+			}
 		}
 	}
 
@@ -282,8 +281,7 @@ bool refine(grid_cell* cell, double x_spat, double y_spat, double z_spat, vec3 *
 }
 	
 void output_grid(int itNum, int numFiles, grid_cell ***grid_cells, List particles) {
-	printf("not really outputting grid\n");
-	//output_grid_impl(itNum, numFiles, grid_cells, particles, "data");
+	output_grid_impl(itNum, numFiles, grid_cells, particles, "data");
 	//TODO: it should be true that itNum == time/dt. maybe we don't need to pass the itNum variable as an argument
 	// int itNum = round_i(time/dt);
 }
