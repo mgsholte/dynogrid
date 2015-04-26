@@ -64,7 +64,11 @@ elif (dim == 3):
     
 # normalize data:
 timesteps = fn.normalizeData(timesteps, E_min, E_max, B_min, B_max, p_min, p_max, nx, ny, nz)
-    
+print("E_min is: " + str(E_min))
+print("E_max is: " + str(E_max))
+print("B_min is: " + str(B_min))
+print("B_max is: " + str(B_max))
+
 # plot data:    
 if(dim == 2):
     for t in xrange(0, numFiles):

@@ -64,7 +64,7 @@ void output_grid_impl(int itNum, int numFiles, grid_cell ***grid_cells, List par
 		testPFile(pfile, fname);
 
 		fprintf(pfile, "params.data\n");
-		fprintf(pfile, "nx=%d,ny=%d,nz=%d\n", nx+1, ny+1, nz+1);
+		fprintf(pfile, "nx=%d,ny=%d,nz=%d\n", nx, ny, nz);
 		fprintf(pfile, "dx=%lg,dy=%lg,dz=%lg\n", dx, dy, dz);
 		fprintf(pfile, "numFiles=%d\n", numFiles);
 		fclose(pfile);

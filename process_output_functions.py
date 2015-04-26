@@ -5,6 +5,7 @@ import os
 import matplotlib.cm as cm
 import numpy as np
 from mpl_toolkits.mplot3d import Axes3D
+import sys
 
 
 def createTestOutputFile2D(itNum, nx, ny, numParticles, numFiles, ext):
@@ -198,7 +199,7 @@ def getParticleData2D(numFiles, timesteps, ext):
 
 
 def getGridData3D(numFiles, ext, nx, ny, nz, dx, dy, dz):
-    numLines = int(nx*ny*nz)
+    # numLines = int(nx*ny*nz)
     timesteps = list()
     # suck in all the gridpoint files and parse the text for the relevant data:
     E_min = 0.0
@@ -210,17 +211,17 @@ def getGridData3D(numFiles, ext, nx, ny, nz, dx, dy, dz):
         fname = str(i) + str(fname_grid)
         
         gridpoints = dict()
-        # Xs = list()
-        # Ys = list()
-        # Zs = list()
-        # Bs = list()
-        # Es = list()
+        Xs = list()
+        Ys = list()
+        Zs = list()
+        Bs = list()
+        Es = list()
         # Xs, Ys, Zs = np.mgrid[0:nx*dx:dx, 0:ny*dy:dy, 0:nz*dz:dz]
-        Xs = np.empty(numLines, dtype=np.float64)
-        Ys = np.empty(numLines, dtype=np.float64)
-        Zs = np.empty(numLines, dtype=np.float64)
-        Bs = np.empty(numLines, dtype=np.float64)
-        Es = np.empty(numLines, dtype=np.float64)
+        # Xs = np.empty(numLines, dtype=np.float64)
+        # Ys = np.empty(numLines, dtype=np.float64)
+        # Zs = np.empty(numLines, dtype=np.float64)
+        # Bs = np.empty(numLines, dtype=np.float64)
+        # Es = np.empty(numLines, dtype=np.float64)
         with open(fname, 'r') as grid_file:
             # grid_file_lines = grid_file.readlines() # grid_file_lines is a list of the lines in grid_file
             line_ct = -1
@@ -248,18 +249,24 @@ def getGridData3D(numFiles, ext, nx, ny, nz, dx, dy, dz):
 #                    B_min = B
 #                if B > B_max:
 #                    B_max = B
-                # Xs.append(xcoord)
-                # Ys.append(ycoord)
-                # Zs.append(zcoord)
-                # Es.append(E)
-                # Bs.append(B)
-                Xs[line_ct - 1] = xcoord
-                Ys[line_ct - 1] = ycoord
-                Zs[line_ct - 1] = zcoord
-                Es[line_ct - 1] = E
-                Bs[line_ct - 1] = B
+                Xs.append(xcoord)
+                Ys.append(ycoord)
+                Zs.append(zcoord)
+                Es.append(E)
+                Bs.append(B)
+                # Xs[line_ct - 1] = xcoord
+                # Ys[line_ct - 1] = ycoord
+                # Zs[line_ct - 1] = zcoord
+                # Es[line_ct - 1] = E
+                # Bs[line_ct - 1] = B
                 # store data in a dictionary:
         # gridpoints = {'Xs':Xs.flatten(), 'Ys':Ys.flatten(), 'Zs':Zs.flatten(), 'Es':Es, 'Bs':Bs}
+        Xs = np.asarray(Xs, dtype=np.float64)
+        Ys = np.asarray(Ys, dtype=np.float64)
+        Zs = np.asarray(Zs, dtype=np.float64)
+        Es = np.asarray(Es, dtype=np.float64)
+        Bs = np.asarray(Bs, dtype=np.float64)
+
         gridpoints = {'Xs':Xs, 'Ys':Ys, 'Zs':Zs, 'Es':Es, 'Bs':Bs}
         timesteps.append({'gridpoints':gridpoints,'particles':''})
         E_max = Es.max()
@@ -311,10 +318,16 @@ def getParticleData3D(numFiles, timesteps, ext):
         
 def normalizeData(timesteps, E_min, E_max, B_min, B_max, p_min, p_max, nx, ny, nz):
     # (x-min)/(max-min)
+
     for t in xrange(0, len(timesteps)):
         # normalize gridpoint data:
         # for grdpt in xrange(0, len(((timesteps[t])['gridpoints'])['Es'])):
-        for grdpt in xrange(0, int(nx*ny*nz)):
+        len_Bs = len(((timesteps[t])['gridpoints'])['Bs'])
+        len_Es = len(((timesteps[t])['gridpoints'])['Es'])
+        if  len_Bs != len_Es:
+            print("ERROR! len of Bs does not equal len of Es")
+            sys.exit
+        for grdpt in xrange(0, len_Bs):
             # normalize E and B in each gridpoint dictionary:
             if E_min == E_max:
                 (((timesteps[t])['gridpoints'])['Es'])[grdpt] = 0.5
@@ -414,7 +427,7 @@ def plotDataForSingleTimeStep3D(gridpoints, particles, itNum, nx, ny, nz, dx, dy
     # SM = cm.ScalarMappable()
     # cMap = SM.get_cmap()
     myCmap = cm.get_cmap("binary")
-    myCmap.set_under('w', 0)
+    myCmap.set_under('r', 0)
 
                         
     ax1.set_xlabel('X', fontsize=16)
@@ -425,9 +438,9 @@ def plotDataForSingleTimeStep3D(gridpoints, particles, itNum, nx, ny, nz, dx, dy
     ax1.set_zlim(0, nz*dz)
     
     if E_or_B == 'B':
-        cb1 = ax1.scatter(gridpoints_Xs, gridpoints_Ys, gridpoints_Zs, c=gridpoints_Bs, marker=u'.', cmap=myCmap, vmin=.6, linewidths=0, alpha=.7, label='B Field')
+        cb1 = ax1.scatter(gridpoints_Xs, gridpoints_Ys, gridpoints_Zs, c=gridpoints_Bs, marker=u'.', cmap=myCmap, vmin=.25, linewidths=0, alpha=.5, label='B Field')
     elif E_or_B == 'E':
-        cb1 = ax1.scatter(gridpoints_Xs, gridpoints_Ys, gridpoints_Zs, c=gridpoints_Es, marker=u'.', cmap=myCmap, vmin=.6, linewidths=0, alpha=.7, label='E Field')
+        cb1 = ax1.scatter(gridpoints_Xs, gridpoints_Ys, gridpoints_Zs, c=gridpoints_Es, marker=u'.', cmap=myCmap, vmin=.4, linewidths=0, alpha=.5, label='E Field')
 
     # particles_Xs = particles['Xs']
     # particles_Ys = particles['Ys']
@@ -441,7 +454,7 @@ def plotDataForSingleTimeStep3D(gridpoints, particles, itNum, nx, ny, nz, dx, dy
    
     legend = ax1.legend(loc='upper right', shadow=True)
     plt.colorbar(cb1)
-    # plt.colorbar(cb2)
+    plt.colorbar(cb2)
 
     #plt.show()
     if os.access(path, os.F_OK):
