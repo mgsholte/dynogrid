@@ -15,5 +15,5 @@ bool refine(grid_cell* cell, double x_spat, double y_spat, double z_spat, vec3 *
 
 // print fields and particles at iteration i
 void output_grid(int itNum, int numFiles, grid_cell ***grid_cells, List particles);
-
+void cleanup(grid_cell ***grid_cells);
 #endif //GRID_H

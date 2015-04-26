@@ -14,6 +14,9 @@ void list_free(List list) {
 	while(list_has_next(list)) {
 		list_pop(&list);
 	}
+	list_reset_iter(&list);
+	if (list_has_next(list))
+		list_pop(&list);
 	free(list.sentinel);
 }
 

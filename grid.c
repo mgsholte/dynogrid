@@ -282,7 +282,7 @@ void output_grid(int itNum, int numFiles, grid_cell ***grid_cells, List particle
 	//TODO: it should be true that itNum == time/dt. maybe we don't need to pass the itNum variable as an argument
 	// int itNum = round_i(time/dt);
 }
-
+void recursive_execute_coarsen(grid_cell* cell);
 void cleanup(grid_cell ***grid_cells) {
 	int x,y,z,i;
 	grid_cell* cell;
@@ -303,7 +303,6 @@ void cleanup(grid_cell ***grid_cells) {
 	}
 	free(grid_cells);
 }
-
 void recursive_execute_coarsen(grid_cell* cell) {
 	// BASE CASE or if at coarsest cell size from the start
 	if (cell->children == NULL) {
