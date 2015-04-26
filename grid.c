@@ -12,10 +12,6 @@ static inline double rand_float( double low, double high ) {
 	return ( (double)rand() * (high - low) ) / (double)	RAND_MAX + low;
 }
 
-static inline double log2(double x) {
-	return log(x)/log(2.);
-}
-
 static void scale_vec(vec3 *v, double factor) {
 	v->x *= factor;
 	v->y *= factor;
@@ -82,7 +78,7 @@ List init_particles(vec3 origin, vec3 dims, int part_per_cell) {
 						PROTON_WEIGHT  //weight
 						};
 
-					list_add(&particles, p);
+					list_add(particles, p);
 
 					// add an electron
 					p = (particle*) malloc(sizeof(particle));
@@ -98,7 +94,7 @@ List init_particles(vec3 origin, vec3 dims, int part_per_cell) {
 						ELECTRON_WEIGHT  //weight
 						};
 
-					list_add(&particles, p);
+					list_add(particles, p);
 				}
 			}
 		}

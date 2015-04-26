@@ -20,12 +20,12 @@ void list_free(List list) {
 	free(list.sentinel);
 }
 
-void list_add(List *list, particle *payload) {
+void list_add(List list, particle *payload) {
 	Node *new_node = (Node*) malloc(sizeof(Node));
 
 	new_node->payload = payload;
-	new_node->next = (list->sentinel)->next;
-	(list->sentinel)->next = new_node;
+	new_node->next = (list.sentinel)->next;
+	(list.sentinel)->next = new_node;
 }
 
 // remove the node currently being iterated

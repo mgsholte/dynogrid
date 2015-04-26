@@ -18,7 +18,7 @@ typedef struct {
 // list modification
 List list_init();
 void list_free(List list);
-void list_add(List *list, particle *payload);
+void list_add(List list, particle *payload);
 void list_pop(List *list);
 
 // list iteration
