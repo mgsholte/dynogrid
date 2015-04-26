@@ -13,9 +13,7 @@ static inline double rand_float( double low, double high ) {
 }
 
 static void scale_vec(vec3 *v, double factor) {
-	v->x *= factor;
-	v->y *= factor;
-	v->z *= factor;
+	v->x *= factor;	v->y *= factor;	v->z *= factor;
 }
 
 // inits all grid points to 0 in E and B
@@ -53,22 +51,22 @@ grid_cell*** init_grid() {
 // if the origin and dims of the prism don't algin exactly to grid points, they will be rounded to the nearest ones
 List init_particles(vec3 origin, vec3 dims, int part_per_cell) {
 	List particles = list_init();
-	int row, col, dep, k;
-	int x_i_min = round_i(origin.x/dx), x_i_max = round_i(dims.x/dx) + x_i_min;
-	int y_i_min = round_i(origin.y/dy), y_i_max = round_i(dims.y/dy) + y_i_min;
-	int z_i_min = round_i(origin.z/dz), z_i_max = round_i(dims.z/dz) + z_i_min;
+	int iy, ix, dep, k;
+	int ix_min = round_i(origin.x/dx), ix_max = round_i(dims.x/dx) + ix_min;
+	int iy_min = round_i(origin.y/dy), iy_max = round_i(dims.y/dy) + iy_min;
+	int iz_min = round_i(origin.z/dz), iz_max = round_i(dims.z/dz) + iz_min;
 	double x,y,z; // the coords of the next particle to add
 	particle *p; // pointer to the next particle to add
-	for (col = x_i_min; col < x_i_max; ++col) {
-		for (row = y_i_min; row < y_i_max; ++row) {
-			for (dep = z_i_min; dep < z_i_max; ++dep) {
+	for (ix = ix_min; ix < ix_max; ++ix) {
+		for (iy = iy_min; iy < iy_max; ++iy) {
+			for (dep = iz_min; dep < iz_max; ++dep) {
 				// add particles in this cell
 				for (k = 0; k < part_per_cell/2; ++k) {
 					// add a proton
 					p = (particle*) malloc(sizeof(particle));
 
-					x = rand_float(0, dx) + col*dx;
-					y = rand_float(0, dy) + row*dy;
+					x = rand_float(0, dx) + ix*dx;
+					y = rand_float(0, dy) + iy*dy;
 					z = rand_float(0, dz) + dep*dz;
 					*p = (particle) { 
 						{x, y, z},  //position
@@ -83,8 +81,8 @@ List init_particles(vec3 origin, vec3 dims, int part_per_cell) {
 					// add an electron
 					p = (particle*) malloc(sizeof(particle));
 
-					x = rand_float(0, dx) + col*dx;
-					y = rand_float(0, dy) + row*dy;
+					x = rand_float(0, dx) + ix*dx;
+					y = rand_float(0, dy) + iy*dy;
 					z = rand_float(0, dz) + dep*dz;
 					*p = (particle) { 
 						{x, y, z},  //position
