@@ -51,7 +51,7 @@ grid_cell*** init_grid() {
 // if the origin and dims of the prism don't algin exactly to grid points, they will be rounded to the nearest ones
 List init_particles(vec3 origin, vec3 dims, int part_per_cell) {
 	List particles = list_init();
-	int iy, ix, dep, k;
+	int iy, ix, iz, k;
 	int ix_min = round_i(origin.x/dx), ix_max = round_i(dims.x/dx) + ix_min;
 	int iy_min = round_i(origin.y/dy), iy_max = round_i(dims.y/dy) + iy_min;
 	int iz_min = round_i(origin.z/dz), iz_max = round_i(dims.z/dz) + iz_min;
@@ -59,7 +59,7 @@ List init_particles(vec3 origin, vec3 dims, int part_per_cell) {
 	particle *p; // pointer to the next particle to add
 	for (ix = ix_min; ix < ix_max; ++ix) {
 		for (iy = iy_min; iy < iy_max; ++iy) {
-			for (dep = iz_min; dep < iz_max; ++dep) {
+			for (iz = iz_min; iz < iz_max; ++iz) {
 				// add particles in this cell
 				for (k = 0; k < part_per_cell/2; ++k) {
 					// add a proton
@@ -67,7 +67,7 @@ List init_particles(vec3 origin, vec3 dims, int part_per_cell) {
 
 					x = rand_float(0, dx) + ix*dx;
 					y = rand_float(0, dy) + iy*dy;
-					z = rand_float(0, dz) + dep*dz;
+					z = rand_float(0, dz) + iz*dz;
 					*p = (particle) { 
 						{x, y, z},  //position
 						{0, 0, 0},  //momentum
@@ -83,7 +83,7 @@ List init_particles(vec3 origin, vec3 dims, int part_per_cell) {
 
 					x = rand_float(0, dx) + ix*dx;
 					y = rand_float(0, dy) + iy*dy;
-					z = rand_float(0, dz) + dep*dz;
+					z = rand_float(0, dz) + iz*dz;
 					*p = (particle) { 
 						{x, y, z},  //position
 						{0, 0, 0},  //momentum
