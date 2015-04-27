@@ -15,9 +15,7 @@ static double min(const double x, const double y, const double z) {
 double time = 0.;
 
 int main(int argc, char *argv[]) {
-	//dt = min(dx,dy,dz)/C;
-
-	int i;  // loop index variable
+	int i;  // loop index var
 
 	// read as inputs in the future
 	const int nSteps = ceil(t_end/dt);
