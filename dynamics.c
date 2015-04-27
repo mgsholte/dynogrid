@@ -6,7 +6,7 @@
 static const double inv_sigma_sq_2 = 1./(2*sigma*sigma);
 
 // changes E and B at the given point and time
-void laser(grid_point *grid_p, double x, double y, double z, double t) {
+void laser(grid_point *point, double x, double y, double z, double t) {
 	double B = B0*cos(freq*t - wavenum*x);
 	double E = E0*cos(freq*t - wavenum*x);
 	// N is the gaussian distribution factor for 3D
@@ -59,13 +59,4 @@ void update_grid(grid_cell ***grid_cells) {
 			}
 		}
 	}
-	/*
-	for (x = 0; x < nx; x++) {
-		for (y = 0; y < ny; y++) {
-			for (z = 0; z < nz; z++) {
-				update_grid_cell(&grid_cells[x][y][z], x, y, z);
-			}
-		}
-	}
-	*/
 }

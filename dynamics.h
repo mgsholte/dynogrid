@@ -14,7 +14,7 @@
 
 void update_grid(grid_cell ***grid_cells);
 
-void laser(grid_point *grid_p, double x, double y, double z, double t);
+void laser(grid_point *grid_p, vec3 loc, double t);
 void recursive_laser(grid_cell *cell, double x_spat, double y_spat, double z_spat, int depth, double t);
 
 void push_particles(grid_cell ***grid, List part_list);
