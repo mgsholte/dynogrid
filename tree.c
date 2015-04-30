@@ -125,19 +125,18 @@ void tree_update(tree t) {
 
 void refine(TreeNode* cell, double x, double y, double z, vec3 *h) {
 	int i, j, k, m;
-	// create 8 new children
+	// allocate the 8 new children cells
 	tree *children_cells[8];
 	for (i = 0; i < 8; ++i) {
-		children_cells[i] = (tree*) malloc( sizeof(TreeNode) );
+		children_cells[i] = (TreeNode*) calloc( sizeof(TreeNode) );
 	}
 
-	// creating all needed points (27 total), referencing 8 back to parent's points,
-	//  allocating the rest, then having all the child cells reference these 27 "master" points
+	// allocate all 19 new points. then have the new child cells reference these 19 new points and the original 8 points from their parent
 	grid_point* children_points[3][3][3];
-	for (j = 0; j < 8; ++j){
-		// consider 2x2x2 grid super cell. there will be 3 grid_points in each direction.
-		// the elem children_points[i][j][k] holds the point at z=i, y=j, x=k
-		children_points[(j&4)/2][(j&2)][(j&1)*2] = cell->points[j];
+	for (i = 0; i < 8; ++i) {
+		// consider 2x2x2 grid super cell. there will be 3 grid_points in each direction b/c 2 adjacent cells share the points on their boundary
+		// the elem children_points[i][j][k] holds the point at x=i, y=j, z=k
+		children_points[(j&1)*2][(j&2)][(j&4)/2] = cell->points[j];
 	}
 	// malloc points not pointing to parent points
 	for (j = 0; j < 3; ++j) {
@@ -145,7 +144,7 @@ void refine(TreeNode* cell, double x, double y, double z, vec3 *h) {
 			for (m = 0; m < 3; ++m) {
 				// selects only points not pointing to parent points
 				if ( j==1 || k==1 || m==1 ) {
-					children_points[j][k][m] = (grid_point*) malloc( sizeof(grid_point) );
+					children_points[j][k][m] = (grid_point*) calloc( sizeof(grid_point) );
 					// NOTE: if adding more than laser to a grid point, add that here
 					laser(children_points[j][k][m], x_spat + j*h->x,
 													y_spat + k*h->y,
