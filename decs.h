@@ -15,6 +15,10 @@ typedef struct {
 	double x,y,z;
 } vec3;
 
+inline void scale_vec(vec3 *v, double factor) {
+	v->x *= factor;	v->y *= factor;	v->z *= factor;
+}
+
 // Define the particle structure
 typedef struct {
 	vec3 pos, p;  // position, momentum
