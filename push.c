@@ -37,8 +37,27 @@ vec3 interp3(vec3 field000, vec3 field001, vec3 field010, vec3 field100, vec3 fi
     return interped;
 }
 
+// Calls the pusher and cleans up afterward
+void push_particles(grid_cell ***grid, double pxmin, double pxmax, double pymin, double pymax, double pzmin, double pymax, int imax, int jmax, int kmax){
+	int i,j,k;
+	for (i=0, i<imax, i++){
+		for (j=0, j<jmax, j++){
+			for (k=0, k<kmax, k++){
+				// Possibly check if valid cell
+				push_list(grid, i, j, k);
+			}
+		}
+	}
+
+}
+
 // Particle pusher!!!!
-void push_particles(grid_cell ***grid, List part_list) {
+void push_list(grid_cell ***grid, int i, int j, int k) {
+
+	// Get part_list from grid
+	// Mark: Make the cell have this!
+	List part_list = grid_cell[i][j][k].part_list;
+
 	list_reset_iter(&part_list);
 	if (!list_has_next(part_list))
 			return;
@@ -89,6 +108,7 @@ void push_particles(grid_cell ***grid, List part_list) {
 		(curr->pos).z += uz * root;
 
 		// Check if out of bounds
+		// This check stays the same when parallel, since each processor will have the appropriate ghost cells
 		if ((((curr->pos).x <= 0 || (curr->pos).y <= 0) || (curr->pos).z <= 0) || (((curr->pos).x >= x_max || (curr->pos).y >= y_max) || (curr->pos).z >= z_max)){
 			list_pop(&part_list);
 			continue;
@@ -96,10 +116,12 @@ void push_particles(grid_cell ***grid, List part_list) {
 
 		//Do interpolation to find e and b here.
         // x-left, y-up, and z-near indices
-        xl = floor((curr->pos).x * idx);
-        yu = floor((curr->pos).y * idy);
-		zn = floor((curr->pos).z * idz);
+		// Subtract out the local min to get the correct indicies
+        xl = floor(((curr->pos).x - pxmin) * idx);
+        yu = floor(((curr->pos).y - pymin) * idy);
+		zn = floor(((curr->pos).z - pzmin) * idz);
 		// x-right fraction, ...
+		// This stays the same for parallel, I think
         xrf = ((curr->pos).x - xl*dx) / dx;
         ydf = ((curr->pos).y - yu*dy) / dy;
 		zff = ((curr->pos).z - zn*dz) / dz;
@@ -222,5 +244,8 @@ void push_particles(grid_cell ***grid, List part_list) {
 
 		
         //This is where the current and charge density would be calculatted.
+
+
+		// Pass the particles to neighbor cells if necessary
     } 
 }
