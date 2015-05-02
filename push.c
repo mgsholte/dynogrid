@@ -38,11 +38,11 @@ vec3 interp3(vec3 field000, vec3 field001, vec3 field010, vec3 field100, vec3 fi
 }
 
 // Calls the pusher and cleans up afterward
-void push_particles(grid_cell ****grid, double pxmin, double pymin, double pzmin, int imax, int jmax, int kmax){
+void push_particles(grid_cell ****grid){
 	int i,j,k;
-	for (i=0, i<imax, i++){
-		for (j=0, j<jmax, j++){
-			for (k=0, k<kmax, k++){
+	for (i=imin, i<imax, i++){
+		for (j=jmin, j<jmax, j++){
+			for (k=kmin, k<kmax, k++){
 				// Check if valid cell
 				if (grid[i][j][k] != NULL){
 					if (grid[i][j][k]->owner == pid){
@@ -52,9 +52,9 @@ void push_particles(grid_cell ****grid, double pxmin, double pymin, double pzmin
 			}
 		}
 	}
-	for (i=0, i<imax, i++){
-		for (j=0, j<jmax, j++){
-			for (k=0, k<kmax, k++){
+	for (i=imin, i<imax, i++){
+		for (j=jmin, j<jmax, j++){
+			for (k=kmin, k<kmax, k++){
 				// Check if ghost cell and pass next_list to responsible processor
 				if (grid[i][j][k] != NULL){
 					if (grid[i][j][k]->owner != pid){
@@ -65,9 +65,9 @@ void push_particles(grid_cell ****grid, double pxmin, double pymin, double pzmin
 			}
 		}
 	}
-	for (i=0, i<imax, i++){
-		for (j=0, j<jmax, j++){
-			for (k=0, k<kmax, k++){
+	for (i=imin, i<imax, i++){
+		for (j=jmin, j<jmax, j++){
+			for (k=kmin, k<kmax, k++){
 				if (grid[i][j][k] != NULL){
 					// Add the next_list to the current list
 					// Mark: make this happen

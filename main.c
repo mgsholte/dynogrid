@@ -5,6 +5,7 @@
 #include "grid.h"
 #include "dynamics.h"
 #include "list.h"
+#include "defs.h"
 
 static double min(const double x, const double y, const double z) {
 	return (x < y)

@@ -35,6 +35,11 @@ struct grid_cell {
 };
 typedef struct grid_cell grid_cell;
 
+// Declare some globals
+extern int imin, imax, ymin, ymax, kmin, kmax;	//Processor minimum indicies
+extern int pid;	//Processor ID
+extern double pxmin, pymin, pzmin;	//Processor minimum x, y, and z
+
 #define C (3e8)
 
 double time; // changes every iteration
