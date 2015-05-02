@@ -30,8 +30,15 @@ typedef struct {
 struct grid_cell {
 	grid_point *points[8];
 	struct grid_cell **children;
+	int status; // tracked, ghost, or ignore
+	List part_list;
+	List next_list;
 };
 typedef struct grid_cell grid_cell;
+
+#define TRACKED (1)
+#define GHOST (0)
+#define IGNORE (-1)
 
 #define C (3e8)
 
