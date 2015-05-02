@@ -38,23 +38,16 @@ vec3 interp3(vec3 field000, vec3 field001, vec3 field010, vec3 field100, vec3 fi
 }
 
 // Calls the pusher and cleans up afterward
-void push_particles(grid_cell ***grid, double pxmin, double pymin, double pzmin, int imax, int jmax, int kmax){
+void push_particles(grid_cell ****grid, double pxmin, double pymin, double pzmin, int imax, int jmax, int kmax){
 	int i,j,k;
 	for (i=0, i<imax, i++){
 		for (j=0, j<jmax, j++){
 			for (k=0, k<kmax, k++){
 				// Check if valid cell
-				if (grid[i][j][k].status != IGNORE)
-					push_list(grid, i, j, k);
-			}
-		}
-	}
-	for (i=0, i<imax, i++){
-		for (j=0, j<jmax, j++){
-			for (k=0, k<kmax, k++){
-				// Check if ghost cell and pass next_list to responsible processor
-				if (grid[i][j][k].status == GHOST){
-				// MPI commands go here
+				if (grid[i][j][k] != NULL){
+					if (grid[i][j][k]->owner == pid){
+						push_list(grid, i, j, k);
+					}
 				}
 			}
 		}
@@ -62,8 +55,23 @@ void push_particles(grid_cell ***grid, double pxmin, double pymin, double pzmin,
 	for (i=0, i<imax, i++){
 		for (j=0, j<jmax, j++){
 			for (k=0, k<kmax, k++){
-				// Add the next_list to the current list
-				// Mark: make this happen
+				// Check if ghost cell and pass next_list to responsible processor
+				if (grid[i][j][k] != NULL){
+					if (grid[i][j][k]->owner != pid){
+						
+						// MPI commands go here
+					}
+				}
+			}
+		}
+	}
+	for (i=0, i<imax, i++){
+		for (j=0, j<jmax, j++){
+			for (k=0, k<kmax, k++){
+				if (grid[i][j][k] != NULL){
+					// Add the next_list to the current list
+					// Mark: make this happen
+				}
 			}
 		}
 	}
@@ -147,7 +155,7 @@ void push_list(grid_cell ***grid, int i, int j, int k) {
         /*E = interp3(grid[xl][yu][zn].E, grid[xl][yu][zn+1].E, grid[xl][yu+1][zn].E, grid[xl+1][yu][zn].E, grid[xl][yu+1][zn+1].E, grid[xl+1][yu][zn+1].E, grid[xl][yu+1][zn+1].E, grid[xl+1][yu+1][zn+1].E, xrf, ydf, zff);
         B = interp3(grid[xl][yu][zn].B, grid[xl][yu][zn+1].B, grid[xl][yu+1][zn].B, grid[xl+1][yu][zn].B, grid[xl][yu+1][zn+1].B, grid[xl+1][yu][zn+1].B, grid[xl][yu+1][zn+1].B, grid[xl+1][yu+1][zn+1].B, xrf, ydf, zff);*/
 
-        cell = &(grid[xl][yu][zn]);
+        cell = (grid[xl][yu][zn]);
 
 		//Find the finest cell that contains the particle
 		while (cell->children != NULL){
