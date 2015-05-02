@@ -38,13 +38,32 @@ vec3 interp3(vec3 field000, vec3 field001, vec3 field010, vec3 field100, vec3 fi
 }
 
 // Calls the pusher and cleans up afterward
-void push_particles(grid_cell ***grid, double pxmin, double pxmax, double pymin, double pymax, double pzmin, double pymax, int imax, int jmax, int kmax){
+void push_particles(grid_cell ***grid, double pxmin, double pymin, double pzmin, int imax, int jmax, int kmax){
 	int i,j,k;
 	for (i=0, i<imax, i++){
 		for (j=0, j<jmax, j++){
 			for (k=0, k<kmax, k++){
-				// Possibly check if valid cell
-				push_list(grid, i, j, k);
+				// Check if valid cell
+				if (grid[i][j][k].status != IGNORE)
+					push_list(grid, i, j, k);
+			}
+		}
+	}
+	for (i=0, i<imax, i++){
+		for (j=0, j<jmax, j++){
+			for (k=0, k<kmax, k++){
+				// Check if ghost cell and pass next_list to responsible processor
+				if (grid[i][j][k].status == GHOST){
+				// MPI commands go here
+				}
+			}
+		}
+	}
+	for (i=0, i<imax, i++){
+		for (j=0, j<jmax, j++){
+			for (k=0, k<kmax, k++){
+				// Add the next_list to the current list
+				// Mark: make this happen
 			}
 		}
 	}
@@ -247,5 +266,18 @@ void push_list(grid_cell ***grid, int i, int j, int k) {
 
 
 		// Pass the particles to neighbor cells if necessary
+        // Ending x-left, y-up, and z-near indices
+		// Subtract out the local min to get the correct indicies
+        xle = floor(((curr->pos).x - pxmin) * idx);
+        yue = floor(((curr->pos).y - pymin) * idy);
+		zne = floor(((curr->pos).z - pzmin) * idz);
+
+		// Check if cell has changed
+		// Guarenteed to still be in a cell or ghost cell controled by proc
+		if (xle != xl || yue != yu || zne != zn){
+			//Mark: add curr to the next_list of grid[xle][yue][zne]
+			list_pop(&part_list);
+		}
+
     } 
 }
