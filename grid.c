@@ -104,57 +104,131 @@ grid_cell**** init_grid(int i_size, int j_size, int k_size) {
 
 // populates particles randomly within each grid cell inside the bounds of the specified prism. particles are evenly distributed across the cells
 // if the origin and dims of the prism don't align exactly to grid points, they will be rounded to the nearest ones
-List init_particles(vec3 origin, vec3 dims, int part_per_cell) {
-	List particles = list_init();
-	int iy, ix, iz, k;
-	int ix_min = round_i(origin.x/dx), ix_max = round_i(dims.x/dx) + ix_min;
-	int iy_min = round_i(origin.y/dy), iy_max = round_i(dims.y/dy) + iy_min;
-	int iz_min = round_i(origin.z/dz), iz_max = round_i(dims.z/dz) + iz_min;
+void init_particles(grid_cell**** grid_cells, vec3 origin, vec3 dims, int part_per_cell) {
+	//ensure that the origin of the tungsten block aligns evenly with increments of dx, dy, and dz:
+	double tungsten_xmin = dx*(round_i(origin.x/dx)), tungsten_xmax = dx*(round_i(dims.x/dx)) + tungsten_xmin;
+	double tungsten_ymin = dy*(round_i(origin.y/dy)), tungsten_ymax = dy*(round_i(dims.y/dy)) + tungsten_ymin;
+	double tungsten_zmin = dz*(round_i(origin.z/dz)), tungsten_zmax = dz*(round_i(dims.z/dz)) + tungsten_zmin;
+	
+	int i, j, k, ppc; //i corresonds to x; j to y; k to z; ppc for particles per cell
+	double cell_xmin; cell_xmax, cell_ymin, cell_ymax, cell_zmin, cell_zmax;
+	particle *p; // pointer to the next particle to add...why declare this outside the loops???
 	double x,y,z; // the coords of the next particle to add
-	particle *p; // pointer to the next particle to add
-	for (ix = ix_min; ix < ix_max; ++ix) {
-		for (iy = iy_min; iy < iy_max; ++iy) {
-			for (iz = iz_min; iz < iz_max; ++iz) {
-				// add particles in this cell
-				for (k = 0; k < part_per_cell/2; ++k) {
-					// add a proton
-					p = (particle*) malloc(sizeof(particle));
+	for(i = imin; i < imax; i++){
+		cell_xmin = pxmin + ((i-imin) * dx);
+		cell_xmax = cell_xmin + dx;
+		for(j = jmin; j < jmax; j++){
+			cell_ymin = pymin + ((j-jmin) * dy);
+			cell_ymax = cell_ymin + dy;
+			for(k = kmin; k < kmax; k++){
+				cell_zmin = pzmin + ((k-kmin) * dz);
+				cell_zmax = cell_zmin + dz;
+				
+				List particles = list_init(); //particles list for the current time step
+				List next_particles = list_init(); //particles list for the next time step...will be initiated to empty
+				
+				if(	(cell_xmax >= tungsten_xmin && cell_xmin <= tungsten_xmax) &&
+					(cell_ymax >= tungsten_ymin && cell_ymin <= tungsten_ymax) &&
+					(cell_zmax >= tungsten_zmin && cell_zmin <= tungsten_zmax) &&
+					(i > imin && i < imax) &&
+					(j > jmin && j < jmax) &&
+					(k > kmin && k < kmax)
+					){	
+					
+					//then this cell lies within the block of tungsten (and NOT a ghost cell), so it gets particles:
+					for (ppc = 0; ppc < part_per_cell/2; ppc++) {
+						// add a proton
+						p = (particle*) malloc(sizeof(particle));
 
-					x = rand_float(0, dx) + ix*dx;
-					y = rand_float(0, dy) + iy*dy;
-					z = rand_float(0, dz) + iz*dz;
-					*p = (particle) { 
-						{x, y, z},  //position
-						{0, 0, 0},  //momentum
-						BASE_PROTON_MASS * PROTON_WEIGHT,   //mass
-						BASE_PROTON_CHARGE * PROTON_WEIGHT, //charge
-						PROTON_WEIGHT  //weight
-						};
+						x = rand_float(0, dx) + cell_xmin;
+						y = rand_float(0, dy) + cell_ymin;
+						z = rand_float(0, dz) + cell_zmin;
+						*p = (particle) { 
+							{x, y, z},  //position
+							{0, 0, 0},  //momentum
+							BASE_PROTON_MASS * PROTON_WEIGHT,   //mass
+							BASE_PROTON_CHARGE * PROTON_WEIGHT, //charge
+							PROTON_WEIGHT  //weight
+							};
 
-					list_add(particles, p);
+						list_add(particles, p);
 
-					// add an electron
-					p = (particle*) malloc(sizeof(particle));
+						// add an electron
+						p = (particle*) malloc(sizeof(particle));
 
-					x = rand_float(0, dx) + ix*dx;
-					y = rand_float(0, dy) + iy*dy;
-					z = rand_float(0, dz) + iz*dz;
-					*p = (particle) { 
-						{x, y, z},  //position
-						{0, 0, 0},  //momentum
-						BASE_ELECTRON_MASS * ELECTRON_WEIGHT,   //mass
-						BASE_ELECTRON_CHARGE * ELECTRON_WEIGHT, //charge
-						ELECTRON_WEIGHT  //weight
-						};
+						x = rand_float(0, dx) + cell_xmin;
+						y = rand_float(0, dy) + cell_ymin;
+						z = rand_float(0, dz) + cell_zmin;
+						*p = (particle) { 
+							{x, y, z},  //position
+							{0, 0, 0},  //momentum
+							BASE_ELECTRON_MASS * ELECTRON_WEIGHT,   //mass
+							BASE_ELECTRON_CHARGE * ELECTRON_WEIGHT, //charge
+							ELECTRON_WEIGHT  //weight
+							};
 
-					list_add(particles, p);
-				}
-			}
-		}
-	}
-	list_reset_iter(&particles);
-	return particles;
-}
+						list_add(particles, p);
+						list_reset_iter(&particles); //do we need to do this or no??? (Joel asking, not sure if this is needed)
+					}//end ppc for loop
+				}//end if
+				//adding initial list of particles to cell:
+				(grid_cells[i][j][k])->part_list = particles;
+				//adding blank, but initialized list of particles for next time step:
+				(grid_cells[i][j][k])->next_list = next_particles;
+			}//end k for loop
+		}//end j for loop
+	}// end i for loop
+
+	// //old, sequential version...keeping around for now just in case we need to compare/revert anything from the above:
+	// int iy, ix, iz, k;
+	// int ix_min = round_i(origin.x/dx), ix_max = round_i(dims.x/dx) + ix_min;
+	// int iy_min = round_i(origin.y/dy), iy_max = round_i(dims.y/dy) + iy_min;
+	// int iz_min = round_i(origin.z/dz), iz_max = round_i(dims.z/dz) + iz_min;
+	// double x,y,z; // the coords of the next particle to add
+	// particle *p; // pointer to the next particle to add
+	// for (ix = ix_min; ix < ix_max; ++ix) {
+	// 	for (iy = iy_min; iy < iy_max; ++iy) {
+	// 		for (iz = iz_min; iz < iz_max; ++iz) {
+	// 			// add particles in this cell
+	// 			for (k = 0; k < part_per_cell/2; ++k) {
+	// 				// add a proton
+	// 				p = (particle*) malloc(sizeof(particle));
+
+	// 				x = rand_float(0, dx) + ix*dx;
+	// 				y = rand_float(0, dy) + iy*dy;
+	// 				z = rand_float(0, dz) + iz*dz;
+	// 				*p = (particle) { 
+	// 					{x, y, z},  //position
+	// 					{0, 0, 0},  //momentum
+	// 					BASE_PROTON_MASS * PROTON_WEIGHT,   //mass
+	// 					BASE_PROTON_CHARGE * PROTON_WEIGHT, //charge
+	// 					PROTON_WEIGHT  //weight
+	// 					};
+
+	// 				list_add(particles, p);
+
+	// 				// add an electron
+	// 				p = (particle*) malloc(sizeof(particle));
+
+	// 				x = rand_float(0, dx) + ix*dx;
+	// 				y = rand_float(0, dy) + iy*dy;
+	// 				z = rand_float(0, dz) + iz*dz;
+	// 				*p = (particle) { 
+	// 					{x, y, z},  //position
+	// 					{0, 0, 0},  //momentum
+	// 					BASE_ELECTRON_MASS * ELECTRON_WEIGHT,   //mass
+	// 					BASE_ELECTRON_CHARGE * ELECTRON_WEIGHT, //charge
+	// 					ELECTRON_WEIGHT  //weight
+	// 					};
+
+	// 				list_add(particles, p);
+	// 			}
+	// 		}
+	// 	}
+	// }
+	// list_reset_iter(&particles);
+	// return particles;
+}//end init_particles() function
 
 static bool need_to_coarsen(grid_cell* cell) {
 	int i, j;
