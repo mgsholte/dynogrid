@@ -17,26 +17,81 @@ static void scale_vec(vec3 *v, double factor) {
 }
 
 // inits all grid points to 0 in E and B
-grid_cell*** init_grid() {
-	grid_cell ***grid_cells = (grid_cell***) malloc( (nx+1) * sizeof(grid_cell**) ); // allocate an array of pointers to rows-depthwise
+// i_size, etc. are lengths of real cell dimensions. ghost and NULL cells are added in this function
+// padding is 50% of i_size (etc.) on each side
+// ASSUMING GLOBAL numProcs, x_divs, y_divs, z_divs (the user-supplied specs)
+grid_cell**** init_grid(int i_size, int j_size, int k_size) {
+	// global vars (local indices)
+	i_min = i_size/2 - 1; // -1 for ghost on left
+	j_min = j_size/2 - 1;
+	k_min = k_size/2 - 1;
+	i_max = i_min + i_size + 2; // +2 for ghosts on left and right
+	j_max = j_min + j_size + 2;
+	k_max = k_min + k_size + 2;
+	// global vars (global spatial positions)
+	px_min = ((double)(pid % x_divs))/x_divs * x_max - dx;
+	py_min = ((double)((pid - pid % x_divs)/x_divs % y_divs))/y_divs * y_max - dy;
+	pz_min = ((double)((pid - pid % x_divs - pid % (x_divs * y_divs))/(x_divs * y_divs)))/z_divs * z_max - dz;
+	
+	// local vars
+	int wi = 2*i_size;
+	int wj = 2*j_size;
+	int wk = 2*k_size;
+	
+	
+	grid_cell ****grid_cells = (grid_cell****) malloc( (wi+1) * sizeof(grid_cell***) ); // allocate an array of pointers to rows-depthwise
 	int i, j, k, n;
-	for (i = 0; i <= nx; ++i) {
-		grid_cells[i] = (grid_cell**) malloc( (ny+1) * sizeof(grid_cell*) );  // allocate the row
-		for (j = 0; j <= ny; ++j) {
-			grid_cells[i][j] = (grid_cell*) malloc( (nz+1) * sizeof(grid_cell) );  // allocate the row
-			// initialize only the upper-left-forward grid_point (points[0] represents (z,y,x)==000, points[3] repr. (z,y,x)==011)
-			for (k = 0; k <= nz; ++k) {
-				grid_cells[i][j][k].points[0] = malloc( sizeof(grid_point) );
-				grid_cells[i][j][k].points[0]->E = (vec3) {0,0,0};
-				grid_cells[i][j][k].points[0]->B = (vec3) {0,0,0};
-				grid_cells[i][j][k].children = NULL;
+	int di, dj, dk, owner_id;
+	for (i = 0; i < wi; ++i) {
+		grid_cells[i] = (grid_cell***) malloc( (wj+1) * sizeof(grid_cell**) );  // allocate the row
+		for (j = 0; j < wj; ++j) {
+			grid_cells[i][j] = (grid_cell**) malloc( (wk+1) * sizeof(grid_cell*) );  // allocate the row
+			// each index goes from (ghost cell on left) to (initialization ghost cell on right) which is one past (ghost cell on right) for the
+			// purpose of initializing all points. each cell makes just one point, so an extra layer is needed at the end
+			for (k = 0; k < wk; ++k) {
+				// malloc for real, ghost, and 'init ghost' cells
+				if (i >= i_min && i < i_max+1 &&
+					j >= j_min && j < j_max+1 &&
+					k >= k_min && k < k_max+1) {
+					
+					grid_cells[i][j][k] = (grid_cell*) malloc( sizeof(grid_cell) );
+					
+					// initialize only the upper-left-forward grid_point (points[0] represents (z,y,x)==000, points[3] repr. (z,y,x)==011)
+					grid_cells[i][j][k]->points[0] = malloc( sizeof(grid_point) );
+					grid_cells[i][j][k]->points[0]->E = (vec3) {0,0,0};
+					grid_cells[i][j][k]->points[0]->B = (vec3) {0,0,0};
+					grid_cells[i][j][k]->children = NULL;
+					
+					// I think this will work, assuming true->1 and false->0
+					// 26 possible neighbors could own each ghost cell, but their pids can be constructed from true/false statements
+					di = (i == i_max-1) - (i == i_min); // +1 or -1
+					dj = (j == j_max-1) - (j == j_min);
+					dk = (k == k_max-1) - (k == k_min);
+					owner_id = pid;
+					owner_id += di;
+					owner_id += dj * x_divs;
+					owner_id += dk * x_divs * y_divs;
+					
+					// find bad cases where there is no proper owner_id, i.e. the above algorithm got a bad answer b/c ghost is out of simulation bounds
+					if ((di == 1  &&  px_min + dx * (i_size+1.5) >= x_max) || 	// 1.5 is to prevent rounding issues, even though 1 should be enough
+						(dj == 1  &&  py_min + dy * (i_size+1.5) >= y_max) ||
+						(dk == 1  &&  pz_min + dz * (i_size+1.5) >= z_max) ||
+						(di == -1  &&  px_min + dx * 0.5 <= 0) ||
+						(dj == -1  &&  py_min + dy * 0.5 <= 0) ||
+						(dk == -1  &&  pz_min + dz * 0.5 <= 0)) {
+						
+						owner_id = -1;
+					}
+					
+					grid_cells[i][j][k]->owner = owner_id;
+				}
 			}
 		}
 	}
-	// make other 7 grid_point pointers of each grid cell point to grid points allocated by neighbors. except for right/upper/back boundaries
-	for (i = 0; i < nx; ++i) {
-		for (j = 0; j < ny; ++j) {
-			for (k = 0; k < nz; ++k) {
+	// make other 7 grid_point pointers of each grid cell point to grid points allocated by neighbors. except for fake 'init ghost' cells on right/bottom/back boundaries
+	for (i = i_min; i < i_max; ++i) {
+		for (j = j_min; j < j_max; ++j) {
+			for (k = k_min; k < k_max; ++k) {
 				// n should be thought of as binary (n for "neighbors")
 				for (n = 1; n < 8; ++n) {
 					grid_cells[i][j][k].points[n] = grid_cells[i+(n&1)][j+(n&2)/2][k+(n&4)/4].points[0];
@@ -47,8 +102,8 @@ grid_cell*** init_grid() {
 	return grid_cells;
 }
 
-// populates particles randomly within each grid cell inside the bounds of the specified prism. particles are evenly distrubuted across the cells
-// if the origin and dims of the prism don't algin exactly to grid points, they will be rounded to the nearest ones
+// populates particles randomly within each grid cell inside the bounds of the specified prism. particles are evenly distributed across the cells
+// if the origin and dims of the prism don't align exactly to grid points, they will be rounded to the nearest ones
 List init_particles(vec3 origin, vec3 dims, int part_per_cell) {
 	List particles = list_init();
 	int iy, ix, iz, k;

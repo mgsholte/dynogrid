@@ -32,6 +32,7 @@ struct grid_cell {
 	struct grid_cell **children;
 	List part_list;
 	List next_list;
+	int owner; // proc id
 };
 typedef struct grid_cell grid_cell;
 
