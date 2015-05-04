@@ -14,6 +14,7 @@ typedef struct {
 	TreeNode *root;
 	vec3 loc; // the (x,y,z) location of the lower-left-front point of the root node
 	List particles; // the particles within this cell
+	// int owner; // the rank of the processor which owns this tree
 } tree;
 
 // create a tree only initializing 1 (0-th) of the 8 grid_points in the cell

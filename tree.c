@@ -1,4 +1,5 @@
 #include "tree.h"
+#include "math.h"
 
 tree tree_init(vec3 loc) {
 	TreeNode *root = (TreeNode*) calloc(sizeof(TreeNode));
@@ -18,13 +19,13 @@ static void tree_node_apply_fcn(TreeNode *node, int cn, void (*f)(grid_point *),
 	}
 	// now apply to all children if they exist
 	if (node->children[0]) {  // if 1 child exitsts, then all 8 exist
-		scale_vec(h, 0.5); // spacing is halved every level down
+		vec3_scale(h, 0.5); // spacing is halved every level down
 		for (i = 0; i < 8; ++i) {
 			//NB: h is half what it should be so need to multiply by 2*h. this
 			// is accounted for already in the call below
 			tree_node_apply_fcn(node->children[i], i, f, x+((i&4)/2*h.x), y+((i&2)*h.y), z+((i&1)*2*h.z), h);
 		}
-		scale_vec(h, 2.); // spacing was halved going down the tree, now it needs to be doubled going back up
+		vec3_scale(h, 2.); // spacing was halved going down the tree, now it needs to be doubled going back up
 	}
 }
 
@@ -109,12 +110,12 @@ static void tree_node_update(TreeNode *node) {
 	// points have little E,B difference at this level so it should be even less on the finer grid. remove all children and coarsen to this level
 	if (need_to_coarsen(node)) {
 		coarsen(node);
-	} else if (node->children[0]) { // find the leaf nodes to see if we need to refine
+	} else if (node->children[0]) { // find the leaf nodes to see if we need to refine/coarsen there
 		int i;
 		for (i = 0; i < 8; ++i) {
 			tree_node_update(node->children[i]);
 		}
-	} else if (need_to_refine(node)) {  // found a leaf node
+	} else if (need_to_refine(node)) {  // found a leaf node, might need to refine
 		refine(node);
 	}
 }
@@ -124,37 +125,52 @@ void tree_update(tree t) {
 }
 
 void refine(TreeNode* cell, double x, double y, double z, vec3 *h) {
-	int i, j, k, m;
+	int i, j, k;
 	// allocate the 8 new children cells
 	tree *children_cells[8];
 	for (i = 0; i < 8; ++i) {
 		children_cells[i] = (TreeNode*) calloc( sizeof(TreeNode) );
 	}
 
-	// allocate all 19 new points. then have the new child cells reference these 19 new points and the original 8 points from their parent
+	// allocate all 19 new points. then have the new child cells reference these 19 new points and the original 8 points from their parent for a total of 27 points in the new 2x2x2 supercell
+	// consider 2x2x2 grid super cell. there will be 3 grid_points in each direction b/c 2 adjacent cells share the points on their boundary
+	// the elem children_points[i][j][k] holds the point given by the vector x=i, y=j, z=k where i|j|k=2 means move 2 points in that direction, i.e. the verticies of the original, unsplit cell
 	grid_point* children_points[3][3][3];
-	for (i = 0; i < 8; ++i) {
-		// consider 2x2x2 grid super cell. there will be 3 grid_points in each direction b/c 2 adjacent cells share the points on their boundary
-		// the elem children_points[i][j][k] holds the point at x=i, y=j, z=k
-		children_points[(j&1)*2][(j&2)][(j&4)/2] = cell->points[j];
-	}
-	// malloc points not pointing to parent points
-	for (j = 0; j < 3; ++j) {
-		for (k = 0; k < 3; ++k) {
-			for (m = 0; m < 3; ++m) {
-				// selects only points not pointing to parent points
-				if ( j==1 || k==1 || m==1 ) {
-					children_points[j][k][m] = (grid_point*) calloc( sizeof(grid_point) );
-					// NOTE: if adding more than laser to a grid point, add that here
-					laser(children_points[j][k][m], x_spat + j*h->x,
-													y_spat + k*h->y,
-													z_spat + m*h->z, time);
+	for (i = 0; i < 3; ++i) {
+		bool isI = (i == 1);
+		for (j = 0; j < 3; ++j) {
+			bool isJ = (j == 1);
+			for (k = 0; k < 3; ++k) {
+				bool isK = (k == 1);
+				// gives the index of the closest parent cell with indicies rounded down
+				//TODO: these divide by 2s are really just an extra shift
+				#define closest_parent(i,j,k) (((i/2)<<2) + ((j/2)<<1) + (k/2))
+				if (isI || isJ || isK) {  // these are the child points
+					children_points[i][j][k] = (grid_point*) calloc( sizeof(grid_point) );
+					grid_point *pChildPoint = children_points[i][j][k];
+					// set value at grid point by averaging appropriate parent points (the nearest neighbors)
+					int ip, jp, kp;  // the parent point direction
+					int basep = closest_parent(i,j,k);
+					for (ip = 0; ip < isI; ++ip) {
+						for (jp = 0; jp < isJ; ++jp) {
+							for (kp = 0; kp < isK; ++kp) {
+								grid_point *pParentPoint = cell->points[basep+(ip<<2)+(jp<<1)+kp];
+								vec3_add(&(pChildPoint->E), pParentPoint->E);
+								vec3_add(&(pChildPoint->B), pParentPoint->B);
+							}
+						}
+					}
+					// the number of NN is 2^(# of 1s) where # of 1s counts how many of i,j,k are equal to 1
+					int nAveraged = ((1<<isI)<<isJ)<<isK;
+					vec3_scale(&(pChildPoint->E), 1./nAveraged);
+					vec3_scale(&(pChildPoint->B), 1./nAveraged);
+				} else {  // these are the parent points
+					//TODO: these divide by 2s are really just an extra shift
+					children_points[i][j][k] = cell->points[closest_parent(i,j,k)];
 				}
-			}
-		}
 	}
 
-	for (i = 0; i < 8; ++i){
+	for (i = 0; i < 8; ++i) {
 	    children_cells[i]->points[0] = children_points[0+(i&4)/4][0+(i&2)/2][0+(i&1)];
 	    children_cells[i]->points[1] = children_points[0+(i&4)/4][0+(i&2)/2][1+(i&1)];
 	    children_cells[i]->points[2] = children_points[0+(i&4)/4][1+(i&2)/2][0+(i&1)];
@@ -167,32 +183,4 @@ void refine(TreeNode* cell, double x, double y, double z, vec3 *h) {
 
 	// finally, make the cell the parent of the newly created children
 	cell->children = children_cells;
-}//end execute_refine function
-
-/*	A grid_cell should only coarsen if it has exactly 1 level of decendants
-	(i.e. has children, but does not have grandchildrend or greatgranchildren, etc.
-	AND it meets the coarsening criteria based on its E and B fields */
-/*	A grid_cell should only refine if it has no children AND it meets
-	the refining criteria based on its E and B fields */
-bool refine(grid_cell* cell, double x_spat, double y_spat, double z_spat, vec3 *h) {
-	// called refine on a leaf. refine if refinement condition is met
-	if(cell->children == NULL) {
-		if(need_to_refine(cell)) {
-			execute_refine(cell, x_spat, y_spat, z_spat, h);
-			return true;
-		} else {
-			return false;
-		}
-	}
-	// cell either started as an internal node or has become one via refinement. pass the refine call to the children to see if they need to split
-	int cn;
-	scale_vec(h,0.5);
-	for(cn = 0; cn < 8; cn++) {
-		refine(cell->children[cn], x_spat+(cn&1)*h->x,
-								   y_spat+((cn&2)/2)*h->y,
-								   z_spat+((cn&4)/4)*h->z, h);
-								   // z_spat+((cn&1)/4)*dz/pow(2.0,depth+1), depth+1);
-	}//end for 
-	scale_vec(h,2.);
-	return false;
 }
