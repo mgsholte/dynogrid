@@ -17,32 +17,6 @@ void laser(grid_point *point, double x, double y, double z) {
 	point->B = (vec3) { 0, 0, N*B };
 }
 
-void recursive_laser(grid_cell *cell, vec3 loc, vec3 h, double t) {
-	//BASE CASE:
-	int cn; //cn stands for child number
-
-	if(cell->children == NULL) {
-		//cell has no children, so apply laser to each of the cell's gridpoints:
-		for(cn = 0; cn < 8; cn++) {
-			laser(cell->points[cn], 
-				loc.x+(cn&1)*h.x, loc.y+((cn&2)/2)*h.y,	loc.z+((cn&4)/4)*h.z,
-				time);
-		}//end for
-		return;
-	}
-	//RECURSIVE STEP:
-	else{
-		//recursively call recursive_laser on each child cell:
-		for(cn = 0; cn < 8; cn++){
-			recursive_laser(cell->children[cn],
-				loc.x+(cn&1)*dx/pow(2.0,depth+1),
-				loc.y+((cn&2)/2)*dy/pow(2.0,depth+1),
-				loc.z+((cn&4)/4)*dz/pow(2.0,depth+1), depth+1,
-				time);
-		}//end for
-	}//end if else
-}//end recursive_laser function
-
 void grid_update(tree ***base_grid) {
 	int ix, iy, iz;
 	// set the laser fields at every point

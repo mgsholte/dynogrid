@@ -1,23 +1,11 @@
 #ifndef DECS_H
 #define DECS_H
 
+#include "vector.h"
+
 //Definitions go here to avoid clutter elsewhere
 
 typedef enum { false, true } bool;
-
-// a 2D vector
-typedef struct {
-	double x,y;
-} vec2;
-
-// a 3D vector
-typedef struct {
-	double x,y,z;
-} vec3;
-
-inline void scale_vec(vec3 *v, double factor) {
-	v->x *= factor;	v->y *= factor;	v->z *= factor;
-}
 
 // Define the particle structure
 typedef struct {
@@ -31,11 +19,10 @@ typedef struct {
 	// double rho; // average charge density at grid point
 } grid_point;
 
-struct grid_cell {
+typedef struct grid_cell {
 	grid_point *points[8];
 	struct grid_cell **children;
-};
-typedef struct grid_cell grid_cell;
+} grid_cell;
 
 #define C (3e8)
 
