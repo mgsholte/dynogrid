@@ -15,6 +15,6 @@ typedef struct {
 void vec3_scale(vec3 *v, double factor);
 
 // add the vectors v,w and store result in v
-void vec3_add(vec3 *v, vec3* w);
+void vec3_add(vec3 *v, vec3 w);
 
 #endif //VECTOR_H
