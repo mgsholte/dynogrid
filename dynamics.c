@@ -43,19 +43,19 @@ void recursive_laser(grid_cell *cell, double x_spat, double y_spat, double z_spa
 	}//end if else
 }//end recursive_laser function
 
-static void update_grid_cell(grid_cell* cell, int x, int y, int z) {
+static void update_grid_cell(grid_cell* cell, int i, int j, int k) {
 	vec3 h = (vec3) {dx,dy,dz};
-	if(!refine(cell, x*dx, y*dy, z*dz, &h))
+	if(!refine(cell, i*dx, j*dy, k*dz, &h))
 		coarsen(cell);
 }//end update_grid_cell function
 
-void update_grid(grid_cell ****grid_cells) {
-	int x,y,z;
-	for (x = 0; x < nx; x++) {
-		for (y = 0; y < ny; y++) {
-			for (z = 0; z < nz; z++) {
-				recursive_laser(grid_cells[x][y][z], x*dx, y*dy, z*dz, 0, time);
-				update_grid_cell(grid_cells[x][y][z], x, y, z);
+void update_grid(grid_cell ***grid_cells) {
+	int i,j,k;
+	for (i = imin; i < imax; ++i) {
+		for (j = jmin; j < jmax; ++j) {
+			for (k = kmin; k < kmax; ++k) {
+				recursive_laser(&grid_cells[x][y][z], x*dx, y*dy, z*dz, 0, time);
+				update_grid_cell(&grid_cells[x][y][z], x, y, z);
 			}
 		}
 	}
