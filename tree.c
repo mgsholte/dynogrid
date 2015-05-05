@@ -1,9 +1,15 @@
 #include "tree.h"
 #include "math.h"
 
+// extract direction encoded in index
+#define getX(i) ((i&4)/4)
+#define getY(i) ((i&2)/2)
+#define getZ(i) (i&1)
+#define getIdx(x,y,z) ((x<<2)+(y<<1)+z)
+
 tree tree_init(vec3 loc) {
-	TreeNode *root = (TreeNode*) calloc(sizeof(TreeNode));
-	root->points[0] = (grid_point*) calloc(sizeof(grid_point)); // the point starts with E = B = 0
+	TreeNode *root = (TreeNode*) calloc(1, sizeof(TreeNode));
+	root->points[0] = (grid_point*) calloc(1, sizeof(grid_point)); // the point starts with E = B = 0
 	
 	return (tree) { root, loc, list_init() };
 }
@@ -21,6 +27,7 @@ static void tree_node_apply_fcn(TreeNode *node, int cn, void (*f)(grid_point *),
 	if (node->children[0]) {  // if 1 child exitsts, then all 8 exist
 		vec3_scale(h, 0.5); // spacing is halved every level down
 		for (i = 0; i < 8; ++i) {
+			//TODO: optimization test. can this be replaced with 2*getX(i) and produce the same code?
 			//NB: h is half what it should be so need to multiply by 2*h. this
 			// is accounted for already in the call below
 			tree_node_apply_fcn(node->children[i], i, f, x+((i&4)/2*h.x), y+((i&2)*h.y), z+((i&1)*2*h.z), h);
@@ -38,7 +45,7 @@ void tree_apply_fcn(tree t, void (*f)(grid_point *)) {
 static bool need_to_coarsen(TreeNode *cell) {
 	int i, j;
 	grid_point a, b;
-	// compare all pairs of points in the cell
+	// compare all distinct pairs of points in the cell
 	for(i =0; i < 8; ++i) {
 		for(j = 7; j > i; --j) {
 			a = *(cell->points[i]);
@@ -62,6 +69,7 @@ static bool need_to_coarsen(TreeNode *cell) {
 static bool need_to_refine(TreeNode *cell) {
 	int i, j;
 	grid_point a, b;
+	// compare all distinct pairs of points in the cell
 	for(i =0; i < 8; i++) {
 		for(j = 7; j > i; j--) {
 			a = *(cell->points[i]);
@@ -127,9 +135,9 @@ void tree_update(tree t) {
 void refine(TreeNode* cell, double x, double y, double z, vec3 *h) {
 	int i, j, k;
 	// allocate the 8 new children cells
-	tree *children_cells[8];
+	TreeNode *children_cells[8];
 	for (i = 0; i < 8; ++i) {
-		children_cells[i] = (TreeNode*) calloc( sizeof(TreeNode) );
+		children_cells[i] = (TreeNode*) calloc(1, sizeof(TreeNode));
 	}
 
 	// allocate all 19 new points. then have the new child cells reference these 19 new points and the original 8 points from their parent for a total of 27 points in the new 2x2x2 supercell
@@ -146,15 +154,15 @@ void refine(TreeNode* cell, double x, double y, double z, vec3 *h) {
 				//TODO: these divide by 2s are really just an extra shift
 				#define closest_parent(i,j,k) (((i/2)<<2) + ((j/2)<<1) + (k/2))
 				if (isI || isJ || isK) {  // these are the child points
-					children_points[i][j][k] = (grid_point*) calloc( sizeof(grid_point) );
+					children_points[i][j][k] = (grid_point*) calloc(1, sizeof(grid_point));
 					grid_point *pChildPoint = children_points[i][j][k];
 					// set value at grid point by averaging appropriate parent points (the nearest neighbors)
 					int ip, jp, kp;  // the parent point direction
 					int basep = closest_parent(i,j,k);
-					for (ip = 0; ip < isI; ++ip) {
-						for (jp = 0; jp < isJ; ++jp) {
-							for (kp = 0; kp < isK; ++kp) {
-								grid_point *pParentPoint = cell->points[basep+(ip<<2)+(jp<<1)+kp];
+					for (ip = 0; ip <= isI; ++ip) {
+						for (jp = 0; jp <= isJ; ++jp) {
+							for (kp = 0; kp <= isK; ++kp) {
+								grid_point *pParentPoint = cell->points[basep+getIdx(ip,jp,kp)];
 								vec3_add(&(pChildPoint->E), pParentPoint->E);
 								vec3_add(&(pChildPoint->B), pParentPoint->B);
 							}
@@ -165,22 +173,24 @@ void refine(TreeNode* cell, double x, double y, double z, vec3 *h) {
 					vec3_scale(&(pChildPoint->E), 1./nAveraged);
 					vec3_scale(&(pChildPoint->B), 1./nAveraged);
 				} else {  // these are the parent points
-					//TODO: these divide by 2s are really just an extra shift
 					children_points[i][j][k] = cell->points[closest_parent(i,j,k)];
 				}
+			}
+		}
 	}
 
+	// tell each new child which points it needs
 	for (i = 0; i < 8; ++i) {
-	    children_cells[i]->points[0] = children_points[0+(i&4)/4][0+(i&2)/2][0+(i&1)];
-	    children_cells[i]->points[1] = children_points[0+(i&4)/4][0+(i&2)/2][1+(i&1)];
-	    children_cells[i]->points[2] = children_points[0+(i&4)/4][1+(i&2)/2][0+(i&1)];
-	    children_cells[i]->points[3] = children_points[0+(i&4)/4][1+(i&2)/2][1+(i&1)];
-	    children_cells[i]->points[4] = children_points[1+(i&4)/4][0+(i&2)/2][0+(i&1)];
-	    children_cells[i]->points[5] = children_points[1+(i&4)/4][0+(i&2)/2][1+(i&1)];
-	    children_cells[i]->points[6] = children_points[1+(i&4)/4][1+(i&2)/2][0+(i&1)];
-	    children_cells[i]->points[7] = children_points[1+(i&4)/4][1+(i&2)/2][1+(i&1)];
+		int ix = getX(i),
+			iy = getY(i),
+			iz = getZ(i);
+		for (j = 0; j < 8; ++j) {  // 8 points of the i-th child
+			children_cells[i]->points[j] = children_points[getX(j)+ix][getY(j)+iy][getZ(j)+iz];
+		}
 	}
 
-	// finally, make the cell the parent of the newly created children
-	cell->children = children_cells;
+	// finally, tell the parent the new cells are its children
+	for (i = 0; i < 8; ++i) {
+		cell->children[i] = children_cells[i];
+	}
 }
