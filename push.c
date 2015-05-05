@@ -60,6 +60,8 @@ void push_particles(grid_cell ****grid){
 					if (grid[i][j][k]->owner != pid){
 						
 						// MPI commands go here
+						// Non-blocking send next_list
+						// Non-blocking receive (and add to next list).
 					}
 				}
 			}
@@ -71,6 +73,7 @@ void push_particles(grid_cell ****grid){
 				if (grid[i][j][k] != NULL){
 					// Add the next_list to the current list
 					// Mark: make this happen
+					// list_append(grid[i][j][k]->part_list, grid[i][j][k]->next_list);
 				}
 			}
 		}
@@ -82,8 +85,7 @@ void push_particles(grid_cell ****grid){
 void push_list(grid_cell ***grid, int i, int j, int k) {
 
 	// Get part_list from grid
-	// Mark: Make the cell have this!
-	List part_list = grid_cell[i][j][k].part_list;
+	List part_list = grid_cell[i][j][k]->part_list;
 
 	list_reset_iter(&part_list);
 	if (!list_has_next(part_list))
@@ -284,7 +286,8 @@ void push_list(grid_cell ***grid, int i, int j, int k) {
 		// Guarenteed to still be in a cell or ghost cell controled by proc
 		if (xle != xl || yue != yu || zne != zn){
 			//Mark: add curr to the next_list of grid[xle][yue][zne]
-			list_pop(&part_list);
+			//list_pop(&part_list); Don't actually pop, just move the pointers
+			//particle_pass(grid[xl][yu][zn]->part_list, grid[xle][yue][zne], curr); // curr is a pointer!
 		}
 
     } 
