@@ -43,7 +43,7 @@ int main(int argc, char *argv[]) {
 	const int part_per_cell = 5;
 	// print output every output_freq iterations of the main loop
 	const int output_freq = nSteps/10;
-	// upper left coordinate and dimensions defining the rectangle where particles begin in the simulation
+	// upper left front coordinate and dimensions defining the rectangle where particles begin in the simulation
 	const vec3 ulf = {.46*x_max, .46*y_max, .46*z_max};
 	const vec3 dims = {.08*x_max, .08*y_max, .08*z_max};
 
