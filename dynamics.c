@@ -43,7 +43,7 @@ void recursive_laser(grid_cell *cell, double x_spat, double y_spat, double z_spa
 	}//end if else
 }//end recursive_laser function
 
-static void update_grid_cell(grid_cell* cell, int i, int j, int k) {
+static void update_grid_cell(grid_cell* cell, int x, int y, int z) {
 	vec3 h = (vec3) {dx,dy,dz};
 	if(!refine(cell, px_min+i*dx, py_min+j*dy, pz_min+k*dz, &h))
 		coarsen(cell);
