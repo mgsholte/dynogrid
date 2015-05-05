@@ -49,13 +49,13 @@ static void update_grid_cell(grid_cell* cell, int x, int y, int z) {
 		coarsen(cell);
 }//end update_grid_cell function
 
-void update_grid(grid_cell ***grid_cells) {
+void update_grid(grid_cell ****grid_cells) {
 	int x,y,z;
 	for (x = 0; x < nx; x++) {
 		for (y = 0; y < ny; y++) {
 			for (z = 0; z < nz; z++) {
-				recursive_laser(&grid_cells[x][y][z], x*dx, y*dy, z*dz, 0, time);
-				update_grid_cell(&grid_cells[x][y][z], x, y, z);
+				recursive_laser(grid_cells[x][y][z], x*dx, y*dy, z*dz, 0, time);
+				update_grid_cell(grid_cells[x][y][z], x, y, z);
 			}
 		}
 	}

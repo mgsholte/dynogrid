@@ -1,6 +1,9 @@
 #include <stdio.h>
 #include <math.h>
 
+#include <mpi.h>
+// #include <omp.h>
+
 #include "decs.h"
 #include "grid.h"
 #include "dynamics.h"
@@ -17,6 +20,22 @@ double time = 0.;
 
 int main(int argc, char *argv[]) {
 	int i;  // loop index var
+	int x_divs, y_divs, z_divs, numProcs;
+	sscanf (argv[1],"%d",&x_divs);
+	sscanf (argv[2],"%d",&y_divs);
+	sscanf (argv[3],"%d",&z_divs);
+	printf("x_divs is: %d\n", x_divs);
+	printf("y_divs is: %d\n", y_divs);
+	printf("z_divs is: %d\n", z_divs);
+	
+	MPI_Init();
+
+	int MPI_Comm_size (MPI_Comm comm, &numProcs);
+	if(numProcs != x_divs*y_divs*z_divs){
+		printf("ERROR! numProcs != x_divs*y_divs*z_divs!\nMoron!!!\n");
+		return -1;
+	}//end if
+
 
 	// read as inputs in the future
 	const int nSteps = ceil(t_end/dt);
@@ -30,7 +49,7 @@ int main(int argc, char *argv[]) {
 
 	printf("initializing grid and particles\n");
 
-	grid_cell ***grid_cells = init_grid();
+	grid_cell ****grid_cells = init_grid();
 	List particles = init_particles(ulf, dims, part_per_cell);
 
 	printf("finished initializing. beginning simulation\n");
@@ -55,6 +74,8 @@ int main(int argc, char *argv[]) {
 
 	list_free(particles);
 	cleanup(grid_cells);
+
+	MPI_Finalize();
 
 	return 0;
 }
