@@ -37,9 +37,9 @@ struct grid_cell {
 typedef struct grid_cell grid_cell;
 
 // Declare some globals
-extern int imin, imax, ymin, ymax, kmin, kmax;	//Processor minimum indicies
+extern int imin, imax, jmin, jmax, kmin, kmax;	//Processor minimum indicies
 extern int pid;	//Processor ID
-extern double pxmin, pymin, pzmin;	//Processor minimum x, y, and z
+extern double px_min, py_min, pz_min;	//Processor minimum x, y, and z
 
 #define C (3e8)
 

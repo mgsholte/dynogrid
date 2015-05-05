@@ -146,9 +146,9 @@ void push_list(grid_cell ***grid, int i, int j, int k) {
 		//Do interpolation to find e and b here.
         // x-left, y-up, and z-near indices
 		// Subtract out the local min to get the correct indicies
-        xl = floor(((curr->pos).x - pxmin) * idx);
-        yu = floor(((curr->pos).y - pymin) * idy);
-		zn = floor(((curr->pos).z - pzmin) * idz);
+        xl = floor(((curr->pos).x - px_min) * idx);
+        yu = floor(((curr->pos).y - py_min) * idy);
+		zn = floor(((curr->pos).z - pz_min) * idz);
 		// x-right fraction, ...
 		// This stays the same for parallel, I think
         xrf = ((curr->pos).x - xl*dx) / dx;
@@ -278,9 +278,9 @@ void push_list(grid_cell ***grid, int i, int j, int k) {
 		// Pass the particles to neighbor cells if necessary
         // Ending x-left, y-up, and z-near indices
 		// Subtract out the local min to get the correct indicies
-        xle = floor(((curr->pos).x - pxmin) * idx);
-        yue = floor(((curr->pos).y - pymin) * idy);
-		zne = floor(((curr->pos).z - pzmin) * idz);
+        xle = floor(((curr->pos).x - px_min) * idx);
+        yue = floor(((curr->pos).y - py_min) * idy);
+		zne = floor(((curr->pos).z - pz_min) * idz);
 
 		// Check if cell has changed
 		// Guarenteed to still be in a cell or ghost cell controled by proc

@@ -17,26 +17,24 @@ static void scale_vec(vec3 *v, double factor) {
 }
 
 // inits all grid points to 0 in E and B
-// i_size, etc. are lengths of real cell dimensions. ghost and NULL cells are added in this function
-// padding is 50% of i_size (etc.) on each side
-// ASSUMING GLOBAL numProcs, x_divs, y_divs, z_divs (the user-supplied specs)
-grid_cell**** init_grid(int i_size, int j_size, int k_size, int x_divs, int y_divs, int z_divs) {
+// isize, etc. are lengths of real cell dimensions. ghost and NULL cells are added in this function
+grid_cell**** init_grid(int isize, int jsize, int ksize, int x_divs, int y_divs, int z_divs) {
 	// global vars (local indices)
-	i_min = i_size/2 - 1; // -1 for ghost on left
-	j_min = j_size/2 - 1;
-	k_min = k_size/2 - 1;
-	i_max = i_min + i_size + 2; // +2 for ghosts on left and right
-	j_max = j_min + j_size + 2;
-	k_max = k_min + k_size + 2;
+	imin = isize/2 - 1; // -1 for ghost on left
+	jmin = jsize/2 - 1;
+	kmin = ksize/2 - 1;
+	imax = imin + isize + 2; // +2 for ghosts on left and right
+	jmax = jmin + jsize + 2;
+	kmax = kmin + ksize + 2;
 	// global vars (global spatial positions)
 	px_min = ((double)(pid % x_divs))/x_divs * x_max - dx;
 	py_min = ((double)((pid - pid % x_divs)/x_divs % y_divs))/y_divs * y_max - dy;
 	pz_min = ((double)((pid - pid % x_divs - pid % (x_divs * y_divs))/(x_divs * y_divs)))/z_divs * z_max - dz;
 	
 	// local vars
-	int wi = 2*i_size;
-	int wj = 2*j_size;
-	int wk = 2*k_size;
+	int wi = 2*isize; // padding is 50% of isize (etc.) on each side
+	int wj = 2*jsize;
+	int wk = 2*ksize;
 	
 	
 	grid_cell ****grid_cells = (grid_cell****) malloc( (wi+1) * sizeof(grid_cell***) ); // allocate an array of pointers to rows-depthwise
@@ -50,9 +48,9 @@ grid_cell**** init_grid(int i_size, int j_size, int k_size, int x_divs, int y_di
 			// purpose of initializing all points. each cell makes just one point, so an extra layer is needed at the end
 			for (k = 0; k < wk; ++k) {
 				// malloc for real, ghost, and 'init ghost' cells
-				if (i >= i_min && i < i_max+1 &&
-					j >= j_min && j < j_max+1 &&
-					k >= k_min && k < k_max+1) {
+				if (i >= imin && i < imax+1 &&
+					j >= jmin && j < jmax+1 &&
+					k >= kmin && k < kmax+1) {
 					
 					grid_cells[i][j][k] = (grid_cell*) malloc( sizeof(grid_cell) );
 					
@@ -64,18 +62,18 @@ grid_cell**** init_grid(int i_size, int j_size, int k_size, int x_divs, int y_di
 					
 					// I think this will work, assuming true->1 and false->0
 					// 26 possible neighbors could own each ghost cell, but their pids can be constructed from true/false statements
-					di = (i == i_max-1) - (i == i_min); // +1 or -1
-					dj = (j == j_max-1) - (j == j_min);
-					dk = (k == k_max-1) - (k == k_min);
+					di = (i == imax-1) - (i == imin); // +1 or -1
+					dj = (j == jmax-1) - (j == jmin);
+					dk = (k == kmax-1) - (k == kmin);
 					owner_id = pid;
 					owner_id += di;
 					owner_id += dj * x_divs;
 					owner_id += dk * x_divs * y_divs;
 					
 					// find bad cases where there is no proper owner_id, i.e. the above algorithm got a bad answer b/c ghost is out of simulation bounds
-					if ((di == 1  &&  px_min + dx * (i_size+1.5) >= x_max) || 	// 1.5 is to prevent rounding issues, even though 1 should be enough
-						(dj == 1  &&  py_min + dy * (i_size+1.5) >= y_max) ||
-						(dk == 1  &&  pz_min + dz * (i_size+1.5) >= z_max) ||
+					if ((di == 1  &&  px_min + dx * (isize+1.5) >= x_max) || 	// 1.5 is to prevent rounding issues, even though 1 should be enough
+						(dj == 1  &&  py_min + dy * (isize+1.5) >= y_max) ||
+						(dk == 1  &&  pz_min + dz * (isize+1.5) >= z_max) ||
 						(di == -1  &&  px_min + dx * 0.5 <= 0) ||
 						(dj == -1  &&  py_min + dy * 0.5 <= 0) ||
 						(dk == -1  &&  pz_min + dz * 0.5 <= 0)) {
@@ -89,9 +87,9 @@ grid_cell**** init_grid(int i_size, int j_size, int k_size, int x_divs, int y_di
 		}
 	}
 	// make other 7 grid_point pointers of each grid cell point to grid points allocated by neighbors. except for fake 'init ghost' cells on right/bottom/back boundaries
-	for (i = i_min; i < i_max; ++i) {
-		for (j = j_min; j < j_max; ++j) {
-			for (k = k_min; k < k_max; ++k) {
+	for (i = imin; i < imax; ++i) {
+		for (j = jmin; j < jmax; ++j) {
+			for (k = kmin; k < kmax; ++k) {
 				// n should be thought of as binary (n for "neighbors")
 				for (n = 1; n < 8; ++n) {
 					grid_cells[i][j][k].points[n] = grid_cells[i+(n&1)][j+(n&2)/2][k+(n&4)/4].points[0];
@@ -115,13 +113,13 @@ void init_particles(grid_cell**** grid_cells, vec3 origin, vec3 dims, int part_p
 	particle *p; // pointer to the next particle to add...why declare this outside the loops???
 	double x,y,z; // the coords of the next particle to add
 	for(i = imin; i < imax; i++){
-		cell_xmin = pxmin + ((i-imin) * dx);
+		cell_xmin = px_min + ((i-imin) * dx);
 		cell_xmax = cell_xmin + dx;
 		for(j = jmin; j < jmax; j++){
-			cell_ymin = pymin + ((j-jmin) * dy);
+			cell_ymin = py_min + ((j-jmin) * dy);
 			cell_ymax = cell_ymin + dy;
 			for(k = kmin; k < kmax; k++){
-				cell_zmin = pzmin + ((k-kmin) * dz);
+				cell_zmin = pz_min + ((k-kmin) * dz);
 				cell_zmax = cell_zmin + dz;
 				
 				List particles = list_init(); //particles list for the current time step
@@ -400,20 +398,21 @@ bool refine(grid_cell* cell, double x_spat, double y_spat, double z_spat, vec3 *
 	return false;
 }
 	
-void output_grid(int itNum, int numFiles, grid_cell ***grid_cells, List particles) {
+void output_grid(int itNum, int numFiles, grid_cell ****grid_cells, List particles) {
 	output_grid_impl(itNum, numFiles, grid_cells, particles, "data");
 	//TODO: it should be true that itNum == time/dt. maybe we don't need to pass the itNum variable as an argument
 	// int itNum = round_i(time/dt);
 }
-void recursive_execute_coarsen(grid_cell* cell);
-void cleanup(grid_cell ***grid_cells) {
+
+//TODO: change these loop bounds to whatever suits the changing grid chunk size. not just imin to imax, right? there's uninitialized cells.
+void cleanup(grid_cell ****grid_cells) {
 	int x,y,z,i;
 	grid_cell* cell;
 	for (x = 0; x <= nx; x++) {
 		for (y = 0; y <= ny; y++) {
 			for (z = 0; z <= nz; z++) {
 				// coarsen completely (coarsest should have no children after)
-				cell = &grid_cells[x][y][z];
+				cell = grid_cells[x][y][z];
 				recursive_execute_coarsen(cell);
 				
 				// only free what was malloc'd per cell in init_grid

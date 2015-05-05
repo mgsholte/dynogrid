@@ -20,17 +20,13 @@ double time = 0.;
 
 int main(int argc, char *argv[]) {
 	int i;  // loop index var
-	int x_divs, y_divs, z_divs, i_size, j_size, k_size, numProcs;
+	int x_divs, y_divs, z_divs, numProcs;
 	sscanf (argv[1],"%d",&x_divs);
 	sscanf (argv[2],"%d",&y_divs);
 	sscanf (argv[3],"%d",&z_divs);
 	printf("x_divs is: %d\n", x_divs);
 	printf("y_divs is: %d\n", y_divs);
 	printf("z_divs is: %d\n", z_divs);
-	
-	//TODO: calculate i_size, j_size, and k_size based on x_divs, y_divs, and z_divs:
-	//....
-
 	
 	MPI_Init();
 
@@ -39,7 +35,15 @@ int main(int argc, char *argv[]) {
 		printf("ERROR! numProcs != x_divs*y_divs*z_divs!\nMoron!!!\n");
 		return -1;
 	}//end if
-
+	
+	if ( nx%x_divs != 0 || ny%y_divs != 0 || nz%z_divs ) {
+		prinf("ERROR! nx%x_divs != 0 (or y or z)!\nTsk tsk.\n");
+		return -1;
+	}//end if
+	
+	int isize = nx/x_divs;
+	int jsize = ny/y_divs;
+	int ksize = nz/z_divs;
 
 	// read as inputs in the future
 	const int nSteps = ceil(t_end/dt);
@@ -53,7 +57,7 @@ int main(int argc, char *argv[]) {
 
 	printf("initializing grid and particles\n");
 
-	grid_cell ****grid_cells = init_grid(i_size, j_size, k_size, x_divs, y_divs, z_divs);
+	grid_cell ****grid_cells = init_grid(isize, jsize, ksize, x_divs, y_divs, z_divs);
 	List particles = init_particles(ulf, dims, part_per_cell);
 
 	printf("finished initializing. beginning simulation\n");

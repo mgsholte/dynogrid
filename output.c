@@ -42,7 +42,7 @@ void output_one_cell(grid_cell* cell, double x_spat, double y_spat, double z_spa
 
 // grid_points and particles are the stuff to print
 // suffix is the suffix used in naming the output files
-void output_grid_impl(int itNum, int numFiles, grid_cell ***grid_cells, List particles, const char suffix[]) {
+void output_grid_impl(int itNum, int numFiles, grid_cell ****grid_cells, List particles, const char suffix[]) {
 	int suffix_len = strlen(suffix);
 
 	// the # of chars needed to represent the biggest iteration # as a string. all iter #s will be padded to this value
@@ -78,14 +78,18 @@ void output_grid_impl(int itNum, int numFiles, grid_cell ***grid_cells, List par
     // test to ensure that the file was actually created and exists: 
 	testPFile(pfile, fname);
 
-    int x,y,z;
+    int i,j,k;
 	// double magE, magB;
 	// print |E|, |B| for each grid point
 	fprintf(pfile, "x, y, z, |E|, |B|\n");
-	for(x = 0; x <= nx; x++) {
-		for(y = 0; y <= ny; y++) {
-            for(z = 0; z <= nz; z++) {
-				output_one_cell(&(grid_cells[x][y][z]), x*dx, y*dy, z*dz, 0, pfile);
+	// avoid ghost cells
+	for(i = imin+1; i < imax-1; ++i) {
+		for(j = jmin+1; j < jmax-1; ++j) {
+            for(k = kmin+1; k < kmax-1; ++k) {
+            	if (grid_cells[i][j][k] != NULL) {
+            		// TODO: make sure we aren't double outputting (via diff procs) or missing cells at the end of the grid
+					output_one_cell(grid_cells[i][j][k], px_min+i*dx, py_min+j*dy, pz_min+k*dz, 0, pfile);
+				}
             }
         }
     }
