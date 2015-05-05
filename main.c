@@ -19,6 +19,12 @@ static double min(const double x, const double y, const double z) {
 double time = 0.;
 
 int main(int argc, char *argv[]) {
+	MPI_Init(&argc, &argv);
+
+	// Definitions for globals
+	MPI_Comm_rank(MPI_COMM_WORLD, &pid);
+	part_per_cell = 5;
+
 	int i;  // loop index var
 	int x_divs, y_divs, z_divs, i_size, j_size, k_size, numProcs;
 	sscanf (argv[1],"%d",&x_divs);
@@ -31,10 +37,8 @@ int main(int argc, char *argv[]) {
 	//TODO: calculate i_size, j_size, and k_size based on x_divs, y_divs, and z_divs:
 	//....
 
-	
-	MPI_Init();
 
-	int MPI_Comm_size (MPI_Comm comm, &numProcs);
+	int MPI_Comm_size (MPI_COMM_WORLD, &numProcs);
 	if(numProcs != x_divs*y_divs*z_divs){
 		printf("ERROR! numProcs != x_divs*y_divs*z_divs!\nMoron!!!\n");
 		return -1;
@@ -44,7 +48,7 @@ int main(int argc, char *argv[]) {
 	// read as inputs in the future
 	const int nSteps = ceil(t_end/dt);
 	//int nx = 100, ny = 100, nz = 100;
-	const int part_per_cell = 5;
+	part_per_cell = 5; //now a global constant
 	// print output every output_freq iterations of the main loop
 	const int output_freq = nSteps/10;
 	// upper left coordinate and dimensions defining the rectangle where particles begin in the simulation
