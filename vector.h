@@ -11,6 +11,8 @@ typedef struct {
 	double x,y,z;
 } vec3;
 
+double vec3_norm(const vec3 v);
+
 // scale the vector v (in-place) by the scalar factor
 void vec3_scale(vec3 *v, double factor);
 

@@ -3,6 +3,7 @@
 #include "decs.h"
 #include "math.h"
 #include "list.h"
+#include "dynamics.h"
 
 // Some globals that I am assuming exist
 // dx, dy -- cell size

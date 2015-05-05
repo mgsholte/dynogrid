@@ -1,12 +1,6 @@
 #include "tree.h"
 #include "math.h"
 
-// extract direction encoded in index
-#define getX(i) ((i&4)/4)
-#define getY(i) ((i&2)/2)
-#define getZ(i) (i&1)
-#define getIdx(x,y,z) ((x<<2)+(y<<1)+z)
-
 tree tree_init(vec3 loc) {
 	TreeNode *root = (TreeNode*) calloc(1, sizeof(TreeNode));
 	root->points[0] = (grid_point*) calloc(1, sizeof(grid_point)); // the point starts with E = B = 0
@@ -20,7 +14,7 @@ static void tree_node_apply_fcn(TreeNode *node, int cn, void (*f)(grid_point *,d
 	// i=0 point covered by parent already
 	for (i = 1; i < 8; ++i) {
 		if ((cn&i) == cn) {  // avoids calling f twice on 1 point shared by 2 children
-			f(node->points[i], x, y, z);  // apply f to current points
+			f(node->points[i], x, y, z, xargs);  // apply f to current points
 		}
 	}
 	// now apply to all children if they exist

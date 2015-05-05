@@ -5,10 +5,11 @@
 
 #include "grid.h"
 #include "list.h"
+#include "vector.h"
+#include "tree.h"
 
-static inline double norm(const vec3 v) {
-	return sqrt(v.x*v.x + v.y*v.y + v.z*v.z);
-}
+// only way I could see to make output_one_point work with tree_apply_function
+static FILE *pfile = NULL;
 
 static inline void testPFile(FILE *pfile, char *fname) {
 	if (pfile == NULL) {
@@ -17,30 +18,15 @@ static inline void testPFile(FILE *pfile, char *fname) {
 	}
 }
 
-/*	Recursive function to output the grid_point data for each grid_cell:
-	Notes:	(1) only data for leaf grid_cell's needs to be output
-			(2) each leaf grid_cell only needs to output its (0,0) coordinate grid_point (I think...)
-*/
-void output_one_cell(tree* cell, double x_spat, double y_spat, double z_spat, int depth, FILE *pfile){
-	//BASE CASE:
-	if(cell->children == NULL){
-		double E = norm(((cell)->points[0])->E);
-		double B = norm(((cell)->points[0])->B);
-		fprintf(pfile, "%lg,%lg,%lg,%lg,%lg\n", x_spat, y_spat, z_spat, E, B);
-	}
-	//RECURSIVE STEP:
-	else{
-		int cn; //child num
-		for(cn = 0; cn < 8; cn++){
-			output_one_cell(cell->children[cn], x_spat+(cn&1)*dx/pow(2.0,depth+1),
-									   y_spat+((cn&2)/2)*dy/pow(2.0,depth+1),
-									   z_spat+((cn&4)/4)*dz/pow(2.0,depth+1), depth+1, pfile);
-									   // z_spat+((cn&1)/4)*dz/pow(2.0,depth+1), depth+1);
-		}//end for
-	}//end else
-}//end out_one_coarse_cell() function
+// print x,y,z coord of the point followed by |E|,|B| at the point
+// extra_args: pass a FILE* to the file where the point should be written
+void output_one_point(grid_point *point, double x, double y, double z) {
+	double E = vec3_norm(point->E),
+		B = vec3_norm(point->B);
+	fprintf(pfile, "%lg,%lg,%lg,%lg,%lg\n", x, y, z, E, B);
+}
 
-// grid_points and particles are the stuff to print
+// the base_grid has the trees which hold the points and particles to print
 // suffix is the suffix used in naming the output files
 void output_grid_impl(int itNum, int numFiles, tree ***base_grid, const char suffix[]) {
 	int suffix_len = strlen(suffix);
@@ -78,14 +64,15 @@ void output_grid_impl(int itNum, int numFiles, tree ***base_grid, const char suf
     // test to ensure that the file was actually created and exists: 
 	testPFile(pfile, fname);
 
-    int x,y,z;
+    int ix,iy,iz;
 	// double magE, magB;
 	// print |E|, |B| for each grid point
 	fprintf(pfile, "x, y, z, |E|, |B|\n");
-	for(x = 0; x <= nx; x++) {
-		for(y = 0; y <= ny; y++) {
-            for(z = 0; z <= nz; z++) {
-				output_one_cell(&(base_grid[x][y][z]), x*dx, y*dy, z*dz, 0, pfile);
+	for (ix = 0; ix < nx; ++ix) {
+		for (iy = 0; iy < ny; ++iy) {
+            for (iz = 0; iz < nz; ++iz) {
+				// tell each tree to print all of the points its responsible for
+				tree_apply_fcn(base_grid[ix][iy][iz], &output_one_point);
             }
         }
     }
@@ -102,13 +89,20 @@ void output_grid_impl(int itNum, int numFiles, tree ***base_grid, const char suf
 
 	fprintf(pfile, "x, y, z, |p|\n");
 	// print # of particles as a header
-	fprintf(pfile, "%d\n", list_length(particles));
-    list_reset_iter(&particles);
-	// print x,y,z,|p| for each particle
-    while(list_has_next(particles)) {
-        particle *ptc = list_get_next(&particles);
-        fprintf(pfile, "%lg,%lg,%lg,%lg\n", (ptc->pos).x, (ptc->pos).y, (ptc->pos).z, norm(ptc->p));
-    }
+	//fprintf(pfile, "%d\n", list_length(particles));
+	for (ix = 0; ix < nx; ++ix) {
+		for (iy = 0; iy < ny; ++iy) {
+            for (iz = 0; iz < nz; ++iz) {
+				// print x,y,z,|p| for each particle in the cell
+				List particles = base_grid[ix][iy][iz].particles;
+				list_reset_iter(&particles);
+				while(list_has_next(particles)) {
+					particle *ptc = list_get_next(&particles);
+					fprintf(pfile, "%lg,%lg,%lg,%lg\n", (ptc->pos).x, (ptc->pos).y, (ptc->pos).z, vec3_norm(ptc->p));
+				}
+			}
+		}
+	}
     fclose(pfile);
 }
 

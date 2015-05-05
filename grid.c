@@ -2,6 +2,7 @@
 #include <math.h>
 #include <stdio.h>
 
+#include "tree.h"
 #include "decs.h"
 #include "grid.h"
 #include "output.h"
@@ -28,10 +29,14 @@ tree*** grid_init() {
 			for (k = 0; k <= nz; ++k) {
 				base_grid[i][j][k] = tree_init(get_loc(i,j,k));
 			}
-			// each tree allocated only 1 grid_point. now set all trees (except ghosts) to point to the points allocated by their neighbors
+		}
+	}
+	// each tree allocated only 1 grid_point. now set all trees (except ghosts) to point to the grid_points allocated by their neighbors
+	for (i = 0; i < nx; ++i) {
+		for (j = 0; j < ny; ++j) {
 			for (k = 0; k < nz; ++k) {
 				for (n = 1; n < 8; ++n) {
-					base_grid[i][j][k].root->points[n] = base_grid[i+(n&1)][j+(n&2)/2][k+(n&4)/4].root->points[0];
+					base_grid[i][j][k].root->points[n] = base_grid[i+getX(n)][j+getY(n)][k+getZ(n)].root->points[0];
 				}
 			}
 		}

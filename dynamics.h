@@ -2,6 +2,7 @@
 #define DYNAMICS_H
 
 #include "grid.h"
+#include "tree.h"
 
 //laser pulse parameters
 #define sigma (15e-6)

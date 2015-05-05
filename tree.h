@@ -4,6 +4,12 @@
 #include "decs.h"
 #include "list.h"
 
+// extract direction encoded in index
+#define getX(i) ((i&4)/4)
+#define getY(i) ((i&2)/2)
+#define getZ(i) (i&1)
+#define getIdx(x,y,z) ((x<<2)+(y<<1)+z)
+
 typedef struct TreeNode {
 	grid_point *points[8];  // the 8 vertices of the cell the node represents
 	struct TreeNode *children[8];  // the 8 sub-cells created by halving the cell in each dimension
@@ -22,7 +28,7 @@ tree tree_init();
 
 // apply the function f to every point in the tree. f is a fcn that
 // accepts a pointer to the grid point and 3 doubles (x,y,z) giving its location
-void tree_apply_fcn(tree t, void (*f)(grid_point *, double, double, double));
+void tree_apply_fcn(tree t, void (*f)(grid_point *,double,double,double));
 
 // refine/coarsen the tree if necessary
 void tree_update(tree t);
