@@ -20,13 +20,17 @@ double time = 0.;
 
 int main(int argc, char *argv[]) {
 	int i;  // loop index var
-	int x_divs, y_divs, z_divs, numProcs;
+	int x_divs, y_divs, z_divs, i_size, j_size, k_size, numProcs;
 	sscanf (argv[1],"%d",&x_divs);
 	sscanf (argv[2],"%d",&y_divs);
 	sscanf (argv[3],"%d",&z_divs);
 	printf("x_divs is: %d\n", x_divs);
 	printf("y_divs is: %d\n", y_divs);
 	printf("z_divs is: %d\n", z_divs);
+	
+	//TODO: calculate i_size, j_size, and k_size based on x_divs, y_divs, and z_divs:
+	//....
+
 	
 	MPI_Init();
 
@@ -43,13 +47,13 @@ int main(int argc, char *argv[]) {
 	const int part_per_cell = 5;
 	// print output every output_freq iterations of the main loop
 	const int output_freq = nSteps/10;
-	// upper left front coordinate and dimensions defining the rectangle where particles begin in the simulation
+	// upper left coordinate and dimensions defining the rectangle where particles begin in the simulation
 	const vec3 ulf = {.46*x_max, .46*y_max, .46*z_max};
 	const vec3 dims = {.08*x_max, .08*y_max, .08*z_max};
 
 	printf("initializing grid and particles\n");
 
-	grid_cell ****grid_cells = init_grid();
+	grid_cell ****grid_cells = init_grid(i_size, j_size, k_size, x_divs, y_divs, z_divs);
 	List particles = init_particles(ulf, dims, part_per_cell);
 
 	printf("finished initializing. beginning simulation\n");
