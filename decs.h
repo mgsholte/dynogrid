@@ -19,11 +19,6 @@ typedef struct {
 	// double rho; // average charge density at grid point
 } grid_point;
 
-typedef struct grid_cell {
-	grid_point *points[8];
-	struct grid_cell **children;
-} grid_cell;
-
 #define C (3e8)
 
 double time; // changes every iteration

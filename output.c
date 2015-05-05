@@ -21,7 +21,7 @@ static inline void testPFile(FILE *pfile, char *fname) {
 	Notes:	(1) only data for leaf grid_cell's needs to be output
 			(2) each leaf grid_cell only needs to output its (0,0) coordinate grid_point (I think...)
 */
-void output_one_cell(grid_cell* cell, double x_spat, double y_spat, double z_spat, int depth, FILE *pfile){
+void output_one_cell(tree* cell, double x_spat, double y_spat, double z_spat, int depth, FILE *pfile){
 	//BASE CASE:
 	if(cell->children == NULL){
 		double E = norm(((cell)->points[0])->E);
@@ -42,7 +42,7 @@ void output_one_cell(grid_cell* cell, double x_spat, double y_spat, double z_spa
 
 // grid_points and particles are the stuff to print
 // suffix is the suffix used in naming the output files
-void output_grid_impl(int itNum, int numFiles, grid_cell ***grid_cells, List particles, const char suffix[]) {
+void output_grid_impl(int itNum, int numFiles, tree ***base_grid, const char suffix[]) {
 	int suffix_len = strlen(suffix);
 
 	// the # of chars needed to represent the biggest iteration # as a string. all iter #s will be padded to this value
@@ -85,7 +85,7 @@ void output_grid_impl(int itNum, int numFiles, grid_cell ***grid_cells, List par
 	for(x = 0; x <= nx; x++) {
 		for(y = 0; y <= ny; y++) {
             for(z = 0; z <= nz; z++) {
-				output_one_cell(&(grid_cells[x][y][z]), x*dx, y*dy, z*dz, 0, pfile);
+				output_one_cell(&(base_grid[x][y][z]), x*dx, y*dy, z*dz, 0, pfile);
             }
         }
     }

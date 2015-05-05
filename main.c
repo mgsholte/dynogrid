@@ -35,6 +35,7 @@ int main(int argc, char *argv[]) {
 	printf("initializing grid and particles\n");
 
 	tree ***base_grid = grid_init();
+	// add particles to the specified trees
 	init_particles(base_grid, origin, dims, elec_per_cell);
 
 	printf("finished initializing. beginning simulation\n");
@@ -42,23 +43,23 @@ int main(int argc, char *argv[]) {
 	for(i = 0; i < nSteps; ++i) {
 		time = i*dt;
 		printf("pushing particles\n");
-		push_particles(base_grid, particles);
+		push_particles(base_grid);
 		printf("updating grid\n");
 		update_grid(base_grid);  // add the laser, etc.
 		if (i % output_freq == 0) {
 			printf("outputting grid\n");
-			output_grid((i/output_freq), (nSteps/output_freq), grid_cells, particles);
+			output_grid((i/output_freq), (nSteps/output_freq), base_grid);
 		}
 	}
 
 	// print final state unless it was already output on the last iteration of the above loop
 	if ((i-1) % output_freq != 0)
-		output_grid((i/output_freq), (nSteps/output_freq), grid_cells, particles);
+		output_grid((i/output_freq), (nSteps/output_freq), base_grid);
 	 
 	printf("simulation finished\n");
 
-	list_free(particles);
-	cleanup(grid_cells);
+	//list_free(particles);
+	//cleanup(grid_cells);
 
 	return 0;
 }

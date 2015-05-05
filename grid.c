@@ -41,9 +41,8 @@ tree*** grid_init() {
 
 // populates particles randomly within each grid cell inside the bounds of the specified prism. particles are evenly distrubuted across the cells
 // if the origin and dims of the prism don't algin exactly to grid points, they will be rounded to the nearest ones
-void init_particles(tre base_grid, vec3 origin, vec3 dims, int elec_per_cell) {
-	List particles = list_init();
-	int iy, ix, iz, k;
+void init_particles(tree ***base_grid, vec3 origin, vec3 dims, int elec_per_cell) {
+	int iy, ix, iz, n;
 	int ix_min = round_i(origin.x/dx), ix_max = round_i(dims.x/dx) + ix_min;
 	int iy_min = round_i(origin.y/dy), iy_max = round_i(dims.y/dy) + iy_min;
 	int iz_min = round_i(origin.z/dz), iz_max = round_i(dims.z/dz) + iz_min;
@@ -52,9 +51,11 @@ void init_particles(tre base_grid, vec3 origin, vec3 dims, int elec_per_cell) {
 	for (ix = ix_min; ix < ix_max; ++ix) {
 		for (iy = iy_min; iy < iy_max; ++iy) {
 			for (iz = iz_min; iz < iz_max; ++iz) {
-				// add particles in this cell
-				for (k = 0; k < elec_per_cell; ++k) {
+				for (n = 0; n < elec_per_cell; ++n) {
+					// add particles in this cell
 					tree cell = base_grid[ix][iy][iz];
+					cell.particles = list_init();
+
 					// add a proton
 					p = (particle*) malloc(sizeof(particle));
 
@@ -98,6 +99,8 @@ void output_grid(int itNum, int numFiles, tree ***base_grid) {
 	//TODO: it should be true that itNum == time/dt. maybe we don't need to pass the itNum variable as an argument
 	// int itNum = round_i(time/dt);
 }
+
+/*
 void recursive_execute_coarsen(grid_cell* cell);
 void cleanup(grid_cell ***grid_cells) {
 	int x,y,z,i;
@@ -132,3 +135,4 @@ void recursive_execute_coarsen(grid_cell* cell) {
 		execute_coarsen(cell);
 	}
 }
+*/

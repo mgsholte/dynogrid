@@ -38,7 +38,7 @@ vec3 interp3(vec3 field000, vec3 field001, vec3 field010, vec3 field100, vec3 fi
 }
 
 // Particle pusher!!!!
-void push_particles(grid_cell ***grid, List part_list) {
+void push_particles(tree ***base_grid) {
 	list_reset_iter(&part_list);
 	if (!list_has_next(part_list))
 			return;
@@ -65,7 +65,7 @@ void push_particles(grid_cell ***grid, List part_list) {
     double idtx = idt*idy;
     double idxy = idx*idy;
     double tau, taux, taux2, tauy, tauy2, tauz, tauz2;
-	grid_cell* cell;
+	tree* cell;
     
 	particle *curr;
     //loop over all the particles

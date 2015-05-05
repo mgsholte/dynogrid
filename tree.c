@@ -15,7 +15,7 @@ tree tree_init(vec3 loc) {
 }
 
 // cn is the index of the node in its parent's children array
-static void tree_node_apply_fcn(TreeNode *node, int cn, void (*f)(grid_point *), double x, double y, double z, vec3 *h) {
+static void tree_node_apply_fcn(TreeNode *node, int cn, void (*f)(grid_point *,double,double,double), double x, double y, double z, vec3 *h) {
 	int i;
 	// i=0 point covered by parent already
 	for (i = 1; i < 8; ++i) {
@@ -37,7 +37,7 @@ static void tree_node_apply_fcn(TreeNode *node, int cn, void (*f)(grid_point *),
 }
 
 // apply the function f to every point in the tree
-void tree_apply_fcn(tree t, void (*f)(grid_point *)) {
+void tree_apply_fcn(tree t, void (*f)(grid_point *,double,double,double)) {
 	vec3 h = (vec3) { dx, dy, dz };
 	tree_node_apply_fcn(t.root, 0, f, loc.x, loc.y, loc.z, &h);
 }
