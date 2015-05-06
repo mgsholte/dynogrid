@@ -26,11 +26,11 @@ static inline int min(const int x, const int y) {
 }
 
 // inits all grid points with E=B=0 for all of them
-// i_size, etc. are lengths of real cell dimensions. ghost and NULL cells are added in this function
-// i_min|i_max, etc. are the start|end indexes for the real+ghost cell dims
-// padding is 50% of i_size (etc.) on each side
+// isize, etc. are lengths of real cell dimensions. ghost and NULL cells are added in this function
+// imin|imax, etc. are the start|end indexes for the real+ghost cell dims
+// padding is 50% of isize (etc.) on each side
 // ASSUMING GLOBAL numProcs, x_divs, y_divs, z_divs (the user-supplied specs)
-tree**** grid_init(int i_size, int j_size, int k_size, int x_divs, int y_divs, int z_divs) {
+tree**** grid_init(int isize, int jsize, int ksize, int x_divs, int y_divs, int z_divs) {
 	// global vars (local indices)
 	imin = isize/2 - 1; // -1 for ghost on left
 	jmin = jsize/2 - 1;
@@ -50,7 +50,6 @@ tree**** grid_init(int i_size, int j_size, int k_size, int x_divs, int y_divs, i
 	
 	tree ****base_grid = (tree****) malloc( (wi+1) * sizeof(tree***) ); // allocate an array of pointers to rows-depthwise
 	int i, j, k, n;
-	int di, dj, dk;
 	for (i = 0; i < wi; ++i) {
 		base_grid[i] = (tree***) malloc( (wj+1) * sizeof(tree**) );  // allocate the row
 		for (j = 0; j < wj; ++j) {
@@ -69,6 +68,7 @@ tree**** grid_init(int i_size, int j_size, int k_size, int x_divs, int y_divs, i
 
 					// I think this will work, assuming true->1 and false->0
 					// 26 possible neighbors could own each ghost cell, but their pids can be constructed from true/false statements
+					int di, dj, dk, owner_id;
 					di = (i == imax-1) - (i == imin); // +1 or -1
 					dj = (j == jmax-1) - (j == jmin);
 					dk = (k == kmax-1) - (k == kmin);
@@ -101,7 +101,7 @@ tree**** grid_init(int i_size, int j_size, int k_size, int x_divs, int y_divs, i
 			for (k = kmin; k < kmax; ++k) {
 				// n should be thought of as binary (n for "neighbors")
 				for (n = 1; n < 8; ++n) {
-					base_grid[i][j][k]->root->points[n] = base_grid[i+getX(n)][j+getY(n)][k+getZ(n)].root->points[0];
+					base_grid[i][j][k]->root->points[n] = base_grid[i+getX(n)][j+getY(n)][k+getZ(n)]->root->points[0];
 				}
 			}
 		}
@@ -174,7 +174,7 @@ void init_particles(tree ****base_grid, vec3 origin, vec3 dims, int elec_per_cel
 	}
 }
 
-void output_grid(int itNum, int numFiles, tree ***base_grid) {
+void output_grid(int itNum, int numFiles, tree ****base_grid) {
 	output_grid_impl(itNum, numFiles, base_grid, "data");
 	//TODO: it should be true that itNum == time/dt. maybe we don't need to pass the itNum variable as an argument
 	// int itNum = round_i(time/dt);

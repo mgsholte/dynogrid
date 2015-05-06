@@ -8,7 +8,6 @@
 #include "grid.h"
 #include "dynamics.h"
 #include "list.h"
-#include "defs.h"
 
 static double min(const double x, const double y, const double z) {
 	return (x < y)
@@ -28,7 +27,6 @@ int main(int argc, char *argv[]) {
 
 	// Definitions for globals
 	MPI_Comm_rank(MPI_COMM_WORLD, &pid);
-	part_per_cell = 5;
 
 	int i;  // loop index var
 	int x_divs, y_divs, z_divs, numProcs;
@@ -39,16 +37,14 @@ int main(int argc, char *argv[]) {
 	printf("y_divs is: %d\n", y_divs);
 	printf("z_divs is: %d\n", z_divs);
 	
-	MPI_Init();
-
-	int MPI_Comm_size (MPI_COMM_WORLD, &numProcs);
+	MPI_Comm_size(MPI_COMM_WORLD, &numProcs);
 	if(numProcs != x_divs*y_divs*z_divs){
 		printf("ERROR! numProcs != x_divs*y_divs*z_divs!\nMoron!!!\n");
 		return -1;
 	}//end if
 	
 	if ( nx%x_divs != 0 || ny%y_divs != 0 || nz%z_divs ) {
-		prinf("ERROR! nx%x_divs != 0 (or y or z)!\nTsk tsk.\n");
+		printf("ERROR! nx\%x_divs != 0 (or y or z)!\nTsk tsk.\n");
 		return -1;
 	}//end if
 	
@@ -68,7 +64,7 @@ int main(int argc, char *argv[]) {
 
 	printf("initializing grid and particles\n");
 
-	tree ****base_grid = init_grid(isize, jsize, ksize, x_divs, y_divs, z_divs);
+	tree ****base_grid = grid_init(isize, jsize, ksize, x_divs, y_divs, z_divs);
 	// add particles to the specified cells
 	//TODO:init_particles
 	init_particles(base_grid, origin, dims, elec_per_cell);

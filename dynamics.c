@@ -6,7 +6,7 @@
 static const double inv_sigma_sq_2 = 1./(2*sigma*sigma);
 
 // changes E and B at the given point and time
-void laser(grid_point *point, double x, double y, double z) {
+bool laser(grid_point *point, double x, double y, double z) {
 	double B = B0*cos(freq*time - wavenum*x);
 	double E = E0*cos(freq*time - wavenum*x);
 	// N is the gaussian distribution factor for 3D
@@ -15,10 +15,12 @@ void laser(grid_point *point, double x, double y, double z) {
 	
 	point->E = (vec3) { 0, N*E, 0 };
 	point->B = (vec3) { 0, 0, N*B };
+
+	return false;
 }
 
 //TODO: update for parallel
-void grid_update(tree ***base_grid) {
+void grid_update(tree ****base_grid) {
 	int ix, iy, iz;
 	// set the laser fields at every point
 	for (ix = 0; ix < nx; ++ix) {

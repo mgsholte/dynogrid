@@ -20,10 +20,11 @@ static inline void testPFile(FILE *pfile, char *fname) {
 
 // print x,y,z coord of the point followed by |E|,|B| at the point
 // extra_args: pass a FILE* to the file where the point should be written
-void output_one_point(grid_point *point, double x, double y, double z) {
+bool output_one_point(grid_point *point, double x, double y, double z) {
 	double E = vec3_norm(point->E),
 		B = vec3_norm(point->B);
 	fprintf(pfile, "%lg,%lg,%lg,%lg,%lg\n", x, y, z, E, B);
+	return false;
 }
 
 // the base_grid has the trees which hold the points and particles to print
@@ -64,7 +65,7 @@ void output_grid_impl(int itNum, int numFiles, tree ****base_grid, const char su
     // test to ensure that the file was actually created and exists: 
 	testPFile(pfile, fname);
 
-    int ix,iy,iz;
+    int i, j, k;
 	// double magE, magB;
 	// print |E|, |B| for each grid point
 	fprintf(pfile, "x, y, z, |E|, |B|\n");
@@ -93,11 +94,11 @@ void output_grid_impl(int itNum, int numFiles, tree ****base_grid, const char su
 	fprintf(pfile, "x, y, z, |p|\n");
 	// print # of particles as a header
 	//fprintf(pfile, "%d\n", list_length(particles));
-	for (ix = 0; ix < nx; ++ix) {
-		for (iy = 0; iy < ny; ++iy) {
-            for (iz = 0; iz < nz; ++iz) {
+	for (i = 0; i < nx; ++i) {
+		for (j = 0; j < ny; ++j) {
+            for (k = 0; k < nz; ++k) {
 				// print x,y,z,|p| for each particle in the cell
-				List particles = base_grid[ix][iy][iz].particles;
+				List particles = base_grid[i][j][k]->particles;
 				list_reset_iter(&particles);
 				while(list_has_next(particles)) {
 					particle *ptc = list_get_next(&particles);

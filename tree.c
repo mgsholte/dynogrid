@@ -10,13 +10,15 @@ tree tree_init(vec3 loc) {
 	return (tree) { root, loc, list_init(), list_init(), -1 };
 }
 
+// see notes for tree_apply_fcn
 // cn is the index of the node in its parent's children array
-static void tree_node_apply_fcn(TreeNode *node, int cn, void (*f)(grid_point *,double,double,double), double x, double y, double z, vec3 *h) {
+static void tree_node_apply_fcn(TreeNode *node, int cn, bool (*f)(grid_point *,double,double,double), double x, double y, double z, vec3 *h) {
 	int i;
 	// i=0 point covered by parent already
 	for (i = 1; i < 8; ++i) {
 		if ((cn&i) == cn) {  // avoids calling f twice on 1 point shared by 2 children
-			f(node->points[i], x, y, z, xargs);  // apply f to current points
+			if(f(node->points[i], x, y, z, xargs))  // apply f to current points
+				return; // the function requested to abort iteration
 		}
 	}
 	// now apply to all children if they exist
@@ -33,7 +35,7 @@ static void tree_node_apply_fcn(TreeNode *node, int cn, void (*f)(grid_point *,d
 }
 
 // apply the function f to every point in the tree
-void tree_apply_fcn(tree *t, void (*f)(grid_point *,double,double,double)) {
+void tree_apply_fcn(tree *t, bool (*f)(grid_point *,double,double,double)) {
 	vec3 h = (vec3) { dx, dy, dz };
 	tree_node_apply_fcn(t->root, 0, f, loc.x, loc.y, loc.z, &h);
 }
@@ -124,8 +126,8 @@ static void tree_node_update(TreeNode *node) {
 	}
 }
 
-void tree_update(tree t) {
-	tree_node_update(t.root);
+void tree_update(tree *t) {
+	tree_node_update(t->root);
 }
 
 void refine(TreeNode* cell, double x, double y, double z, vec3 *h) {
