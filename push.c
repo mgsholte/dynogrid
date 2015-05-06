@@ -265,27 +265,36 @@ void push_particles(tree ****grid) {
 
 	// Construct neighbor proc list
 	
+	// TODO: define neighbor struct
+	neighbor neigh;
+	int error;
+	MPI_Request request;
 	//Allocate buffers and do the sends and recvs
-	for (i=imin, i<imax, i++){
-		for (j=jmin, j<jmax, j++){
-			for (k=kmin, k<kmax, k++){
-				// Check if ghost cell and pass next_list to responsible processor
-				curCell = grid[i][j][k];
-				if (curCell != NULL){
-					if (curCell->owner != pid){
-						
-						// MPI commands go here
-						// Non-blocking send next_list
-						mpi_list_send(curCell->next_list, curCell->owner, curCell->buff);
-					}
-				}
-			}
-		}
+	while (list_has_next(proc_list)){
+		neigh = *list_get_next(&proc_list);
+		error = MPI_Isend(&neigh.numsend,1, MPI_int, neigh->pid, 1, MPI_COMM_WORLD, request);
+		error = MPI_Irecv(&(neigh.numrecv), 1, MPI_int, neigh->pid, MPI_COMM_WORLD, request);
+	}
+	list_reset_iter(&proc_list);
+
+	MPI_Waitall;
+
+	// TODO: allocate the buffs and stuff
+	while (list_has_next(proc_list)){
+		for (i=0;i<neigh.numsend;i++)
+			mpi_list_send(grid[neigh.i][neigh.j][neigh.k].list_next, neigh.pid, buff);
+
+		for (i=0;i<neigh.numrecv;i++)
+			mpi_list_recv(buff2, neigh.pid, buff3);
 	}
 
-	// Wait All
-	
-	//Unpack recv buffers into appropriate next_lists
+	MPI_Waitall;
+
+	// for buffs that hane recieved
+	//		do the unpacking
+	//
+	//	This depends on the buffers
+
 	
 	//Combine all the lists
 	//This is the last step
