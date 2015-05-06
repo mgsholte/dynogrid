@@ -111,18 +111,19 @@ static void push_one_cell(tree cell) {
         /*E = interp3(grid[xl][yu][zn].E, grid[xl][yu][zn+1].E, grid[xl][yu+1][zn].E, grid[xl+1][yu][zn].E, grid[xl][yu+1][zn+1].E, grid[xl+1][yu][zn+1].E, grid[xl][yu+1][zn+1].E, grid[xl+1][yu+1][zn+1].E, xrf, ydf, zff);
         B = interp3(grid[xl][yu][zn].B, grid[xl][yu][zn+1].B, grid[xl][yu+1][zn].B, grid[xl+1][yu][zn].B, grid[xl][yu+1][zn+1].B, grid[xl+1][yu][zn+1].B, grid[xl][yu+1][zn+1].B, grid[xl+1][yu+1][zn+1].B, xrf, ydf, zff);*/
 
+		TreeNode *cellIter = cell.root;
 		//Find the finest cell that contains the particle
-		while (cell->children != NULL){
+		while (cellIter->children != NULL){
 			if (xrf < .5){
 				if (ydf < .5){
 					if (zff < .5){
-						cell = cell->children[0];
+						cellIter = cellIter->children[0];
 						xrf*=2;
 						ydf*=2;
 						zff*=2;
 					}
 					else{
-						cell = cell->children[4];
+						cellIter = cellIter->children[4];
 						xrf*=2;
 						ydf*=2;
 						zff=(zff-.5)*2;
@@ -130,13 +131,13 @@ static void push_one_cell(tree cell) {
 				}
 				else{
 					if (zff < .5){
-						cell = cell->children[2];
+						cellIter = cellIter->children[2];
 						xrf*=2;
 						ydf=(ydf-.5)*2;
 						zff*=2;
 					}
 					else{
-						cell = cell->children[6];
+						cellIter = cellIter->children[6];
 						xrf*=2;
 						ydf=(ydf-.5)*2;
 						zff=(zff-.5)*2;
@@ -146,13 +147,13 @@ static void push_one_cell(tree cell) {
 			else{
 				if (ydf < .5){
 					if (zff < .5){
-						cell = cell->children[1];
+						cellIter = cellIter->children[1];
 						xrf=(xrf-.5)*2;
 						ydf*=2;
 						zff*=2;
 					}
 					else{
-						cell = cell->children[5];
+						cellIter = cellIter->children[5];
 						xrf=(xrf-.5)*2;
 						ydf*=2;
 						zff=(zff-.5)*2;
@@ -160,13 +161,13 @@ static void push_one_cell(tree cell) {
 				}
 				else{
 					if (zff < .5){
-						cell = cell->children[3];
+						cellIter = cellIter->children[3];
 						xrf=(xrf-.5)*2;
 						ydf=(ydf-.5)*2;
 						zff*=2;
 					}
 					else{
-						cell = cell->children[7];
+						cellIter = cellIter->children[7];
 						xrf=(xrf-.5)*2;
 						ydf=(ydf-.5)*2;
 						zff=(zff-.5)*2;
@@ -176,8 +177,8 @@ static void push_one_cell(tree cell) {
 		}
 
         //Do interpolation with the new grid_cell
-        E = interp3(cell->points[0]->E, cell->points[1]->E, cell->points[2]->E, cell->points[4]->E, cell->points[3]->E, cell->points[5]->E, cell->points[6]->E, cell->points[7]->E, 1.-xrf, 1.-ydf, 1.-zff);
-        B = interp3(cell->points[0]->B, cell->points[1]->B, cell->points[2]->B, cell->points[4]->B, cell->points[3]->B, cell->points[5]->B, cell->points[6]->B, cell->points[7]->B, 1.-xrf, 1.-ydf, 1.-zff);
+        E = interp3(cellIter->points[0]->E, cellIter->points[1]->E, cellIter->points[2]->E, cellIter->points[4]->E, cellIter->points[3]->E, cellIter->points[5]->E, cellIter->points[6]->E, cellIter->points[7]->E, 1.-xrf, 1.-ydf, 1.-zff);
+        B = interp3(cellIter->points[0]->B, cellIter->points[1]->B, cellIter->points[2]->B, cellIter->points[4]->B, cellIter->points[3]->B, cellIter->points[5]->B, cellIter->points[6]->B, cellIter->points[7]->B, 1.-xrf, 1.-ydf, 1.-zff);
         
         // Update momenta to u_-, from Birdsall and Langdon
         uxm = ux + cmratio * E.x;
@@ -230,6 +231,7 @@ static void push_one_cell(tree cell) {
 		// Pass the particles to neighbor cells if necessary
         // Ending x-left, y-up, and z-near indices
 		// Subtract out the local min to get the correct indicies
+		int xle, yue, zne;
         xle = floor(((curr->pos).x - pxmin) * idx);
         yue = floor(((curr->pos).y - pymin) * idy);
 		zne = floor(((curr->pos).z - pzmin) * idz);
@@ -262,9 +264,9 @@ void push_particles(tree ****grid) {
 			}
 		}
 	}
-	for (i=imin, i<imax, i++){
-		for (j=jmin, j<jmax, j++){
-			for (k=kmin, k<kmax, k++){
+	for (i=imin; i<imax; i++){
+		for (j=jmin; j<jmax; j++){
+			for (k=kmin; k<kmax; k++){
 				// Check if ghost cell and pass next_list to responsible processor
 				curCell = grid[i][j][k];
 				if (curCell != NULL){
@@ -278,9 +280,9 @@ void push_particles(tree ****grid) {
 			}
 		}
 	}
-	for (i=imin, i<imax, i++){
-		for (j=jmin, j<jmax, j++){
-			for (k=kmin, k<kmax, k++){
+	for (i=imin; i<imax; i++){
+		for (j=jmin; j<jmax; j++){
+			for (k=kmin; k<kmax; k++){
 				curCell = grid[i][j][k];
 				if (curCell != NULL){
 					// Add the next_list to the current list

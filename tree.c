@@ -1,3 +1,5 @@
+#include <stdlib.h>
+
 #include "tree.h"
 #include "math.h"
 
@@ -14,10 +16,11 @@ tree tree_init(vec3 loc) {
 // cn is the index of the node in its parent's children array
 static void tree_node_apply_fcn(TreeNode *node, int cn, bool (*f)(grid_point *,double,double,double), double x, double y, double z, vec3 *h) {
 	int i;
+	//TODO: does this call f on any point twice?
 	// i=0 point covered by parent already
 	for (i = 1; i < 8; ++i) {
 		if ((cn&i) == cn) {  // avoids calling f twice on 1 point shared by 2 children
-			if(f(node->points[i], x, y, z, xargs))  // apply f to current points
+			if(f(node->points[i], x, y, z))  // apply f to current points
 				return; // the function requested to abort iteration
 		}
 	}
@@ -28,7 +31,7 @@ static void tree_node_apply_fcn(TreeNode *node, int cn, bool (*f)(grid_point *,d
 			//TODO: optimization test. can this be replaced with 2*getX(i) and produce the same code?
 			//NB: h is half what it should be so need to multiply by 2*h. this
 			// is accounted for already in the call below
-			tree_node_apply_fcn(node->children[i], i, f, x+((i&4)/2*h.x), y+((i&2)*h.y), z+((i&1)*2*h.z), h);
+			tree_node_apply_fcn(node->children[i], i, f, x+((i&4)/2*h->x), y+((i&2)*h->y), z+((i&1)*2*h->z), h);
 		}
 		vec3_scale(h, 2.); // spacing was halved going down the tree, now it needs to be doubled going back up
 	}
@@ -37,7 +40,8 @@ static void tree_node_apply_fcn(TreeNode *node, int cn, bool (*f)(grid_point *,d
 // apply the function f to every point in the tree
 void tree_apply_fcn(tree *t, bool (*f)(grid_point *,double,double,double)) {
 	vec3 h = (vec3) { dx, dy, dz };
-	tree_node_apply_fcn(t->root, 0, f, loc.x, loc.y, loc.z, &h);
+	if(!f(t->root->points[0], t->loc.x, t->loc.y, t->loc.z))
+		tree_node_apply_fcn(t->root, 0, f, t->loc.x, t->loc.y, t->loc.z, &h);
 }
 
 static bool need_to_coarsen(TreeNode *cell) {
@@ -112,25 +116,7 @@ static void coarsen(TreeNode *cell) {
 	}
 }
 
-static void tree_node_update(TreeNode *node) {
-	// points have little E,B difference at this level so it should be even less on the finer grid. remove all children and coarsen to this level
-	if (need_to_coarsen(node)) {
-		coarsen(node);
-	} else if (node->children[0]) { // find the leaf nodes to see if we need to refine/coarsen there
-		int i;
-		for (i = 0; i < 8; ++i) {
-			tree_node_update(node->children[i]);
-		}
-	} else if (need_to_refine(node)) {  // found a leaf node, might need to refine
-		refine(node);
-	}
-}
-
-void tree_update(tree *t) {
-	tree_node_update(t->root);
-}
-
-void refine(TreeNode* cell, double x, double y, double z, vec3 *h) {
+static void refine(TreeNode* cell, double x, double y, double z, vec3 *h) {
 	int i, j, k;
 	// allocate the 8 new children cells
 	TreeNode *children_cells[8];
@@ -192,4 +178,27 @@ void refine(TreeNode* cell, double x, double y, double z, vec3 *h) {
 	for (i = 0; i < 8; ++i) {
 		cell->children[i] = children_cells[i];
 	}
+}
+
+static void tree_node_update(TreeNode *node, double x, double y, double z, vec3 *h) {
+	// points have little E,B difference at this level so it should be even less on the finer grid. remove all children and coarsen to this level
+	if (need_to_coarsen(node)) {
+		coarsen(node);
+	} else if (node->children[0]) { // find the leaf nodes to see if we need to refine/coarsen there
+		vec3_scale(h, 0.5); // spacing is halved every level down
+		int i;
+		for (i = 0; i < 8; ++i) {
+			tree_node_update(node->children[i], x+getX(i), y+getY(i), z+getZ(i), h);
+		vec3_scale(h, 2.); // spacing was halved going down the tree, now it needs to be doubled going back up
+		}
+	} else if (need_to_refine(node)) {  // found a leaf node, might need to refine
+		vec3_scale(h, 0.5); // spacing is halved every level down
+		refine(node, x, y, z, h);
+		vec3_scale(h, 2.); // spacing was halved going down the tree, now it needs to be doubled going back up
+	}
+}
+
+void tree_update(tree *t) {
+	vec3 h = (vec3) { dx, dy, dz };
+	tree_node_update(t->root, t->loc.x, t->loc.y, t->loc.z, &h);
 }

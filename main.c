@@ -15,11 +15,14 @@ static double min(const double x, const double y, const double z) {
 			: (y < z ? y : z);
 }
 
-// define functions declared in decs.h
+/**** define things declared in decs.h ****/
 //void scale_vec(vec3 *v, double factor) {
 //	v->x *= factor;	v->y *= factor;	v->z *= factor;
 //}
 
+int imin, imax, jmin, jmax, kmin, kmax;	//Processor minimum indicies
+int pid;	//Processor ID
+double pxmin, pymin, pzmin;	//Processor minimum x, y, and z
 double time = 0.;
 
 int main(int argc, char *argv[]) {
@@ -76,7 +79,7 @@ int main(int argc, char *argv[]) {
 		printf("pushing particles\n");
 		push_particles(base_grid);
 		printf("updating grid\n");
-		update_grid(base_grid);  // add the laser, etc.
+		grid_update(base_grid);  // add the laser, etc.
 		if (i % output_freq == 0) {
 			printf("outputting grid\n");
 			output_grid((i/output_freq), (nSteps/output_freq), base_grid);
