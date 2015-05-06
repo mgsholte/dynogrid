@@ -28,7 +28,7 @@ void output_one_point(grid_point *point, double x, double y, double z) {
 
 // the base_grid has the trees which hold the points and particles to print
 // suffix is the suffix used in naming the output files
-void output_grid_impl(int itNum, int numFiles, tree ***base_grid, const char suffix[]) {
+void output_grid_impl(int itNum, int numFiles, tree ****base_grid, const char suffix[]) {
 	int suffix_len = strlen(suffix);
 
 	// the # of chars needed to represent the biggest iteration # as a string. all iter #s will be padded to this value
@@ -68,11 +68,14 @@ void output_grid_impl(int itNum, int numFiles, tree ***base_grid, const char suf
 	// double magE, magB;
 	// print |E|, |B| for each grid point
 	fprintf(pfile, "x, y, z, |E|, |B|\n");
-	for (ix = 0; ix < nx; ++ix) {
-		for (iy = 0; iy < ny; ++iy) {
-            for (iz = 0; iz < nz; ++iz) {
-				// tell each tree to print all of the points its responsible for
-				tree_apply_fcn(base_grid[ix][iy][iz], &output_one_point);
+	for(i = imin+1; i < imax-1; ++i) {
+		for(j = jmin+1; j < jmax-1; ++j) {
+            for(k = kmin+1; k < kmax-1; ++k) {
+            	if (base_grid[i][j][k] != NULL) {
+					// tell each cell to print all of the points inside it for which it is responsible
+            		// TODO: make sure we aren't double outputting (via diff procs) or missing cells at the end of the grid
+					tree_apply_fcn(base_grid[i][j][k], &output_one_point);
+				}
             }
         }
     }

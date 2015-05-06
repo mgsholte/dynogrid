@@ -16,6 +16,7 @@ tree ****grid_init();
 void init_particles(tree ****base_grid, vec3 origin, vec3 dims, int elec_per_cell);
 
 // print fields and particles at iteration i
-void output_grid(int itNum, int numFiles, tree ***base_grid);
+void output_grid(int itNum, int numFiles, tree ****base_grid);
 //void cleanup(grid_cell ***grid_cells);
+
 #endif //GRID_H

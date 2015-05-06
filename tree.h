@@ -29,7 +29,7 @@ tree tree_init(vec3 loc);
 
 // apply the function f to every point in the tree. f is a fcn that
 // accepts a pointer to the grid point and 3 doubles (x,y,z) giving its location
-void tree_apply_fcn(tree t, void (*f)(grid_point *,double,double,double));
+void tree_apply_fcn(tree *t, void (*f)(grid_point *,double,double,double));
 
 // refine/coarsen the tree if necessary
 void tree_update(tree t);

@@ -22,7 +22,8 @@ typedef struct {
 // Declare some globals
 extern int imin, imax, jmin, jmax, kmin, kmax;	//Processor minimum indicies
 extern int pid;	//Processor ID
-extern double pxmin, pymin, pzmin;	//Processor minimum x, y, and z
+extern double px_min, py_min, pz_min;	//Processor minimum x, y, and z
+extern int part_per_cell; //particles per cell
 
 #define C (3e8)
 

@@ -33,9 +33,9 @@ static void tree_node_apply_fcn(TreeNode *node, int cn, void (*f)(grid_point *,d
 }
 
 // apply the function f to every point in the tree
-void tree_apply_fcn(tree t, void (*f)(grid_point *,double,double,double)) {
+void tree_apply_fcn(tree *t, void (*f)(grid_point *,double,double,double)) {
 	vec3 h = (vec3) { dx, dy, dz };
-	tree_node_apply_fcn(t.root, 0, f, loc.x, loc.y, loc.z, &h);
+	tree_node_apply_fcn(t->root, 0, f, loc.x, loc.y, loc.z, &h);
 }
 
 static bool need_to_coarsen(TreeNode *cell) {

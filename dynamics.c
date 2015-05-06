@@ -17,6 +17,7 @@ void laser(grid_point *point, double x, double y, double z) {
 	point->B = (vec3) { 0, 0, N*B };
 }
 
+//TODO: update for parallel
 void grid_update(tree ***base_grid) {
 	int ix, iy, iz;
 	// set the laser fields at every point
