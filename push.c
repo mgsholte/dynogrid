@@ -38,8 +38,58 @@ vec3 interp3(vec3 field000, vec3 field001, vec3 field010, vec3 field100, vec3 fi
     return interped;
 }
 
+// Calls the pusher and cleans up afterward
+void push_particles(tree ****grid) {
+	tree *curCell = NULL;
+	int i,j,k;
+	for (i=imin, i<imax, i++){
+		for (j=jmin, j<jmax, j++){
+			for (k=kmin, k<kmax, k++){
+				// Check if valid cell
+				curCell = grid[i][j][k];
+				if (curCell != NULL){
+					if (curCell->owner == pid){
+						push_one_cell(*curCell);
+					}
+				}
+			}
+		}
+	}
+	for (i=imin, i<imax, i++){
+		for (j=jmin, j<jmax, j++){
+			for (k=kmin, k<kmax, k++){
+				// Check if ghost cell and pass next_list to responsible processor
+				curCell = grid[i][j][k];
+				if (curCell != NULL){
+					if (curCell->owner != pid){
+						
+						// MPI commands go here
+						// Non-blocking send next_list
+						// Non-blocking receive (and add to next list).
+					}
+				}
+			}
+		}
+	}
+	for (i=imin, i<imax, i++){
+		for (j=jmin, j<jmax, j++){
+			for (k=kmin, k<kmax, k++){
+				curCell = grid[i][j][k];
+				if (curCell != NULL){
+					// Add the next_list to the current list
+					// Mark: make this happen
+					// list_append(grid[i][j][k]->part_list, grid[i][j][k]->next_list);
+				}
+			}
+		}
+	}
+
+}
+
 // Particle pusher!!!!
-void push_particles(tree ***base_grid) {
+void push_one_cell(tree cell) {
+	List part_list = cell.particles;
+
 	list_reset_iter(&part_list);
 	if (!list_has_next(part_list))
 			return;
@@ -66,7 +116,6 @@ void push_particles(tree ***base_grid) {
     double idtx = idt*idy;
     double idxy = idx*idy;
     double tau, taux, taux2, tauy, tauy2, tauz, tauz2;
-	tree* cell;
     
 	particle *curr;
     //loop over all the particles
@@ -90,6 +139,7 @@ void push_particles(tree ***base_grid) {
 		(curr->pos).z += uz * root;
 
 		// Check if out of bounds
+		// This check stays the same when parallel, since each processor will have the appropriate ghost cells
 		if ((((curr->pos).x <= 0 || (curr->pos).y <= 0) || (curr->pos).z <= 0) || (((curr->pos).x >= x_max || (curr->pos).y >= y_max) || (curr->pos).z >= z_max)){
 			list_pop(&part_list);
 			continue;
@@ -97,17 +147,19 @@ void push_particles(tree ***base_grid) {
 
 		//Do interpolation to find e and b here.
         // x-left, y-up, and z-near indices
-        xl = floor((curr->pos).x * idx);
-        yu = floor((curr->pos).y * idy);
-		zn = floor((curr->pos).z * idz);
+		// Subtract out the local min to get the correct indicies
+        xl = floor(((curr->pos).x - pxmin) * idx);
+        yu = floor(((curr->pos).y - pymin) * idy);
+		zn = floor(((curr->pos).z - pzmin) * idz);
 		// x-right fraction, ...
+		// This stays the same for parallel, I think
         xrf = ((curr->pos).x - xl*dx) / dx;
         ydf = ((curr->pos).y - yu*dy) / dy;
 		zff = ((curr->pos).z - zn*dz) / dz;
         /*E = interp3(grid[xl][yu][zn].E, grid[xl][yu][zn+1].E, grid[xl][yu+1][zn].E, grid[xl+1][yu][zn].E, grid[xl][yu+1][zn+1].E, grid[xl+1][yu][zn+1].E, grid[xl][yu+1][zn+1].E, grid[xl+1][yu+1][zn+1].E, xrf, ydf, zff);
         B = interp3(grid[xl][yu][zn].B, grid[xl][yu][zn+1].B, grid[xl][yu+1][zn].B, grid[xl+1][yu][zn].B, grid[xl][yu+1][zn+1].B, grid[xl+1][yu][zn+1].B, grid[xl][yu+1][zn+1].B, grid[xl+1][yu+1][zn+1].B, xrf, ydf, zff);*/
 
-        cell = &(grid[xl][yu][zn]);
+        cell = (grid[xl][yu][zn]);
 
 		//Find the finest cell that contains the particle
 		while (cell->children != NULL){
@@ -223,5 +275,22 @@ void push_particles(tree ***base_grid) {
 
 		
         //This is where the current and charge density would be calculatted.
+
+
+		// Pass the particles to neighbor cells if necessary
+        // Ending x-left, y-up, and z-near indices
+		// Subtract out the local min to get the correct indicies
+        xle = floor(((curr->pos).x - pxmin) * idx);
+        yue = floor(((curr->pos).y - pymin) * idy);
+		zne = floor(((curr->pos).z - pzmin) * idz);
+
+		// Check if cell has changed
+		// Guarenteed to still be in a cell or ghost cell controled by proc
+		if (xle != xl || yue != yu || zne != zn){
+			//Mark: add curr to the next_list of grid[xle][yue][zne]
+			//list_pop(&part_list); Don't actually pop, just move the pointers
+			//particle_pass(grid[xl][yu][zn]->part_list, grid[xle][yue][zne], curr); // curr is a pointer!
+		}
+
     } 
 }

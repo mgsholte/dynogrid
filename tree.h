@@ -20,11 +20,12 @@ typedef struct {
 	TreeNode *root;
 	vec3 loc; // the (x,y,z) location of the lower-left-front point of the root node
 	List particles; // the particles within this cell
-	// int owner; // the rank of the processor which owns this tree
+	List new_particles; // the particles added to this cell for the next time step
+	int owner; // the rank of the processor which owns this cell
 } tree;
 
 // create a tree only initializing 1 (0-th) of the 8 grid_points in the cell
-tree tree_init();
+tree tree_init(vec3 loc);
 
 // apply the function f to every point in the tree. f is a fcn that
 // accepts a pointer to the grid point and 3 doubles (x,y,z) giving its location

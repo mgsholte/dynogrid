@@ -19,6 +19,11 @@ typedef struct {
 	// double rho; // average charge density at grid point
 } grid_point;
 
+// Declare some globals
+extern int imin, imax, jmin, jmax, kmin, kmax;	//Processor minimum indicies
+extern int pid;	//Processor ID
+extern double pxmin, pymin, pzmin;	//Processor minimum x, y, and z
+
 #define C (3e8)
 
 double time; // changes every iteration

@@ -1,10 +1,14 @@
 #include <stdio.h>
 #include <math.h>
 
+#include <mpi.h>
+// #include <omp.h>
+
 #include "decs.h"
 #include "grid.h"
 #include "dynamics.h"
 #include "list.h"
+#include "defs.h"
 
 static double min(const double x, const double y, const double z) {
 	return (x < y)
@@ -21,6 +25,26 @@ double time = 0.;
 
 int main(int argc, char *argv[]) {
 	int i;  // loop index var
+	int x_divs, y_divs, z_divs, i_size, j_size, k_size, numProcs;
+	sscanf (argv[1],"%d",&x_divs);
+	sscanf (argv[2],"%d",&y_divs);
+	sscanf (argv[3],"%d",&z_divs);
+	printf("x_divs is: %d\n", x_divs);
+	printf("y_divs is: %d\n", y_divs);
+	printf("z_divs is: %d\n", z_divs);
+	
+	//TODO: calculate i_size, j_size, and k_size based on x_divs, y_divs, and z_divs:
+	//....
+
+	
+	MPI_Init();
+
+	int MPI_Comm_size (MPI_Comm comm, &numProcs);
+	if(numProcs != x_divs*y_divs*z_divs){
+		printf("ERROR! numProcs != x_divs*y_divs*z_divs!\nMoron!!!\n");
+		return -1;
+	}//end if
+
 
 	// read as inputs in the future
 	const int nSteps = ceil(t_end/dt);
@@ -34,8 +58,9 @@ int main(int argc, char *argv[]) {
 
 	printf("initializing grid and particles\n");
 
-	tree ***base_grid = grid_init();
-	// add particles to the specified trees
+	tree ****base_grid = grid_init(i_size, j_size, k_size, x_divs, y_divs, z_divs);
+	// add particles to the specified cells
+	//TODO:init_particles
 	init_particles(base_grid, origin, dims, elec_per_cell);
 
 	printf("finished initializing. beginning simulation\n");
@@ -60,6 +85,8 @@ int main(int argc, char *argv[]) {
 
 	//list_free(particles);
 	//cleanup(grid_cells);
+
+	MPI_Finalize();
 
 	return 0;
 }

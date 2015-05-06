@@ -28,7 +28,6 @@ void grid_update(tree ***base_grid) {
 		}
 	}
 	// now check to see if the grid needs to refine/coarsen
-	tree neighbors[3];
 	// each tree is responsible for refining the space between it and the points in the +x/y/z dirs. thus, the last point in each dimension never needs to refine
 	for (ix = 0; ix < nx; ++ix) {
 		for (iy = 0; iy < ny; ++iy) {

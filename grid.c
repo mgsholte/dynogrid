@@ -17,26 +17,92 @@ static inline vec3 get_loc(int ix, int iy, int iz) {
 	return (vec3) { ix*dx, iy*dy, iz*dz };
 }
 
-// inits all grid points to 0 in E and B
-tree*** grid_init() {
-	int i, j, k, n;  // loop index vars
-	tree ***base_grid = (tree***) malloc( (nx+1) * sizeof(tree**) );  // a 3-dim array holding the roots of the base grid
-	// initialize all the trees. note that 1 row in each dimension is a row of 'ghost' trees. these are responsible for allocating and freeing grid_point pointers and nothing else
-	for (i = 0; i <= nx; ++i) {
-		base_grid[i] = (tree**) malloc( (ny+1) * sizeof(tree*) );
-		for (j = 0; j <= ny; ++j) {
-			base_grid[i][j] = (tree*) malloc( (nz+1) * sizeof(tree) );
-			for (k = 0; k <= nz; ++k) {
-				base_grid[i][j][k] = tree_init(get_loc(i,j,k));
+static inline int max(const int x, const int y) {
+	return x > y ? x : y;
+}
+
+static inline int min(const int x, const int y) {
+	return x < y ? x : y;
+}
+
+// inits all grid points with E=B=0 for all of them
+// i_size, etc. are lengths of real cell dimensions. ghost and NULL cells are added in this function
+// i_min|i_max, etc. are the start|end indexes for the real+ghost cell dims
+// padding is 50% of i_size (etc.) on each side
+// ASSUMING GLOBAL numProcs, x_divs, y_divs, z_divs (the user-supplied specs)
+tree**** grid_init(int i_size, int j_size, int k_size, int x_divs, int y_divs, int z_divs) {
+	// global vars (local indices)
+	imin = i_size/2 - 1; // -1 for ghost on left
+	jmin = j_size/2 - 1;
+	kmin = k_size/2 - 1;
+	imax = imin + i_size + 2; // +2 for ghosts on left and right
+	jmax = jmin + j_size + 2;
+	kmax = kmin + k_size + 2;
+
+	// global vars (global spatial positions)
+	//pxmin = ((double)(pid % x_divs))/x_divs * x_max - dx;
+	//pymin = ((double)((pid - pid % x_divs)/x_divs % y_divs))/y_divs * y_max - dy;
+	//pzmin = ((double)((pid - pid % x_divs - pid % (x_divs * y_divs))/(x_divs * y_divs)))/z_divs * z_max - dz;
+	
+	// local vars
+	int wi = 2*i_size;
+	int wj = 2*j_size;
+	int wk = 2*k_size;
+	
+	tree ****base_grid = (tree****) malloc( (wi+1) * sizeof(tree***) ); // allocate an array of pointers to rows-depthwise
+	int i, j, k, n;
+	int di, dj, dk;
+	for (i = 0; i < wi; ++i) {
+		base_grid[i] = (tree***) malloc( (wj+1) * sizeof(tree**) );  // allocate the row
+		for (j = 0; j < wj; ++j) {
+			base_grid[i][j] = (tree**) malloc( (wk+1) * sizeof(tree*) );  // allocate the row
+			// each index goes from (ghost cell on left) to (initialization ghost cell on right) which is one past (ghost cell on right) for the
+			// purpose of initializing all points. each cell makes just one point, so an extra layer is needed at the end
+			for (k = 0; k < wk; ++k) {
+				// malloc for real, ghost, and 'init ghost' cells
+				if (i >= imin && i <= imax &&
+					j >= jmin && j <= jmax &&
+					k >= kmin && k <= kmax) {
+					
+					base_grid[i][j][k] = (tree*) malloc(sizeof(tree));
+					
+					*(base_grid[i][j][k]) = tree_init(get_loc(i,j,k));
+
+					// I think this will work, assuming true->1 and false->0
+					// 26 possible neighbors could own each ghost cell, but their pids can be constructed from true/false statements
+					di = (i == i_max-1) - (i == i_min); // +1 or -1
+					dj = (j == j_max-1) - (j == j_min);
+					dk = (k == k_max-1) - (k == k_min);
+					owner_id = pid;
+					owner_id += di;
+					owner_id += dj * x_divs;
+					owner_id += dk * x_divs * y_divs;
+					
+					// find bad cases where there is no proper owner_id, i.e. the above algorithm got a bad answer b/c ghost is out of simulation bounds
+					if ((di == 1  &&  pxmin + dx * (i_size+1.5) >= x_max) || 	// 1.5 is to prevent rounding issues, even though 1 should be enough
+						(dj == 1  &&  pymin + dy * (i_size+1.5) >= y_max) ||
+						(dk == 1  &&  pzmin + dz * (i_size+1.5) >= z_max) ||
+						(di == -1  &&  pxmin + dx * 0.5 <= 0) ||
+						(dj == -1  &&  pymin + dy * 0.5 <= 0) ||
+						(dk == -1  &&  pzmin + dz * 0.5 <= 0)) {
+						
+						owner_id = -1;
+					}
+					
+					base_grid[i][j][k]->owner = owner_id;
+				} else {
+					base_grid[i][j][k] = NULL;
+				}
 			}
 		}
 	}
-	// each tree allocated only 1 grid_point. now set all trees (except ghosts) to point to the grid_points allocated by their neighbors
-	for (i = 0; i < nx; ++i) {
-		for (j = 0; j < ny; ++j) {
-			for (k = 0; k < nz; ++k) {
+	// make other 7 grid_point pointers of each grid cell point to grid points allocated by neighbors. except for fake 'init ghost' cells on right/bottom/back boundaries
+	for (i = imin; i < imax; ++i) {
+		for (j = jmin; j < jmax; ++j) {
+			for (k = kmin; k < kmax; ++k) {
+				// n should be thought of as binary (n for "neighbors")
 				for (n = 1; n < 8; ++n) {
-					base_grid[i][j][k].root->points[n] = base_grid[i+getX(n)][j+getY(n)][k+getZ(n)].root->points[0];
+					base_grid[i][j][k]->root->points[n] = base_grid[i+getX(n)][j+getY(n)][k+getZ(n)].root->points[0];
 				}
 			}
 		}
@@ -47,19 +113,28 @@ tree*** grid_init() {
 // populates particles randomly within each grid cell inside the bounds of the specified prism. particles are evenly distrubuted across the cells
 // if the origin and dims of the prism don't algin exactly to grid points, they will be rounded to the nearest ones
 void init_particles(tree ***base_grid, vec3 origin, vec3 dims, int elec_per_cell) {
+	//TODO: this assumes that ix=0 gives the cell with origin at x=0. this is not necessarily the case looking at grid_init(). each proc needs to know an offset where its grid begins. i.e. ix=0 on my local grid corresponds to ix=offset on the global grid
 	int iy, ix, iz, n;
 	int ix_min = round_i(origin.x/dx), ix_max = round_i(dims.x/dx) + ix_min;
 	int iy_min = round_i(origin.y/dy), iy_max = round_i(dims.y/dy) + iy_min;
 	int iz_min = round_i(origin.z/dz), iz_max = round_i(dims.z/dz) + iz_min;
-	double x,y,z; // the coords of the next particle to add
-	particle *p; // pointer to the next particle to add
+	// each processor starts no lower than the cells it is responsible for, also no lower than the origin of the prism containing the particles
+	ix_min = max(ix_min, imin);
+	iy_min = max(iy_min, jmin);
+	iz_min = max(iz_min, kmin);
+	// each processor goes no further than the cells it is responsible for, also no furthen than the end of the prism containing the particles
+	ix_max = min(ix_max, imax);
+	iy_max = min(iy_max, jmax);
+	iz_max = min(iz_max, kmax);
+	//NB: it is possible that a processor might not be responsible for adding any particles, in which case the body of the loops below will not execute
 	for (ix = ix_min; ix < ix_max; ++ix) {
 		for (iy = iy_min; iy < iy_max; ++iy) {
 			for (iz = iz_min; iz < iz_max; ++iz) {
+				tree cell = base_grid[ix][iy][iz];
+				// add particles in this cell
 				for (n = 0; n < elec_per_cell; ++n) {
-					// add particles in this cell
-					tree cell = base_grid[ix][iy][iz];
-					cell.particles = list_init();
+					double x,y,z; // the coords of the next particle to add
+					particle *p; // pointer to the next particle to add
 
 					// add a proton
 					p = (particle*) malloc(sizeof(particle));
@@ -92,8 +167,9 @@ void init_particles(tree ***base_grid, vec3 origin, vec3 dims, int elec_per_cell
 						};
 
 					list_add(cell.particles, p);
-					list_reset_iter(&cell.particles);
 				}
+				// reset the iterator after adding the particles. probably redundant since this should be called anytime before starting an iteration
+				list_reset_iter(&cell.particles);
 			}
 		}
 	}
@@ -105,7 +181,7 @@ void output_grid(int itNum, int numFiles, tree ***base_grid) {
 	// int itNum = round_i(time/dt);
 }
 
-/*
+/* haven't yet integrated this function with the tree system
 void recursive_execute_coarsen(grid_cell* cell);
 void cleanup(grid_cell ***grid_cells) {
 	int x,y,z,i;

@@ -1,11 +1,13 @@
 #include "tree.h"
 #include "math.h"
 
+// loc = location of the point in the cell with the smallest coordinates
+// owner = the rank of the mpi process which owns this cell
 tree tree_init(vec3 loc) {
 	TreeNode *root = (TreeNode*) calloc(1, sizeof(TreeNode));
 	root->points[0] = (grid_point*) calloc(1, sizeof(grid_point)); // the point starts with E = B = 0
 	
-	return (tree) { root, loc, list_init() };
+	return (tree) { root, loc, list_init(), list_init(), -1 };
 }
 
 // cn is the index of the node in its parent's children array
@@ -169,6 +171,7 @@ void refine(TreeNode* cell, double x, double y, double z, vec3 *h) {
 				} else {  // these are the parent points
 					children_points[i][j][k] = cell->points[closest_parent(i,j,k)];
 				}
+				#undef closest_parent
 			}
 		}
 	}
