@@ -264,6 +264,9 @@ void push_particles(tree ****grid) {
 			}
 		}
 	}
+	// Construct neighbor proc list
+	
+	//Allocate buffers and do the sends and recvs
 	for (i=imin; i<imax; i++){
 		for (j=jmin; j<jmax; j++){
 			for (k=kmin; k<kmax; k++){
@@ -274,12 +277,19 @@ void push_particles(tree ****grid) {
 						
 						// MPI commands go here
 						// Non-blocking send next_list
-						// Non-blocking receive (and add to next list).
+						mpi_list_send(curCell->next_list, curCell->owner, curCell->buff);
 					}
 				}
 			}
 		}
 	}
+
+	// Wait All
+	
+	//Unpack recv buffers into appropriate next_lists
+	
+	//Combine all the lists
+	//This is the last step
 	for (i=imin; i<imax; i++){
 		for (j=jmin; j<jmax; j++){
 			for (k=kmin; k<kmax; k++){
