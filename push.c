@@ -256,8 +256,8 @@ void push_particles(tree ****grid) {
 			for (k = kmin; k < kmax; ++k) {
 				// Check if valid cell
 				curCell = grid[i][j][k];
-				if (curCell != NULL){
-					if (curCell->owner == pid){
+				if (curCell != NULL) {
+					if (curCell->owner == pid) {
 						push_one_cell(*curCell);
 					}
 				}
@@ -297,9 +297,14 @@ void push_particles(tree ****grid) {
 	MPI_Waitall;
 
 	// TODO: allocate the buffs and stuff
+	for (i = 0; i < nProcs; ++i) {
+		if (parts_to_send[i] != NULL) {
+			mpi_list_send((List*) list_get_next(&parts_to_send), i, buff);
+		}
+	}
+
 	while (list_has_next(proc_list)) {
 		for (i=0;i<neigh.numsend;i++)
-			mpi_list_send((List*) list_get_next(&parts_to_send), neigh.pid, buff);
 
 		for (i=0;i<neigh.numrecv;i++)
 			mpi_list_recv(buff2, neigh.pid, buff3);
