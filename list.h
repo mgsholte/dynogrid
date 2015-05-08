@@ -13,6 +13,7 @@ typedef struct {
 	Node *sentinel;  // dummy node which marks the beginning and end of the list
 	Node *iter;      // pointer to next node returned when iterating over the list
 	Node *prev;      // allows for popping the current element during an iteration
+	int length;
 } List;
 
 // list creation/deletion
@@ -20,7 +21,7 @@ List list_init();
 void list_free(List list);
 
 // list modification
-void list_add(List list, particle *payload);
+void list_add(List *list, particle *payload);
 void list_pop(List *list);
 
 // list iteration

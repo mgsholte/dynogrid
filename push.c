@@ -287,7 +287,7 @@ void push_particles(tree ****grid) {
 						if (parts_to_send[owner] == NULL) {
 							parts_to_send[owner] = list_init();
 						}
-						list_add(parts_to_send[owner], &curCell->particles);
+						list_add(&parts_to_send[owner], &curCell->particles);
 					}
 				}
 			}
