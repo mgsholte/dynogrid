@@ -288,7 +288,7 @@ void push_particles(tree ****grid) {
 		neigh.sendbuff = (particle **)malloc(neigh.numsend * sizeof(particlle *));
 		for (i=0;i<neigh.numsend;i++){
 			neigh.sendbuff[i] = (particle *)malloc(4*part_per_cell * sizeof(particle));
-			mpi_list_send(neigh.next_list, neigh.pid, neigh.sendbuff[i]);
+			mpi_list_send(neigh.send_list[i], neigh.pid, neigh.sendbuff[i]);
 		}
 
 		neigh.recvbuff = (particle **)malloc(neigh.numrecv * sizeof(particle *));
@@ -305,15 +305,21 @@ void push_particles(tree ****grid) {
 	// for buffs that hane recieved
 	//		do the unpacking
 	//
-	//	This depends on the buffers
+	// Also do some frees
 	int j;
 	while (list_has_next(proc_list)){
 		neigh = *list_get_next(&proc_list);
 		for (i=0;i<neigh.numrecv;i++){
 			for (j=0;j<neigh.recvsize[i];j++){
-				list_add(neigh.recv_list
+				list_add(neigh.recv_list[i], neigh.recbuff[i][j])
 			}
+			free(neigh.recbuff[i]);
 		}
+		for (i=0;i<neigh.numsend;i++){
+			free(neigh.sendbuff[i]);
+		}
+		free(neigh.sendbuff);
+		free(neigh.recvbuff);
 	}
 
 	
