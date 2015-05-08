@@ -170,7 +170,7 @@ static void refine(TreeNode* cell, double x, double y, double z, vec3 *h) {
 			iy = getY(i),
 			iz = getZ(i);
 		for (j = 0; j < 8; ++j) {  // 8 points of the i-th child
-			children_cells[i]->points[j] = children_points[getX(j)+ix][getY(j)+iy][getZ(j)+iz];
+			children_cells[i]->points[j] = children_points[ix+getX(j)][iy+getY(j)][iz+getZ(j)];
 		}
 	}
 

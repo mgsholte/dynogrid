@@ -72,7 +72,7 @@ static void push_one_cell(tree cell) {
 	particle *curr;
     //loop over all the particles
     while (list_has_next(part_list)) {
-		curr = list_get_next(&part_list);
+		curr = (particle*) list_get_next(&part_list);
 
 		double cmratio = curr->charge/curr->mass;
         part_mc = C*curr->mass;
@@ -256,8 +256,8 @@ void push_particles(tree ****grid) {
 			for (k = kmin; k < kmax; ++k) {
 				// Check if valid cell
 				curCell = grid[i][j][k];
-				if (curCell != NULL){
-					if (curCell->owner == pid){
+				if (curCell != NULL) {
+					if (curCell->owner == pid) {
 						push_one_cell(*curCell);
 					}
 				}
@@ -271,17 +271,53 @@ void push_particles(tree ****grid) {
 	int error;
 	MPI_Request request;
 	//Allocate buffers and do the sends and recvs
+
+	List *parts_to_send; // array of lists of particles to send to each neighbor proc
+	parts_to_send = (List*) calloc( nProcs*sizeof(List*) );
+	// loop over each ghost cell.
+	// loop over entire grid to find the ghost cells, this is the easiest way to find them
+	// this can't be integrated with above identical loop since the push must be completed before checking to see which pushed things need to be sent to neighbors
+	for (i = imin; i < imax; ++i) {
+		for (j = jmin; j < jmax; ++j) {
+			for (k = kmin; k < kmax; ++k) {
+				curCell = grid[i][j][k];
+				if (curCell != NULL) {
+					int owner = curCell->owner;
+					if (owner != pid) {
+						if (parts_to_send[owner] == NULL) {
+							parts_to_send[owner] = list_init();
+						}
+						list_add(&parts_to_send[owner], &curCell->particles);
+					}
+				}
+			}
+		}
+	}
+
+	while (list_has_next(proc_list)){
+		neigh = *list_get_next(&proc_list);
+		error = MPI_Isend(&neigh.numsend,1, MPI_int, neigh->pid, 1, MPI_COMM_WORLD, request);
+		error = MPI_Irecv(&(neigh.numrecv), 1, MPI_int, neigh->pid, MPI_COMM_WORLD, request);
+	}
 	list_reset_iter(&proc_list);
 
 	MPI_Waitall;
 
-	// TODO: allocate the buffs and stuff
-	while (list_has_next(proc_list)){
-		for (i=0;i<neigh.numsend;i++)
-			mpi_list_send(grid[neigh.i][neigh.j][neigh.k].list_next, neigh.pid, buff);
-
-		for (i=0;i<neigh.numrecv;i++)
-			mpi_list_recv(buff2, neigh.pid, buff3);
+	// Done: allocate the buffs and stuff
+	for (i = 0; i < nProcs; ++i) {
+		if (parts_to_send[i] != NULL) {
+			mpi_list_send((List*) list_get_next(&parts_to_send), i, buff);
+			neigh.sendbuff = (particle **)malloc(neigh.numsend * sizeof(particlle *));
+			for (i=0;i<neigh.numsend;i++){
+				neigh.sendbuff[i] = (particle *)malloc(4*part_per_cell * sizeof(particle));
+				mpi_list_send(neigh.send_list[i], neigh.pid, neigh.sendbuff[i]);
+			}
+			neigh.recvbuff = (particle **)malloc(neigh.numrecv * sizeof(particle *));
+			for (i=0;i<neigh.numrecv;i++){
+				neigh.recvbuff[i] = (particle *)malloc(4*part_per_cell * sizeof(particle));
+				error = MPI_Irecv(neigh.recvbuff[i], neigh.recvsize[i], MPI_Particle, neigh.pid, tag, MPI_COMM_WORLD, request);
+			}
+		}
 	}
 
 	MPI_Waitall;
@@ -289,7 +325,22 @@ void push_particles(tree ****grid) {
 	// for buffs that hane recieved
 	//		do the unpacking
 	//
-	//	This depends on the buffers
+	// Also do some frees
+	int j;
+	while (list_has_next(proc_list)){
+		neigh = *list_get_next(&proc_list);
+		for (i=0;i<neigh.numrecv;i++){
+			for (j=0;j<neigh.recvsize[i];j++){
+				list_add(neigh.recv_list[i], neigh.recbuff[i][j])
+			}
+			free(neigh.recbuff[i]);
+		}
+		for (i=0;i<neigh.numsend;i++){
+			free(neigh.sendbuff[i]);
+		}
+		free(neigh.sendbuff);
+		free(neigh.recvbuff);
+	}
 
 	
 	//Combine all the lists
