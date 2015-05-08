@@ -101,7 +101,7 @@ void output_grid_impl(int itNum, int numFiles, tree ****base_grid, const char su
 				List particles = base_grid[i][j][k]->particles;
 				list_reset_iter(&particles);
 				while(list_has_next(particles)) {
-					particle *ptc = list_get_next(&particles);
+					particle *ptc = (particle*) list_get_next(&particles);
 					fprintf(pfile, "%lg,%lg,%lg,%lg\n", (ptc->pos).x, (ptc->pos).y, (ptc->pos).z, vec3_norm(ptc->p));
 				}
 			}

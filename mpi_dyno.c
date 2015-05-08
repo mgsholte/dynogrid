@@ -11,7 +11,7 @@ MPI_Request mpi_list_send(List part_list, int to_pid, particle* part_array){
 		this will free the particles, while keeping the list structure in place for
 		reuse next time	*/
 	int error;
-	list_reset_iter(part_list);
+	list_reset_iter(&part_list);
 	int i = 0;
 
 	while(list_has_next(part_list)){
@@ -20,7 +20,7 @@ MPI_Request mpi_list_send(List part_list, int to_pid, particle* part_array){
 			MPI_Finalize();
    			exit(-1);
 		}//end if
-		part_array[i] = *(list_get_next(&part_list));
+		part_array[i] = *((particle*) list_get_next(&part_list));
 		list_pop(&part_list);
 		i++;
 	}//end while

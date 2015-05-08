@@ -4,7 +4,7 @@
 #include "decs.h"
 
 typedef struct Node {
-	particle *payload;
+	void *payload;
 	struct Node *next;
 } Node;
 
@@ -15,16 +15,18 @@ typedef struct {
 	Node *prev;      // allows for popping the current element during an iteration
 } List;
 
-// list modification
+// list creation/deletion
 List list_init();
 void list_free(List list);
+
+// list modification
 void list_add(List list, particle *payload);
 void list_pop(List *list);
 
 // list iteration
 void list_reset_iter(List *l);
 bool list_has_next(List l);
-particle* list_get_next(List *l);
+void* list_get_next(List *l);
 
 // list query
 int list_length(List list);
