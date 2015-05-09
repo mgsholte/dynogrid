@@ -1,6 +1,8 @@
 #ifndef DECS_H
 #define DECS_H
 
+#include <mpi.h>
+
 #include "vector.h"
 
 //Definitions go here to avoid clutter elsewhere
@@ -23,6 +25,8 @@ typedef struct {
 extern int imin, imax, jmin, jmax, kmin, kmax;	//Processor minimum indicies
 extern int pid;	//Processor ID
 extern double pxmin, pymin, pzmin;	//Processor minimum x, y, and z
+
+extern MPI_Datatype mpi_vec3, mpi_particle, mpi_tree, mpi_tree_node, mpi_grid_point;
 
 #define C (3e8)
 

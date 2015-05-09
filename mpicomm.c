@@ -1,6 +1,8 @@
 #include <mpi.h>
+#include <stdlib.h>
 
 #include "mpicomm.h"
+#include "mpi_dyno.h"
 
 neighbor neighbor_init(int pid) {
 	return (neighbor) { pid, 0, 0, list_init(), NULL, NULL, NULL, NULL };
@@ -23,7 +25,7 @@ MPI_Request neighbor_send_cell_count(neighbor n) {
 }
 
 MPI_Request* neighbor_send_cells(neighbor n) {
-	MPI_Request *requests = (MPI_Request*) calloc( n.ncellsends*sizeof(MPI_Request) );
+	MPI_Request *requests = (MPI_Request*) calloc(n.ncellsends, sizeof(MPI_Request));
 	// allocate the buffers for sending/recving particles
 	n.sendbufs = (particle **)malloc(n.ncellsends * sizeof(particle*));
 	n.recvbufs = (particle **)malloc(n.ncellrecvs * sizeof(particle*));

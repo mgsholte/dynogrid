@@ -1,5 +1,5 @@
 CC = mpicc -cc=clang
-CFLAGS = -g
+CFLAGS = -g -ferror-limit=4 -Werror
 LFLAGS = -O3
 
 OBJS := $(patsubst %.c,%.o,$(wildcard *.c))
