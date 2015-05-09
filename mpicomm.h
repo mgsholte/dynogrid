@@ -7,11 +7,13 @@
 typedef struct {
 	// the id of the neighbor processor
 	// the # of cells to send/recv
-	int pid, numsends, numrecvs;
+	int pid, ncellsends, ncellrecvs;
 	// a list of the particle lists to send to this neighbor
 	List part_lists;
 	// array of buffers for sending/recving each particle list
 	particle **sendbufs, **recvbufs;
+	// the lengths of each of the send/recv buffers
+	int *sendlens, *recvlens;
 } neighbor;
 
 neighbor neighbor_init(int pid);

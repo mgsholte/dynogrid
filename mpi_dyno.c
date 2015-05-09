@@ -160,13 +160,13 @@ int free_mpi_customs(){
 //MPI SEND AND RECV SUBROUTINES:
 
 /*	send a particle list */
-// n is the neighboring proc where we are sending the particle list of cell iCell. p_part_list is the handle to said cell
-MPI_Request mpi_list_send(List *p_part_list, neighbor n, int iCell) {
+// 'n' is the neighboring proc where we are sending the particle list 'part_list' of cell 'iCell'
+MPI_Request mpi_list_send(List part_list, neighbor n, int iCell) {
 	/*	pack particles from List into array (freeing each particle as we pack it...
 		this will free the particles, while keeping the list structure in place for
 		reuse next time	*/
 	MPI_Request req;
-	int nParts = list_length(*p_part_list);
+	int nParts = list_length(part_list);
 	particle *buf = (particle *)malloc(nParts * sizeof(particle));
 	
 	/* TODO: we don't need to send this?
@@ -175,19 +175,20 @@ MPI_Request mpi_list_send(List *p_part_list, neighbor n, int iCell) {
 	*/
 
 	int i = 0;
-	list_reset_iter(p_part_list);
+	list_reset_iter(&part_list);
 	// fill the sendbuffer with particles to send
-	while(list_has_next(*p_part_list)) {
+	while(list_has_next(&part_list)) {
 		if(i > nParts) { //TODO: will never happen if list_length works properly
 			printf("ERROR! Exceeded buffer in mpi_list_send function. Exiting.\ni is: %d\n", i);
 			MPI_Finalize();
    			exit(-1);
 		}//end if
-		buf[i++] = *((particle*) list_get_next(p_part_list));
-		list_pop(p_part_list);
+		buf[i++] = *((particle*) list_get_next(&part_list));
+		list_pop(&part_list);
 	}//end while
 	// save the handle to the sendbuffer so we can free it later
 	n.sendbuffs[iCell] = buf;
+	n.sendlens[iCell] = nParts;
 
 	/* MPI command to actually send the array of particles (non-blocking) */
 	MPI_Isend(buf, nParts, mpi_particle, to_pid, 1, MPI_COMM_WORLD, &req);
