@@ -24,14 +24,12 @@ int imin, imax, jmin, jmax, kmin, kmax;	//Processor minimum indicies
 int pid;	//Processor ID
 double pxmin, pymin, pzmin;	//Processor minimum x, y, and z
 double time = 0.;
+//global MPI custom data types:
+MPI_datatype *mpi_vec3, *mpi_particle, *mpi_grid_point, *mpi_tree, *mpi_tree_node;
 
 int main(int argc, char *argv[]) {
-	MPI_Init(&argc, &argv);
-
 	// Definitions for globals
-	MPI_Comm_rank(MPI_COMM_WORLD, &pid);
-
-	int i;  // loop index var
+	int i, err;  // loop index var
 	int x_divs, y_divs, z_divs, numProcs;
 	sscanf (argv[1],"%d",&x_divs);
 	sscanf (argv[2],"%d",&y_divs);
@@ -39,7 +37,9 @@ int main(int argc, char *argv[]) {
 	printf("x_divs is: %d\n", x_divs);
 	printf("y_divs is: %d\n", y_divs);
 	printf("z_divs is: %d\n", z_divs);
-	
+
+	MPI_Init(&argc, &argv);
+	MPI_Comm_rank(MPI_COMM_WORLD, &pid);
 	MPI_Comm_size(MPI_COMM_WORLD, &numProcs);
 	if(numProcs != x_divs*y_divs*z_divs){
 		printf("ERROR! numProcs != x_divs*y_divs*z_divs!\nMoron!!!\n");
@@ -50,6 +50,10 @@ int main(int argc, char *argv[]) {
 		printf("ERROR! nx\%x_divs != 0 (or y or z)!\nTsk tsk.\n");
 		return -1;
 	}//end if
+
+	//initializes our MPI custom data types:
+	err = init_mpi_customs();
+	printf("err from init_mpi_customs is: %d\n", err);
 	
 	int isize = nx/x_divs;
 	int jsize = ny/y_divs;
