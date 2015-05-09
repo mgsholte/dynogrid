@@ -21,7 +21,7 @@ List list_init();
 void list_free(List list);
 
 // list modification
-void list_add(List *list, particle *payload);
+void list_add(List *list, void *payload);
 void list_pop(List *list);
 
 // list iteration
@@ -31,5 +31,9 @@ void* list_get_next(List *l);
 
 // list query
 int list_length(List list);
+
+// particle passing
+void list_pass(List *recip, List *donor, void *payload);
+void list_combine(List *recip, List *donor);
 
 #endif //LIST_H

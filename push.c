@@ -1,9 +1,10 @@
 #include <stdlib.h>
+#include <math.h>
 
 #include "decs.h"
-#include "math.h"
 #include "list.h"
 #include "dynamics.h"
+#include "mpicomm.h"
 
 // Some globals that I am assuming exist
 // dx, dy -- cell size
@@ -239,9 +240,8 @@ static void push_one_cell(tree cell) {
 		// Check if cell has changed
 		// Guarenteed to still be in a cell or ghost cell controled by proc
 		if (xle != xl || yue != yu || zne != zn){
-			//Mark: add curr to the next_list of grid[xle][yue][zne]
-			//list_pop(&part_list); Don't actually pop, just move the pointers
-			//particle_pass(grid[xl][yu][zn]->part_list, grid[xle][yue][zne], curr); // curr is a pointer!
+			// add curr to the next_list of grid[xle][yue][zne]
+			particle_pass(&(grid[xle][yue][zne]->next_list), &(grid[xl][yu][zn]->part_list), curr);
 		}
 
     } 
@@ -264,16 +264,10 @@ void push_particles(tree ****grid) {
 			}
 		}
 	}
-	// Construct neighbor proc list
 	
-	// TODO: define neighbor struct
-	neighbor neigh;
-	int error;
-	MPI_Request request;
 	//Allocate buffers and do the sends and recvs
-
-	List *parts_to_send; // array of lists of particles to send to each neighbor proc
-	parts_to_send = (List*) calloc( nProcs*sizeof(List*) );
+	neighbor *neighbors; // array of lists of particle lists to send to each neighbor proc
+	neighbors = (neighbor*) calloc( nProcs*sizeof(neighbor) );
 	// loop over each ghost cell.
 	// loop over entire grid to find the ghost cells, this is the easiest way to find them
 	// this can't be integrated with above identical loop since the push must be completed before checking to see which pushed things need to be sent to neighbors
@@ -284,62 +278,77 @@ void push_particles(tree ****grid) {
 				if (curCell != NULL) {
 					int owner = curCell->owner;
 					if (owner != pid) {
-						if (parts_to_send[owner] == NULL) {
-							parts_to_send[owner] = list_init();
+						if (neighbors[owner] == NULL) {
+							neighbors[owner] = neighbor_init(i);
 						}
-						list_add(&parts_to_send[owner], &curCell->particles);
+						neighbor_add_cell(&(neighbors[owner]), curCell);
 					}
 				}
 			}
 		}
 	}
 
-	while (list_has_next(proc_list)){
-		neigh = *list_get_next(&proc_list);
-		error = MPI_Isend(&neigh.numsend,1, MPI_int, neigh->pid, 1, MPI_COMM_WORLD, request);
-		error = MPI_Irecv(&(neigh.numrecv), 1, MPI_int, neigh->pid, MPI_COMM_WORLD, request);
-	}
-	list_reset_iter(&proc_list);
+	// array to the requests so that we can wait for all receives to finish
+	MPI_Request *cell_count_requests = (MPI_Request*) malloc( nProcs*sizeof(MPI_Request) );
 
-	MPI_Waitall;
-
-	// Done: allocate the buffs and stuff
+	// send # of cell we will send
 	for (i = 0; i < nProcs; ++i) {
-		if (parts_to_send[i] != NULL) {
-			mpi_list_send((List*) list_get_next(&parts_to_send), i, buff);
-			neigh.sendbuff = (particle **)malloc(neigh.numsend * sizeof(particlle *));
-			for (i=0;i<neigh.numsend;i++){
-				neigh.sendbuff[i] = (particle *)malloc(4*part_per_cell * sizeof(particle));
-				mpi_list_send(neigh.send_list[i], neigh.pid, neigh.sendbuff[i]);
-			}
-			neigh.recvbuff = (particle **)malloc(neigh.numrecv * sizeof(particle *));
-			for (i=0;i<neigh.numrecv;i++){
-				neigh.recvbuff[i] = (particle *)malloc(4*part_per_cell * sizeof(particle));
-				error = MPI_Irecv(neigh.recvbuff[i], neigh.recvsize[i], MPI_Particle, neigh.pid, tag, MPI_COMM_WORLD, request);
-			}
+		if (neighbors[i] != NULL) {
+			cell_count_requests[i] = neighbor_send_cell_count(neighbors[i]);
+		} else {
+			cell_count_requests[i] = MPI_REQUEST_NULL;
 		}
 	}
 
-	MPI_Waitall;
+	//TODO: can we ignore status for waitall?
+	MPI_Waitall(cell_count_requests, MPI_STATUSES_IGNORE);
+
+	MPI_Request **cell_requests = (MPI_Request**) malloc( nProcs*sizeof(MPI_Request) );
+	// send the cells themselves
+	for (i = 0; i < nProcs; ++i) {
+		if (neighbors[i] != NULL) {
+			cell_requests[i] = neighbor_send_cells(neighbors[i]);
+		}
+	}
+
+	// wait to finish recving data from all your neighbors
+	for (i = 0; i < nProcs; ++i) {
+		if (neighbors[i] != NULL) {
+			//TODO: can we ignore status for waitall?
+			MPI_Waitall(cell_requests[i], MPI_STATUSES_IGNORE);
+		}
+	}
 
 	// for buffs that hane recieved
 	//		do the unpacking
 	//
 	// Also do some frees
-	int j;
-	while (list_has_next(proc_list)){
-		neigh = *list_get_next(&proc_list);
-		for (i=0;i<neigh.numrecv;i++){
-			for (j=0;j<neigh.recvsize[i];j++){
-				list_add(neigh.recv_list[i], neigh.recbuff[i][j])
+	// loop over your i-th neighbor
+	for (i = 0; i < nProcs; ++i) {
+		neighbor n = neighbors[i];
+		if (n == NULL) { // only receive from actual neighbors
+			continue;
+		}
+		// loop over the j-th cell you received from your i-th neighbor
+		int iCell;
+		for (iCell = 0; iCell < n.ncellrecvs; ++iCell) {
+			// figure out which cell to put the particles in based on the coords of the 1st particle sent
+			tree destination = determine_cell_to_put_in(n.recvbufs[iCell][0].pos);
+			// loop over the k-th particle received from the j-th cell
+			int iPart;
+			for (iPart = 0; iPart < n.recvlen[iCell]; ++iPart) {
+				// add the receivde particle to the appropriate cell's particle list
+				list_add(destination, n.recbufs[iCell][iPart])
 			}
-			free(neigh.recbuff[i]);
+			free(n.recvbufs[iCell]);
 		}
-		for (i=0;i<neigh.numsend;i++){
-			free(neigh.sendbuff[i]);
+		// now free all of the remaining buffers, recvbufs already freed when saving the particles
+		//TODO: we can't save them because we don't know how long they will need to be next time step. maybe we can use realloc?
+		for (iCell = 0; i < n.ncellsends; ++iCell) {
+			free(n.sendbufs[i]);
 		}
-		free(neigh.sendbuff);
-		free(neigh.recvbuff);
+		free(n.sendbufs);
+		free(n.recvbufs);
 	}
 
 	
@@ -351,8 +360,7 @@ void push_particles(tree ****grid) {
 				curCell = grid[i][j][k];
 				if (curCell != NULL){
 					// Add the next_list to the current list
-					// Mark: make this happen
-					// list_append(grid[i][j][k]->part_list, grid[i][j][k]->next_list);
+					list_combine(&(grid[i][j][k]->part_list), &(grid[i][j][k]->next_list));
 				}
 			}
 		}
