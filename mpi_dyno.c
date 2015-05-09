@@ -170,7 +170,7 @@ MPI_Request mpi_list_send(List *p_part_list, int to_pid, particle *part_array) {
 	int i = 0;
 	int nParts = list_length(*p_part_list);
 	// tell the receiving proc how many particles it will be receiving
-	MPI_Isend(&nParts, 1, MPI_INT, to_pid, 1, MPI_COMM_WORLD, request);
+	MPI_Isend(&nParts, 1, MPI_INT, to_pid, 1, MPI_COMM_WORLD, req);
 	// fill the sendbuffer with particles to send
 	while(list_has_next(*p_part_list)) {
 		if(i > nParts) {
@@ -189,10 +189,15 @@ MPI_Request mpi_list_send(List *p_part_list, int to_pid, particle *part_array) {
 
 /*	recv a particle list */
 MPI_Request mpi_list_recv(List part_list, int from_pid, particle* part_array){
-	int error, i, count tag;
-	MPI_Request *request;
-
-	error = MPI_Irecv((void*) part_array, count, mpi_particle, from_pid, tag, MPI_COMM_WORLD, req);
+	int error, i, tag;
+	MPI_Request *req;
+	int nParts;
+	// recv the # of particles it will be receiving from the sending proc
+	MPI_Irecv(&nParts, 1, MPI_INT, from_pid, 1, MPI_COMM_WORLD, req);
+	// allocate buffer to receive these particles
+	part_array = (particle *)malloc(nParts * sizeof(particle));
+	// perform the receive
+	error = MPI_Irecv((void*) part_array, nParts, MPI_Particle, from_pid, tag, MPI_COMM_WORLD, req);
 	// error = MPI_Waitall(int count, MPI_Request array_of_requests[], MPI_Status array_of_statuses[])
 	
 	// list_reset_iter(part_list);
