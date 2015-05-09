@@ -240,9 +240,8 @@ static void push_one_cell(tree cell) {
 		// Check if cell has changed
 		// Guarenteed to still be in a cell or ghost cell controled by proc
 		if (xle != xl || yue != yu || zne != zn){
-			//Mark: add curr to the next_list of grid[xle][yue][zne]
-			//list_pop(&part_list); Don't actually pop, just move the pointers
-			//particle_pass(grid[xl][yu][zn]->part_list, grid[xle][yue][zne], curr); // curr is a pointer!
+			// add curr to the next_list of grid[xle][yue][zne]
+			particle_pass(&(grid[xle][yue][zne]->next_list), &(grid[xl][yu][zn]->part_list), curr);
 		}
 
     } 
@@ -343,8 +342,7 @@ void push_particles(tree ****grid) {
 				curCell = grid[i][j][k];
 				if (curCell != NULL){
 					// Add the next_list to the current list
-					// Mark: make this happen
-					// list_append(grid[i][j][k]->part_list, grid[i][j][k]->next_list);
+					list_combine(&(grid[i][j][k]->part_list), &(grid[i][j][k]->next_list));
 				}
 			}
 		}
