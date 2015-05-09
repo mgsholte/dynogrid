@@ -53,7 +53,7 @@ void list_pass(List *recip, List *donor, void *payload){
 // You have to traverse the list to connect the last node no matter what, so this probably isn't too slow
 void list_combine(List *recip, List *donor){
 	list_reset_iter(donor);
-	while (list_has_next(donor))
+	while (list_has_next(*donor))
 		list_pass(recip, donor, list_get_next(donor));
 }
 

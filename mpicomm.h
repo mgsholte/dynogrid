@@ -3,6 +3,7 @@
 
 #include "decs.h"
 #include "list.h"
+#include "tree.h"
 
 typedef struct {
 	// the id of the neighbor processor
