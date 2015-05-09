@@ -25,7 +25,7 @@ int pid;	//Processor ID
 double pxmin, pymin, pzmin;	//Processor minimum x, y, and z
 double time = 0.;
 //global MPI custom data types:
-MPI_datatype *mpi_vec3, *mpi_particle, *mpi_grid_point, *mpi_tree, *mpi_tree_node;
+MPI_Datatype *mpi_vec3, *mpi_particle, *mpi_grid_point, *mpi_tree, *mpi_tree_node;
 
 int main(int argc, char *argv[]) {
 	// Definitions for globals

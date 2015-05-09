@@ -21,7 +21,7 @@ List list_init();
 void list_free(List list);
 
 // list modification
-void list_add(List *list, particle *payload);
+void list_add(List *list, void *payload);
 void list_pop(List *list);
 
 // list iteration
