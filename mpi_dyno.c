@@ -1,3 +1,4 @@
+#include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
 #include <mpi.h>
@@ -189,46 +190,62 @@ int free_mpi_customs(){
 //MPI SEND AND RECV SUBROUTINES:
 
 /*	send a particle list */
-MPI_Request mpi_list_send(List *p_part_list, int to_pid, particle *part_array, int tag) {
+// 'n' is the neighboring proc where we are sending the particle list 'part_list' of cell 'iCell'
+MPI_Request mpi_list_send(List part_list, neighbor n, int iCell) {
 	/*	pack particles from List into array (freeing each particle as we pack it...
 		this will free the particles, while keeping the list structure in place for
 		reuse next time	*/
-	int error;
-	MPI_Request* req;
-	list_reset_iter(p_part_list);
-	int i = 0;
+	MPI_Request req;
+	int nParts = list_length(part_list);
+	particle *buf = (particle *)malloc(nParts * sizeof(particle));
+	
+	/* TODO: we don't need to send this?
+	// tell the receiving proc how many particles it will be receiving
+	MPI_Isend(&nParts, 1, MPI_INT, to_pid, 1, MPI_COMM_WORLD, req);
+	*/
 
-	while(list_has_next(part_list)){
-		if(i > 4*part_per_cell){
+	int i = 0;
+	list_reset_iter(&part_list);
+	// fill the sendbuffer with particles to send
+	while(list_has_next(&part_list)) {
+		if(i > nParts) { //TODO: will never happen if list_length works properly
 			printf("ERROR! Exceeded buffer in mpi_list_send function. Exiting.\ni is: %d\n", i);
 			MPI_Finalize();
    			exit(-1);
 		}//end if
-		part_array[i] = *((particle*) list_get_next(p_part_list));
+		buf[i++] = *((particle*) list_get_next(&part_list));
 		list_pop(&part_list);
-		i++;
 	}//end while
+	// save the handle to the sendbuffer so we can free it later
+	n.sendbuffs[iCell] = buf;
+	n.sendlens[iCell] = nParts;
 
 	/* MPI command to actually send the array of particles (non-blocking) */
-	error = MPI_Isend(part_array, i, mpi_particle, to_pid, tag, MPI_COMM_WORLD, req);
+	MPI_Isend(buf, nParts, mpi_particle, to_pid, 1, MPI_COMM_WORLD, &req);
 	return req;
 }//end mpi_list_send
 
 /*	recv a particle list */
-MPI_Request mpi_list_recv(List part_list, int from_pid, particle* part_array){
-	int error, i, count tag;
-	MPI_Request *request req;
+// iCell is the index of the cell being received in neighbors recvbuffer
+MPI_Request* mpi_list_recv(neighbor n, int iCell) {
+	int nParts, tag = 0;
+	MPI_Request req;
 
-	error = MPI_Irecv((void*) part_array, count, mpi_particle, from_pid, tag, MPI_COMM_WORLD, req);
-	// error = MPI_Waitall(int count, MPI_Request array_of_requests[], MPI_Status array_of_statuses[])
+	// recv the # of particles it will be receiving from the sending proc
+	MPI_Recv(&nParts, 1, MPI_INT, n.pid, 1, MPI_COMM_WORLD, req);
+
+	/* TODO: could these replace the above irecv?
+	// determine # of particles that were sent so we can alloc recvbuffer
+	MPI_Status status;
+	MPI_Improbe(n.pid, tag, MPI_COMM_WORLD, &status);
+	MPI_Get_count(&status, mpi_particle, &nParts);
+	*/
+
+	// allocate buffer to receive these particles
+	n.recvbufs[iCell] = (particle *)malloc(nParts * sizeof(particle));
+	// receive the particles themselves
+	MPI_Irecv((void*) n.recvbufs[iCell], nParts, mpi_particle, n.pid, tag, MPI_COMM_WORLD, &req);
 	
-	// list_reset_iter(part_list);
-	// i = 0;
-
-	// //TODO: we actually need to MPI_Waitall before we can do this part below...
-	// for( i = 0; i < count; i++){
-	// 	list_add(part_list) = &(part_array[i]);
-	// }//end for
 	return req;
 }//end mpi_list_pass
 
@@ -448,5 +465,4 @@ List mpi_tree_unpack(simple_tree** simple_trees_array, particle** all_particles_
 // 	MPI_Finalize(); 
  
 // }//end test_mpi_data_type()
-
 
