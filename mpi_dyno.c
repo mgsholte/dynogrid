@@ -188,7 +188,7 @@ MPI_Request mpi_list_send(List *p_part_list, int to_pid, particle *part_array) {
 }//end mpi_list_send
 
 /*	recv a particle list */
-MPI_Request mpi_list_recv(List part_list, int from_pid, particle* part_array){
+MPI_Request* mpi_list_recv(int from_pid, particle* part_array){
 	int error, i, tag;
 	MPI_Request *req;
 	int nParts;

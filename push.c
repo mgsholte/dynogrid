@@ -265,13 +265,13 @@ void push_particles(tree ****grid) {
 			}
 		}
 	}
-	// Construct neighbor proc list
 	
-	neighbor neigh;
+	// Construct neighbor proc list
 	int error;
-	MPI_Request request;
-	//Allocate buffers and do the sends and recvs
+	// array of handles to the requests so that we can wait for receives to finish
+	MPI_Request **requests = (MPI_Request**) calloc( nProcs*sizeof(MPI_Request*) );
 
+	//Allocate buffers and do the sends and recvs
 	neighbor *neighbors; // array of lists of particle lists to send to each neighbor proc
 	neighbors = (neighbor*) calloc( nProcs*sizeof(neighbor) );
 	// loop over each ghost cell.
@@ -294,20 +294,25 @@ void push_particles(tree ****grid) {
 		}
 	}
 
+	// send # of cell we will send
 	for (i = 0; i < nProcs; ++i) {
 		if (neighbors[i] != NULL) {
-			neighbor_send(neighbors[i]);
+			requests[i] = neighbor_send_cell_count(neighbors[i]);
 		}
 	}
 
-	MPI_Waitall;
+	//TODO: can we ignore status for waitall?
+	MPI_Waitall(requests, MPI_STATUSES_IGNORE);
 
-	// Done: allocate the buffs and stuff
+	// send the cells themselves
 	for (i = 0; i < nProcs; ++i) {
-		
+		if (neighbors[i] != NULL) {
+			requests[i] = neighbor_send_cell(neighbors[i]);
+		}
 	}
 
-	MPI_Waitall;
+	//TODO: can we ignore status for waitall?
+	MPI_Waitall(requests, MPI_STATUSES_IGNORE);
 
 	// for buffs that hane recieved
 	//		do the unpacking

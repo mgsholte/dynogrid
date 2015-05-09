@@ -3,16 +3,22 @@
 #include "mpicomm.h"
 
 neighbor neighbor_init(int pid) {
-	return (neighbor) { pid, -1, -1, list_init() };
+	return (neighbor) { pid, -1, -1, list_init(), NULL, NULL };
 }
 
-void neighbor_send(neighbor n) {
+MPI_Request* neighbor_send_cell_count(neighbor n) {
+	MPI_Request *request;
+	// tell neighbors how many cells you will send them
+	MPI_Isend(&n.numsends, 1, MPI_INT, n.pid, 1, MPI_COMM_WORLD, request);
+	// recv same info back from them
+	MPI_Irecv(&n.numrecvs, 1, MPI_INT, n.pid, 1, MPI_COMM_WORLD, request);
+	return request;
+}
+
+MPI_Request* neighbor_send_cell(neighbor n) {
+	MPI_Request *request;
 	int numsends, numrecvs;
 	numsends = list_length(n.part_lists);
-	// tell neighbors how many cells you will send them
-	error = MPI_Isend(&numsends, 1, MPI_INT, n.pid, 1, MPI_COMM_WORLD, request);
-	// recv same info back from them
-	error = MPI_Irecv(&numrecvs, 1, MPI_INT, n.pid, 1, MPI_COMM_WORLD, request);
 	// allocate the buffers for sending/recving particles
 	n.sendbufs = (particle **)malloc(numsends * sizeof(particle*));
 	n.recvbufs = (particle **)malloc(numrecv * sizeof(particle *));
@@ -30,7 +36,8 @@ void neighbor_send(neighbor n) {
 
 		for (i = 0; i < numrecv; ++i) {
 			// don't allocate recvbuffer, mpi_list_recv will do that
-			mpi_list_recv(n.pid, n.recvbuffs[i]);
+			request = mpi_list_recv(n.pid, n.recvbuffs[i]);
 		}
 	}
+	return request;
 }

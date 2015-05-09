@@ -1,9 +1,13 @@
 #ifndef MPICOMM_H
 #define MPICOMM_H
 
+#include "decs.h"
+#include "list.h"
+
 typedef struct {
 	// the id of the neighbor processor
-	int pid;
+	// the # of cells to send/recv
+	int pid, numsends, numrecvs;
 	// a list of the particle lists to send to this neighbor
 	List part_lists;
 	// array of buffers for sending/recving each particle list
