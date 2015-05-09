@@ -23,6 +23,10 @@ typedef struct {
 extern int imin, imax, jmin, jmax, kmin, kmax;	//Processor minimum indicies
 extern int pid;	//Processor ID
 extern double pxmin, pymin, pzmin;	//Processor minimum x, y, and z
+//global MPI custom data types:
+extern MPI_datatype *mpi_vec3, *mpi_particle, *mpi_grid_point, *mpi_tree, *mpi_tree_node;
+
+
 
 #define C (3e8)
 
