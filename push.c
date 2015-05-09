@@ -1,9 +1,10 @@
 #include <stdlib.h>
+#include <math.h>
 
 #include "decs.h"
-#include "math.h"
 #include "list.h"
 #include "dynamics.h"
+#include "mpicomm.h"
 
 // Some globals that I am assuming exist
 // dx, dy -- cell size
@@ -266,14 +267,13 @@ void push_particles(tree ****grid) {
 	}
 	// Construct neighbor proc list
 	
-	// TODO: define neighbor struct
 	neighbor neigh;
 	int error;
 	MPI_Request request;
 	//Allocate buffers and do the sends and recvs
 
-	List *parts_to_send; // array of lists of particles to send to each neighbor proc
-	parts_to_send = (List*) calloc( nProcs*sizeof(List*) );
+	neighbor *neighbors; // array of lists of particle lists to send to each neighbor proc
+	neighbors = (neighbor*) calloc( nProcs*sizeof(neighbor) );
 	// loop over each ghost cell.
 	// loop over entire grid to find the ghost cells, this is the easiest way to find them
 	// this can't be integrated with above identical loop since the push must be completed before checking to see which pushed things need to be sent to neighbors
@@ -284,40 +284,27 @@ void push_particles(tree ****grid) {
 				if (curCell != NULL) {
 					int owner = curCell->owner;
 					if (owner != pid) {
-						if (parts_to_send[owner] == NULL) {
-							parts_to_send[owner] = list_init();
+						if (neighbors[owner] == NULL) {
+							neighbors[owner] = neighbor_init(i);
 						}
-						list_add(&parts_to_send[owner], &curCell->particles);
+						list_add(&(neighbors[owner].part_lists), &curCell->particles);
 					}
 				}
 			}
 		}
 	}
 
-	while (list_has_next(proc_list)){
-		neigh = *list_get_next(&proc_list);
-		error = MPI_Isend(&neigh.numsend,1, MPI_int, neigh->pid, 1, MPI_COMM_WORLD, request);
-		error = MPI_Irecv(&(neigh.numrecv), 1, MPI_int, neigh->pid, MPI_COMM_WORLD, request);
+	for (i = 0; i < nProcs; ++i) {
+		if (neighbors[i] != NULL) {
+			neighbor_send(neighbors[i]);
+		}
 	}
-	list_reset_iter(&proc_list);
 
 	MPI_Waitall;
 
 	// Done: allocate the buffs and stuff
 	for (i = 0; i < nProcs; ++i) {
-		if (parts_to_send[i] != NULL) {
-			mpi_list_send((List*) list_get_next(&parts_to_send), i, buff);
-			neigh.sendbuff = (particle **)malloc(neigh.numsend * sizeof(particlle *));
-			for (i=0;i<neigh.numsend;i++){
-				neigh.sendbuff[i] = (particle *)malloc(4*part_per_cell * sizeof(particle));
-				mpi_list_send(neigh.send_list[i], neigh.pid, neigh.sendbuff[i]);
-			}
-			neigh.recvbuff = (particle **)malloc(neigh.numrecv * sizeof(particle *));
-			for (i=0;i<neigh.numrecv;i++){
-				neigh.recvbuff[i] = (particle *)malloc(4*part_per_cell * sizeof(particle));
-				error = MPI_Irecv(neigh.recvbuff[i], neigh.recvsize[i], MPI_Particle, neigh.pid, tag, MPI_COMM_WORLD, request);
-			}
-		}
+		
 	}
 
 	MPI_Waitall;
