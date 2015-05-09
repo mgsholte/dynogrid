@@ -39,6 +39,24 @@ void list_pop(List *l) {
 	--l->length;
 }
 
+// Moves a particle from a donor list to a recipient list
+void list_pass(List *recip, List *donor, void *payload){
+	list_add(recip, payload);
+	Node *x = donor->prev->next;
+	donor->prev->next = x->next;
+	donor->iter = x->next;
+	free(x);
+	--donor->length;
+}
+
+// Add everithing in the donor list to the recipient list
+// You have to traverse the list to connect the last node no matter what, so this probably isn't too slow
+void list_combine(List *recip, List *donor){
+	list_reset_iter(donor);
+	while (list_has_next(donor))
+		list_pass(recip, donor, list_get_next(donor));
+}
+
 void list_reset_iter(List *l) {
 	l->iter = l->sentinel;
 	l->prev = l->sentinel;
