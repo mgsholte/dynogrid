@@ -287,7 +287,7 @@ void push_particles(tree ****grid) {
 						if (neighbors[owner] == NULL) {
 							neighbors[owner] = neighbor_init(i);
 						}
-						list_add(&(neighbors[owner].part_lists), &curCell->particles);
+						neighbor_add_cell(&(neighbors[owner]), curCell);
 					}
 				}
 			}

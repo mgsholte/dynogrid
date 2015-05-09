@@ -16,6 +16,9 @@ typedef struct {
 
 neighbor neighbor_init(int pid);
 
-void neighbor_send(neighbor n);
+void neighbor_add_cell(neighbor *n, tree *cell);
+
+MPI_Request neighbor_send_cell_count(neighbor n);
+MPI_Request* neighbor_send_cells(neighbor n);
 
 #endif //MPICOMM_H
