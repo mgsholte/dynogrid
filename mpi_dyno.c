@@ -160,147 +160,60 @@ int free_mpi_customs(){
 //MPI SEND AND RECV SUBROUTINES:
 
 /*	send a particle list */
-MPI_Request mpi_list_send(List *p_part_list, int to_pid, particle *part_array) {
+// n is the neighboring proc where we are sending the particle list of cell iCell. p_part_list is the handle to said cell
+MPI_Request mpi_list_send(List *p_part_list, neighbor n, int iCell) {
 	/*	pack particles from List into array (freeing each particle as we pack it...
 		this will free the particles, while keeping the list structure in place for
 		reuse next time	*/
-	int error;
-	MPI_Request *req;
-	list_reset_iter(p_part_list);
-	int i = 0;
+	MPI_Request req;
 	int nParts = list_length(*p_part_list);
+	particle *buf = (particle *)malloc(nParts * sizeof(particle));
+	
+	/* TODO: we don't need to send this?
 	// tell the receiving proc how many particles it will be receiving
 	MPI_Isend(&nParts, 1, MPI_INT, to_pid, 1, MPI_COMM_WORLD, req);
+	*/
+
+	int i = 0;
+	list_reset_iter(p_part_list);
 	// fill the sendbuffer with particles to send
 	while(list_has_next(*p_part_list)) {
-		if(i > nParts) {
+		if(i > nParts) { //TODO: will never happen if list_length works properly
 			printf("ERROR! Exceeded buffer in mpi_list_send function. Exiting.\ni is: %d\n", i);
 			MPI_Finalize();
    			exit(-1);
 		}//end if
-		part_array[i++] = *((particle*) list_get_next(p_part_list));
-		list_pop(&part_list);
+		buf[i++] = *((particle*) list_get_next(p_part_list));
+		list_pop(p_part_list);
 	}//end while
+	// save the handle to the sendbuffer so we can free it later
+	n.sendbuffs[iCell] = buf;
 
 	/* MPI command to actually send the array of particles (non-blocking) */
-	error = MPI_Isend(part_array, i, mpi_particle, to_pid, 1, MPI_COMM_WORLD, req);
+	MPI_Isend(buf, nParts, mpi_particle, to_pid, 1, MPI_COMM_WORLD, &req);
 	return req;
 }//end mpi_list_send
 
 /*	recv a particle list */
-MPI_Request* mpi_list_recv(int from_pid, particle* part_array){
-	int error, i, tag;
-	MPI_Request *req;
-	int nParts;
-	// recv the # of particles it will be receiving from the sending proc
-	MPI_Irecv(&nParts, 1, MPI_INT, from_pid, 1, MPI_COMM_WORLD, req);
-	// allocate buffer to receive these particles
-	part_array = (particle *)malloc(nParts * sizeof(particle));
-	// perform the receive
-	error = MPI_Irecv((void*) part_array, nParts, MPI_Particle, from_pid, tag, MPI_COMM_WORLD, req);
-	// error = MPI_Waitall(int count, MPI_Request array_of_requests[], MPI_Status array_of_statuses[])
-	
-	// list_reset_iter(part_list);
-	// i = 0;
+// iCell is the index of the cell being received in neighbors recvbuffer
+MPI_Request* mpi_list_recv(neighbor n, int iCell) {
+	int nParts, tag = 0;
+	MPI_Request req;
 
-	// //TODO: we actually need to MPI_Waitall before we can do this part below...
-	// for( i = 0; i < count; i++){
-	// 	list_add(part_list) = &(part_array[i]);
-	// }//end for
+	// recv the # of particles it will be receiving from the sending proc
+	MPI_Recv(&nParts, 1, MPI_INT, n.pid, 1, MPI_COMM_WORLD, req);
+
+	/* TODO: could these replace the above irecv?
+	// determine # of particles that were sent so we can alloc recvbuffer
+	MPI_Status status;
+	MPI_Improbe(n.pid, tag, MPI_COMM_WORLD, &status);
+	MPI_Get_count(&status, mpi_particle, &nParts);
+	*/
+
+	// allocate buffer to receive these particles
+	n.recvbufs[iCell] = (particle *)malloc(nParts * sizeof(particle));
+	// receive the particles themselves
+	MPI_Irecv((void*) n.recvbufs[iCell], nParts, mpi_particle, n.pid, tag, MPI_COMM_WORLD, &req);
+	
 	return req;
 }//end mpi_list_pass
-
-/*	send a tree (and all of it's decendants) */
-// MPI_Request mpi_tree_send(tree tree, int to_pid, TreeNode* tree_node_array){
-// // error = MPI_Isend(tree_array, i, mpi_???, to_pid, 1, MPI_COMM_WORLD, request);
-// 	return req;
-// }//end mpi_tree_send
-
-
-
-/*	recv a tree (and all of it's decendants) */
-// MPI_Request mpi_tree_recv(tree tree, int to_pid, TreeNode* tree_node_array){
-// // error = MPI_Irecv((void*) tree_array, i, mpi_???, to_pid, 1, MPI_COMM_WORLD, request);
-// 	return req;
-// }//end mpi_tree_send
-
-
-//-----------------------------------------------------------------------------------
-
-
-
-
-
-
-
-
-
-// int test_mpi_data_type(){
-	 
-// 	//MPI custom data type: Struct Derived Datatype: C Example
-// 	#define NELEM 25 
-
-// 	int main(argc,argv) 
-// 	int argc; 
-// 	char *argv[];  { 
-// 	int numtasks, rank, source=0, dest, tag=1, i; 
-
-// 	typedef struct { 
-// 	  float x, y, z; 
-// 	  float velocity; 
-// 	  int  n, type; 
-// 	  }          Particle; 
-// 	Particle     p[NELEM], particles[NELEM]; 
-// 	MPI_Datatype particletype, oldtypes[2];  
-// 	int          blockcounts[2]; 
-
-// 	/* MPI_Aint type used to be consistent with syntax of */ 
-// 	/* MPI_Type_extent routine */ 
-// 	MPI_Aint    offsets[2], extent; 
-
-// 	MPI_Status stat; 
-
-// 	MPI_Init(&argc,&argv); 
-// 	MPI_Comm_rank(MPI_COMM_WORLD, &rank); 
-// 	MPI_Comm_size(MPI_COMM_WORLD, &numtasks); 
-
-// 	 /* Setup description of the 4 MPI_FLOAT fields x, y, z, velocity */ 
-// 	offsets[0] = 0; 
-// 	oldtypes[0] = MPI_FLOAT; 
-// 	blockcounts[0] = 4; 
-// 	/* Setup description of the 2 MPI_INT fields n, type */ 
-// 	/* Need to first figure offset by getting size of MPI_FLOAT */ 
-// 	MPI_Type_extent(MPI_FLOAT, &extent); 
-// 	offsets[1] = 4 * extent; 
-// 	oldtypes[1] = MPI_INT; 
-// 	blockcounts[1] = 2; 
-
-// 	/* Now define structured type and commit it */ 
-
-// 	MPI_Type_struct(2, blockcounts, offsets, oldtypes, &particletype); 
-// 	MPI_Type_commit(&particletype); 
-
-// 	/* Initialize the particle array and then send it to each task */ 
-// 	if (rank == 0) { 
-// 	  for (i=0; i < NELEM; i++) { 
-// 	     particles[i].x = i * 1.0; 
-// 	     particles[i].y = i * -1.0; 
-// 	     particles[i].z = i * 1.0;  
-// 	     particles[i].velocity = 0.25; 
-// 	     particles[i].n = i; 
-// 	     particles[i].type = i % 2;  
-// 	     } 
-	  
-// 	 for (i=0; i < numtasks; i++)  
-// 	     MPI_Send(particles, NELEM, particletype, i, tag, MPI_COMM_WORLD); 
-// 	  } 
-	  
-// 	MPI_Recv(p, NELEM, particletype, source, tag, MPI_COMM_WORLD, &stat); 
-
-// 	/* Print a sample of what was received */ 
-// 	printf("rank= %d   %3.2f %3.2f %3.2f %3.2f %d %d\n", rank,p[3].x, 
-// 	     p[3].y,p[3].z,p[3].velocity,p[3].n,p[3].type); 
-	    
-// 	MPI_Finalize(); 
- 
-// }//end test_mpi_data_type()

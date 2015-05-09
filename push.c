@@ -307,7 +307,7 @@ void push_particles(tree ****grid) {
 	// send the cells themselves
 	for (i = 0; i < nProcs; ++i) {
 		if (neighbors[i] != NULL) {
-			requests[i] = neighbor_send_cell(neighbors[i]);
+			requests[i] = neighbor_send_cells(neighbors[i]);
 		}
 	}
 

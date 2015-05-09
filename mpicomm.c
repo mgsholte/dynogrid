@@ -32,14 +32,11 @@ MPI_Request* neighbor_send_cells(neighbor n) {
 		List *curSendList = (List*) list_get_next(&n.part_lists);
 		int i;
 		for (i = 0; i < n.numsends; ++i) {
-			// allocate sendbuffer. mpi_list_send will populate and send it
-			n.sendbufs[i] = (particle *)malloc(nParts * sizeof(particle));
-			mpi_list_send(curSendList, n.pid, n.sendbufs[i]);
+			mpi_list_send(curSendList, n, i);
 		}
 
 		for (i = 0; i < n.numrecvs; ++i) {
-			// don't allocate recvbuffer, mpi_list_recv will do that
-			requests[i] = mpi_list_recv(n.pid, n.recvbuffs[i]);
+			requests[i] = mpi_list_recv(n, i);
 		}
 	}
 	return requests;
