@@ -234,18 +234,26 @@ void convert_ghost2real_and_reghost(tree**** base_grid, tree* new_tree, char dir
 		dk = -1;
 	}
 	
+	/*
+	logic
+	- points:
+		- note tree_init creates points[0], this must be overwritten if wrong
+		- new_tree also needs to share points
+		- beware of difference between tree and TreeNode!
+		
+	*/
+	
 	for (*d1 = -1; *d1 <= 1; ++*d1) {
 		for (*d2 = -1; *d2 <= 1; ++*d2) {
-			if (di==0 && dj==0 && dk==0) continue;
-		
 			if (base_grid[i+di][j+dj][k+dk] == NULL) {
+			
 				// malloc
 				base_grid[i+di][j+dj][k+dk] = (tree*) malloc(sizeof(tree));
 				
-				// tree_init, includes setting points[0]
-				*(base_grid[i+di][j+dj][k+dk]) = tree_init(get_loc(i,j,k), pid);
-
-				// find owner
+				// tree_init, includes setting points[0] and owner
+				*(base_grid[i+di][j+dj][k+dk]) = tree_init(get_loc(i+di,j+dj,k+dk), new_tree->neighbor_owners[1+*d1][1+*d2]);
+				
+				// set grid points correctly
 				
 				laser(cell)
 			}
