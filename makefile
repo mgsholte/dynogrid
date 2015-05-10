@@ -24,7 +24,7 @@ push.c: dynamics.h decs.h
 
 .PHONY: run
 run: dynogrid
-	@./dynogrid
+	@mpirun ./dynogrid
 
 .PHONY: valgrind
 valgrind: dynogrid

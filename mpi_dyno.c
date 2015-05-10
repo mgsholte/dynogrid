@@ -295,7 +295,7 @@ MPI_Request* mpi_tree_send(List tree_list, int to_pid, simple_tree** simple_tree
 
 
 /*	recv an array of trees and each tree's particles and each trees particle_count */
-MPI_Request* mpi_tree_recv(int from_pid, simple_tree** simple_trees_array, particle** all_particles_array, int** part_counts, int* (buf_lens[]){
+MPI_Request* mpi_tree_recv(int from_pid, simple_tree** simple_trees_array, particle** all_particles_array, int** part_counts, int* (buf_lens[])) {
 	
 	MPI_Status status;
 	MPI_Request *reqs = (MPI_Request*) malloc(sizeof(MPI_Request)*3);
@@ -353,7 +353,7 @@ List mpi_tree_unpack(simple_tree** simple_trees_array, particle** all_particles_
 
 	int tree_num,part_num,tot_parts;
 	// unpack array of simple_trees back into regular trees and from an array into a list:
-	for(tree_num = 0; tree_num < trees_len, tree_num++){
+	for(tree_num = 0; tree_num < trees_len; tree_num++) {
 		tree* tree_ptr = (tree*) malloc(sizeof(tree));
 		tree_ptr->root = (TreeNode*) malloc(sizeof(TreeNode));
 		tree_ptr->loc = ((*simple_trees_array)[tree_num]).loc;
@@ -361,13 +361,13 @@ List mpi_tree_unpack(simple_tree** simple_trees_array, particle** all_particles_
 		tree_ptr->particles = list_init();
 		tree_ptr->new_particles = list_init();
 		list_add(&trees_list, tree_ptr);
-		free((*simple_trees_array)[tree_num]);
-		for(part_num = 0; part_num < part_counts[tree_num]; part_num++){
-			list_add(tree_ptr->particles, (particle*) all_particles_array[tot_parts]);
+		for(part_num = 0; part_num < (*part_counts)[tree_num]; part_num++){
+			list_add(&tree_ptr->particles, (particle*) all_particles_array[tot_parts]);
 			tot_parts++;
 		}//end inner for
 	}//end for
-	return tree_list;	
+	//free(*simple_trees_array);
+	return trees_list;
 }//end mpi_tree_unpack()
 
 
