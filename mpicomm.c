@@ -4,8 +4,10 @@
 #include "mpicomm.h"
 #include "mpi_dyno.h"
 
-neighbor neighbor_init(int pid) {
-	return (neighbor) { pid, 0, 0, list_init(), NULL, NULL, NULL, NULL };
+neighbor* neighbor_init(int pid) {
+	neighbor *n = (neighbor*) malloc(sizeof(neighbor));
+	*n = (neighbor) { pid, 0, 0, list_init(), NULL, NULL, NULL, NULL };
+	return n;
 }
 
 void neighbor_add_cell(neighbor *n, tree *cell) {

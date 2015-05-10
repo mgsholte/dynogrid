@@ -284,6 +284,7 @@ void push_particles(tree ****grid) {
 	for (i = 0; i < nProcs; ++i) {
 		neighbors[i] = NULL;
 	}
+
 	// loop over each ghost cell.
 	// loop over entire grid to find the ghost cells, this is the easiest way to find them
 	// this can't be integrated with above identical loop since the push must be completed before checking to see which pushed things need to be sent to neighbors
@@ -293,10 +294,10 @@ void push_particles(tree ****grid) {
 				curCell = grid[i][j][k];
 				if (curCell != NULL) {
 					int owner = curCell->owner;
-					if (owner != pid) {
+					if (owner != pid && owner != -1) {
+						// allocate and assign the neighbor the 1st time you add a cell
 						if (neighbors[owner] == NULL) {
-							neighbors[owner] = (neighbor*) malloc(sizeof(neighbor));
-							*(neighbors[owner]) = neighbor_init(owner);
+							neighbors[owner] = neighbor_init(owner);
 							printf("proc pid = %d, neighbor.pid = %d, owner = %d\n", pid, neighbors[owner]->pid, owner);
 						}
 						neighbor_add_cell(neighbors[owner], curCell);
