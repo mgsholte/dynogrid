@@ -1,5 +1,5 @@
-CC = mpicc -cc=clang
-CFLAGS = -g -ferror-limit=4 -Werror
+CC = mpicc
+CFLAGS = -g
 LFLAGS = -O3
 
 ALL_SRC := $(patsubst %.c,%.o,$(wildcard *.c))
@@ -24,7 +24,7 @@ push.c: dynamics.h decs.h
 
 .PHONY: run
 run: dynogrid
-	@mpirun ./dynogrid
+	@mpiexec ./dynogrid
 
 .PHONY: valgrind
 valgrind: dynogrid
