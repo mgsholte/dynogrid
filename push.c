@@ -118,7 +118,7 @@ static void push_one_cell(tree ****grid, List part_list) {
 
 		TreeNode *cellIter = grid[xl][yu][zn]->root;
 		//Find the finest cell that contains the particle
-		while (cellIter->children != NULL) {
+		while (cellIter->children[0] != NULL) {
 			if (xrf < .5){
 				if (ydf < .5){
 					if (zff < .5){

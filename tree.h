@@ -18,7 +18,7 @@ typedef struct TreeNode {
 // an octree data structure which represents a single cell at the coarsest level of the simulation. each node holds the verticies of the cell at its level of refinement
 typedef struct {
 	TreeNode *root;
-	vec3 loc; // the (x,y,z) location of the lower-left-front point of the root node
+	vec3 loc; // the (x,y,z) location of the lower-left-front point of the root node in absolute coords
 	List particles; // the particles within this cell
 	List new_particles; // the particles added to this cell for the next time step
 	int owner; // the rank of the processor which owns this cell

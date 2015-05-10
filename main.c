@@ -85,10 +85,10 @@ int main(int argc, char *argv[]) {
 
 	for(i = 0; i < nSteps; ++i) {
 		time = i*dt;
-		printf("pushing particles\n");
-		push_particles(base_grid);
 		printf("updating grid\n");
 		grid_update(base_grid);  // add the laser, etc.
+		printf("pushing particles\n");
+		push_particles(base_grid);
 		if (i % output_freq == 0) {
 			printf("outputting grid\n");
 			output_grid((i/output_freq), (nSteps/output_freq), base_grid);

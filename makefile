@@ -3,7 +3,7 @@ CFLAGS = -g
 LFLAGS = -O3
 
 ALL_SRC := $(patsubst %.c,%.o,$(wildcard *.c))
-EXCLUDES = 
+EXCLUDES = pseudocode.o
 OBJS := $(filter-out $(EXCLUDES),$(ALL_SRC))
 
 
@@ -27,6 +27,10 @@ run: dynogrid
 	@rm -f batch_dynogrid
 	@qsub jobscript
 	@watch -n 10 qstat
+
+.PHONY: debug
+debug: dynogrid
+	@idev -m 15
 
 .PHONY: valgrind
 valgrind: dynogrid

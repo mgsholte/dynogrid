@@ -10,6 +10,7 @@ tree tree_init(vec3 loc, int owner) {
 	root->points[0] = (grid_point*) malloc(sizeof(grid_point)); // the point starts with E = B = 0
 	root->points[0]->E = (vec3) { 0., 0., 0. };
 	root->points[0]->B = (vec3) { 0., 0., 0. };
+	root->children[0] = NULL; // don't need to set others b/c they'll be set later
 	
 	return (tree) { root, loc, list_init(), list_init(), owner };
 }
@@ -123,7 +124,8 @@ static void refine(TreeNode* cell, double x, double y, double z, vec3 *h) {
 	// allocate the 8 new children cells
 	TreeNode *children_cells[8];
 	for (i = 0; i < 8; ++i) {
-		children_cells[i] = (TreeNode*) calloc(1, sizeof(TreeNode));
+		children_cells[i] = (TreeNode*) malloc(sizeof(TreeNode));
+		children_cells[i]->children[0] = NULL;
 	}
 
 	// allocate all 19 new points. then have the new child cells reference these 19 new points and the original 8 points from their parent for a total of 27 points in the new 2x2x2 supercell
@@ -140,8 +142,11 @@ static void refine(TreeNode* cell, double x, double y, double z, vec3 *h) {
 				//TODO: these divide by 2s are really just an extra shift
 				#define closest_parent(i,j,k) (((i/2)<<2) + ((j/2)<<1) + (k/2))
 				if (isI || isJ || isK) {  // these are the child points
-					children_points[i][j][k] = (grid_point*) calloc(1, sizeof(grid_point));
+					// TODO: init points
+					children_points[i][j][k] = (grid_point*) malloc(sizeof(grid_point));
 					grid_point *pChildPoint = children_points[i][j][k];
+					pChildPoint->E = (vec3) { 0., 0., 0. };
+					pChildPoint->B = (vec3) { 0., 0., 0. };
 					// set value at grid point by averaging appropriate parent points (the nearest neighbors)
 					int ip, jp, kp;  // the parent point direction
 					int basep = closest_parent(i,j,k);

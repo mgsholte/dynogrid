@@ -19,22 +19,21 @@ bool laser(grid_point *point, double x, double y, double z) {
 	return false;
 }
 
-//TODO: update for parallel
 void grid_update(tree ****base_grid) {
 	int ix, iy, iz;
 	// set the laser fields at every point
-	for (ix = 0; ix < nx; ++ix) {
-		for (iy = 0; iy < ny; ++iy) {
-			for (iz = 0; iz < nz; ++iz) {
+	for (ix = imin; ix < imax; ++ix) {
+		for (iy = jmin; iy < jmax; ++iy) {
+			for (iz = kmin; iz < kmax; ++iz) {
 				tree_apply_fcn(base_grid[ix][iy][iz], &laser);
 			}
 		}
 	}
 	// now check to see if the grid needs to refine/coarsen
 	// each tree is responsible for refining the space between it and the points in the +x/y/z dirs. thus, the last point in each dimension never needs to refine
-	for (ix = 0; ix < nx; ++ix) {
-		for (iy = 0; iy < ny; ++iy) {
-			for (iz = 0; iz < nz; ++iz) {
+	for (ix = imin; ix < imax; ++ix) {
+		for (iy = jmin; iy < jmax; ++iy) {
+			for (iz = kmin; iz < kmax; ++iz) {
 				tree_update(base_grid[ix][iy][iz]);
 			}
 		}

@@ -14,7 +14,7 @@ static inline double rand_float( double low, double high ) {
 }
 
 static inline vec3 get_loc(int ix, int iy, int iz) {
-	return (vec3) { ix*dx, iy*dy, iz*dz };
+	return (vec3) { (ix-imin)*dx + pxmin, (iy-jmin)*dy + pymin, (iz-kmin)*dz + pzmin };
 }
 
 static inline int max(const int x, const int y) {
@@ -88,7 +88,6 @@ tree**** grid_init(int isize, int jsize, int ksize, int x_divs, int y_divs, int 
 						owner_id = -1;
 					}
 					
-					base_grid[i][j][k]->owner = owner_id;
 				} else {
 					base_grid[i][j][k] = NULL;
 				}
@@ -114,17 +113,19 @@ tree**** grid_init(int isize, int jsize, int ksize, int x_divs, int y_divs, int 
 void init_particles(tree ****base_grid, vec3 origin, vec3 dims, int elec_per_cell) {
 	//TODO: this assumes that ix=0 gives the cell with origin at x=0. this is not necessarily the case looking at grid_init(). each proc needs to know an offset where its grid begins. i.e. ix=0 on my local grid corresponds to ix=offset on the global grid
 	int iy, ix, iz, n;
-	int ix_min = round_i(origin.x/dx), ix_max = round_i(dims.x/dx) + ix_min;
-	int iy_min = round_i(origin.y/dy), iy_max = round_i(dims.y/dy) + iy_min;
-	int iz_min = round_i(origin.z/dz), iz_max = round_i(dims.z/dz) + iz_min;
+	int ix_min = round_i((origin.x-pxmin)/dx)+imin, ix_max = round_i(dims.x/dx) + ix_min;
+	int iy_min = round_i((origin.y-pymin)/dy)+jmin, iy_max = round_i(dims.y/dy) + iy_min;
+	int iz_min = round_i((origin.z-pzmin)/dz)+kmin, iz_max = round_i(dims.z/dz) + iz_min;
 	// each processor starts no lower than the cells it is responsible for, also no lower than the origin of the prism containing the particles
-	ix_min = max(ix_min, imin);
-	iy_min = max(iy_min, jmin);
-	iz_min = max(iz_min, kmin);
+	// also, exclude ghost cells
+	ix_min = max(ix_min, imin+1);
+	iy_min = max(iy_min, jmin+1);
+	iz_min = max(iz_min, kmin+1);
 	// each processor goes no further than the cells it is responsible for, also no furthen than the end of the prism containing the particles
-	ix_max = min(ix_max, imax);
-	iy_max = min(iy_max, jmax);
-	iz_max = min(iz_max, kmax);
+	// also, exclude ghost cells
+	ix_max = min(ix_max, imax-1);
+	iy_max = min(iy_max, jmax-1);
+	iz_max = min(iz_max, kmax-1);
 	//NB: it is possible that a processor might not be responsible for adding any particles, in which case the body of the loops below will not execute
 	for (ix = ix_min; ix < ix_max; ++ix) {
 		for (iy = iy_min; iy < iy_max; ++iy) {
