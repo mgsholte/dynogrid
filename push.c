@@ -251,12 +251,12 @@ static void push_one_cell(tree ****grid, List part_list) {
 }
 
 // Finds the list that these particles belong in
-List* part_belongs_in(tree ****grid, vec3 pos){
+List* part_belongs_in(tree ****grid, vec3 pos) {
 	int i,j,k;
     i = floor((pos.x - pxmin) / dx);
     j = floor((pos.y - pymin) / dy);
 	k = floor((pos.z - pzmin) / dz);
-	return &(grid[i][j][k]->part_list);
+	return &(grid[i][j][k]->particles);
 }
 
 
@@ -349,9 +349,11 @@ void push_particles(tree ****grid) {
 			List* destination = part_belongs_in(grid, n.recvbufs[iCell][0].pos);
 			// loop over the k-th particle received from the j-th cell
 			int iPart;
-			for (iPart = 0; iPart < n.recvlen[iCell]; ++iPart) {
+			for (iPart = 0; iPart < n.recvlens[iCell]; ++iPart) {
 				// add the receivde particle to the appropriate cell's particle list
-				list_add(destination, n.recbufs[iCell][iPart])
+				particle *tmp = (particle*) malloc(sizeof(particle));
+				*tmp = n.recvbufs[iCell][iPart];
+				list_add(destination, tmp);
 			}
 			free(n.recvbufs[iCell]);
 		}
@@ -373,7 +375,7 @@ void push_particles(tree ****grid) {
 				curCell = grid[i][j][k];
 				if (curCell != NULL){
 					// Add the next_list to the current list
-					list_combine(&(grid[i][j][k]->particles), &(grid[i][j][k]->next_list));
+					list_combine(&(grid[i][j][k]->particles), &(grid[i][j][k]->new_particles));
 				}
 			}
 		}
