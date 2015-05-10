@@ -30,6 +30,8 @@ int nProcs;
 MPI_Datatype mpi_vec3, mpi_particle, mpi_grid_point, mpi_tree, mpi_tree_node;
 
 int main(int argc, char *argv[]) {
+	MPI_Init(&argc, &argv);
+
 	// Definitions for globals
 	int i, err;  // loop index var
 	int x_divs, y_divs, z_divs;
@@ -40,16 +42,17 @@ int main(int argc, char *argv[]) {
 	printf("y_divs is: %d\n", y_divs);
 	printf("z_divs is: %d\n", z_divs);
 
-	MPI_Init(&argc, &argv);
 	MPI_Comm_rank(MPI_COMM_WORLD, &pid);
 	MPI_Comm_size(MPI_COMM_WORLD, &nProcs);
 	if(nProcs != x_divs*y_divs*z_divs){
 		printf("ERROR! nProcs != x_divs*y_divs*z_divs!\nMoron!!!\n");
+		MPI_Finalize();
 		return -1;
 	}//end if
 	
 	if ( nx%x_divs != 0 || ny%y_divs != 0 || nz%z_divs ) {
 		printf("ERROR! nx\%x_divs != 0 (or y or z)!\nTsk tsk.\n");
+		MPI_Finalize();
 		return -1;
 	}//end if
 
