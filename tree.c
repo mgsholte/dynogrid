@@ -105,13 +105,18 @@ static void coarsen(TreeNode *cell) {
 	}
 	// remove your children
 	for(i = 0; i < 8; i++) {
+		TreeNode *pChild = cell->children[i];
+		bool hasChildren = (pChild->children[0] != 0);
 		for(j = 0; j < 8; j++) {
 			if(i != j && ((j&i) == i)) { //don't free points i==j bc the parent still needs them. also, other children may have already freed one of your points so don't double free
 				//free each child's 7 points that are no longer needed:
-				free(cell->children[i]->points[j]);
+				free(pChild->points[j]);
 			}
 			// free childrens' child pointers
-			free(cell->children[i]->children[j]);
+			if(hasChildren) {
+				free(pChild->children[j]);
+				pChild->children[j] = NULL;
+			}
 		}
 		// free your child pointers
 		free(cell->children[i]);

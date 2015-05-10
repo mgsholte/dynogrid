@@ -15,18 +15,32 @@ some logic
 	- assign those tree*s where they belong in their new home based on their loc's
 */
 
+#include "grid.h"
+
 // TODO: needs some work on properly separating the tasks onto their appropriate procs, i.e. giving vs taking
 
 // this one may need more?
 trade_cells(base_grid)
-	for each (direction) // direction = x, y, z
-		give_and_take_cells(direction, base_grid)
+	// dirs (directions) is an array of chars, each is a char dir6 (direction w/ 6 possibilities)
+	// each dir6 can be:
+	//  'l' = left = x decreasing
+	//  'r' = right = x increasing
+	//  'u' = up = y decreasing
+	//  'd' = down = y increasing
+	//  'f' = forward = z decreasing
+	//  'b' = back = z increasing
+	char[3] dirs = load_balancer();
+	for each (dir6 in dirs)
+		give_and_take_cells(base_grid, dir6)
 	end
 end trade_cells
 
 // TODO: written only for x direction, need to generalize to y and z
 // determine which trees to send where, and send them. then take trees given to you, adjust your base_grid if necessary, and insert the trees
-give_and_take_cells(direction, tree**** base_grid)
+give_and_take_cells(tree**** base_grid, char dir6)
+	//direction-dependent pointers to variables
+	
+	
 	int neighbors[numNeighbors] = proc neighbors
 	
 	// create moving_trees: an array of List*s pointing to tree*s. The use of tree*s is not made explicit here, may need to cast later
@@ -50,6 +64,7 @@ give_and_take_cells(direction, tree**** base_grid)
 	particle* buff_send_parts[sizeof(neighbors)]
 	int* buff_send_part_list_lengths[sizeof(neighbors)]
 	
+	// TODO: add sending/receiving a char. send a &char, recv a &char. this is the dir6 of the incoming processor
 	// need to track MPI_request objects for a waitall later, in order to be non-blocking
 	MPI_Request req_send_trees[sizeof(neighbors)]
 	MPI_Request req_send_parts[sizeof(neighbors)]
@@ -89,7 +104,7 @@ give_and_take_cells(direction, tree**** base_grid)
 	// once receives are done, can start unpacking buffers, putting new trees where they belong, while adjusting base_grid as necessary
 	List* new_trees;
 	tree* new_tree;
-	double pxmax = pxmin+dx*(imax-imin);
+	double pxmax = pxmin+dx*(imax-imin); //pxmin is start of ghosts using global x position
 	int j,k;
 	for (neighbors)
 		//new_trees = mpi_tree_unpack(&buff_recv_trees[neighbor_id], &buff_recv_parts[neighbor_id], &buff_recv_part_list_lengths[neighbor_id], &lengths_of_buffs[neighbor_id]);
@@ -127,10 +142,10 @@ give_and_take_cells(direction, tree**** base_grid)
 		end
 		
 		// we're good now: let's insert our new_tree's
-		convert_ghost2real_and_reghost(base_grid, new_tree);
+		convert_ghost2real_and_reghost(base_grid, new_tree, dir6);
 		while (list_has_next(*new_trees))
 			new_tree = (tree*) list_get_next(new_trees);
-			convert_ghost2real_and_reghost(base_grid, new_tree);
+			convert_ghost2real_and_reghost(base_grid, new_tree, dir6);
 		end
 		
 	end
@@ -182,20 +197,60 @@ void resize_allocation(tree**** base_grid) {
 
 
 // TODO: write this. should it even be a separate function or not?
-void convert_ghost2real_and_reghost(tree**** base_grid, tree* new_tree) {
+// dir6 is direction tree was passed to get here, can be 'l','r','u','d','f','b'
+void convert_ghost2real_and_reghost(tree**** base_grid, tree* new_tree, char dir6) {
 	int i = imin + 1 + (int) round((new_tree->loc.x - pxmin)/dx); //round to force correct int value
 	int j = jmin + 1 + (int) round((new_tree->loc.y - pymin)/dy);
 	int k = kmin + 1 + (int) round((new_tree->loc.z - pzmin)/dz);
 	base_grid[i][j][k] = new_tree; //replaces the ghost that was there before
 	new_tree->owner = pid;
 	
-	// create new ghosts around new_tree as needed
-	for (neighbor trees of new_tree)
-		if (neighbor == NULL)
-			init cell	// find owner somehow
-			laser(cell)
-		end
-	end
+	// use pointers to iterate over the 9 (or fewer) new ghost cells, respecting which plane they lie in
+	int di,dj,dk;
+	int* d1,d2;
+	if (dir6 == 'l') {
+		di = 1;
+		d1 = &dj;
+		d2 = &dk;
+	} else if (dir6 == 'r') {
+		di = -1;
+		d1 = &dj;
+		d2 = &dk;
+	} else if (dir6 == 'u') {
+		d2 = &di;
+		dj = +1;
+		d1 = &dk;
+	} else if (dir6 == 'd') {
+		d2 = &di;
+		dj = -1;
+		d1 = &dk;
+	} else if (dir6 == 'f') {
+		d1 = &di;
+		d2 = &dj;
+		dk = +1;
+	} else if (dir6 == 'b') {
+		d1 = &di;
+		d2 = &dj;
+		dk = -1;
+	}
+	
+	for (*d1 = -1; *d1 <= 1; ++*d1) {
+		for (*d2 = -1; *d2 <= 1; ++*d2) {
+			if (di==0 && dj==0 && dk==0) continue;
+		
+			if (base_grid[i+di][j+dj][k+dk] == NULL) {
+				// malloc
+				base_grid[i+di][j+dj][k+dk] = (tree*) malloc(sizeof(tree));
+				
+				// tree_init, includes setting points[0]
+				*(base_grid[i+di][j+dj][k+dk]) = tree_init(get_loc(i,j,k), pid);
+
+				// find owner
+				
+				laser(cell)
+			}
+		}
+	}
 } //convert_ghost2real_and_reghost
 
 ------------------------------------------------------------------------

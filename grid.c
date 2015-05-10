@@ -13,10 +13,6 @@ static inline double rand_float( double low, double high ) {
 	return ( (double)rand() * (high - low) ) / (double)	RAND_MAX + low;
 }
 
-static inline vec3 get_loc(int ix, int iy, int iz) {
-	return (vec3) { (ix-imin)*dx + pxmin, (iy-jmin)*dy + pymin, (iz-kmin)*dz + pzmin };
-}
-
 static inline int max(const int x, const int y) {
 	return x > y ? x : y;
 }
@@ -54,18 +50,21 @@ tree**** grid_init(int isize, int jsize, int ksize, int x_divs, int y_divs, int 
 		base_grid[i] = (tree***) malloc( (wj+1) * sizeof(tree**) );  // allocate the row
 		for (j = 0; j < wj; ++j) {
 			base_grid[i][j] = (tree**) malloc( (wk+1) * sizeof(tree*) );  // allocate the row
-			// each index goes from (ghost cell on left) to (initialization ghost cell on right) which is one past (ghost cell on right) for the
-			// purpose of initializing all points. each cell makes just one point, so an extra layer is needed at the end
 			for (k = 0; k < wk; ++k) {
-				// malloc for real, ghost, and 'init ghost' cells
+				// for each real, ghost, and 'init ghost' cell, we: malloc, tree_init, set owner, then after set each tree's 8 points correctly
+				// each index goes from (ghost cell on left) to (initialization ghost cell on right) which is one past (ghost cell on right) for the
+				//  purpose of initializing all points. each cell makes just one point, so an extra layer is needed at the end
 				if (i >= imin && i <= imax &&
 					j >= jmin && j <= jmax &&
 					k >= kmin && k <= kmax) {
 					
+					// malloc
 					base_grid[i][j][k] = (tree*) malloc(sizeof(tree));
 					
+					// tree_init, includes setting points[0]
 					*(base_grid[i][j][k]) = tree_init(get_loc(i,j,k), pid);
 
+					// set owner
 					// 26 possible neighbors could own each ghost cell, but their pids can be constructed from true/false statements. using true->1 and false->0
 					int di, dj, dk, owner_id;
 					di = (i == imax-1) - (i == imin); // +1 or -1
