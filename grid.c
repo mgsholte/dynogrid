@@ -64,7 +64,7 @@ tree**** grid_init(int isize, int jsize, int ksize, int x_divs, int y_divs, int 
 					
 					base_grid[i][j][k] = (tree*) malloc(sizeof(tree));
 					
-					*(base_grid[i][j][k]) = tree_init(get_loc(i,j,k));
+					*(base_grid[i][j][k]) = tree_init(get_loc(i,j,k), pid);
 
 					// I think this will work, assuming true->1 and false->0
 					// 26 possible neighbors could own each ghost cell, but their pids can be constructed from true/false statements

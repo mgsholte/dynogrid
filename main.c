@@ -51,7 +51,7 @@ int main(int argc, char *argv[]) {
 	}//end if
 	
 	if ( nx%x_divs != 0 || ny%y_divs != 0 || nz%z_divs ) {
-		printf("ERROR! nx\%x_divs != 0 (or y or z)!\nTsk tsk.\n");
+		printf("ERROR! nx%%x_divs != 0 (or y or z)!\nTsk tsk.\n");
 		MPI_Finalize();
 		return -1;
 	}//end if

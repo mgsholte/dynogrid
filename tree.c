@@ -5,11 +5,13 @@
 
 // loc = location of the point in the cell with the smallest coordinates
 // owner = the rank of the mpi process which owns this cell
-tree tree_init(vec3 loc) {
-	TreeNode *root = (TreeNode*) calloc(1, sizeof(TreeNode));
-	root->points[0] = (grid_point*) calloc(1, sizeof(grid_point)); // the point starts with E = B = 0
+tree tree_init(vec3 loc, int owner) {
+	TreeNode *root = (TreeNode*) malloc(sizeof(TreeNode));
+	root->points[0] = (grid_point*) malloc(sizeof(grid_point)); // the point starts with E = B = 0
+	root->points[0]->E = (vec3) { 0., 0., 0. };
+	root->points[0]->B = (vec3) { 0., 0., 0. };
 	
-	return (tree) { root, loc, list_init(), list_init(), -1 };
+	return (tree) { root, loc, list_init(), list_init(), owner };
 }
 
 // see notes for tree_apply_fcn

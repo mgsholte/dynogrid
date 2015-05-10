@@ -30,7 +30,7 @@ typedef struct {
 	int owner; // the rank of the processor which owns this cell
 } simple_tree;
 // create a tree only initializing 1 (0-th) of the 8 grid_points in the cell
-tree tree_init(vec3 loc);
+tree tree_init(vec3 loc, int owner);
 
 // apply the function f to every point in the tree. f is a fcn that
 // accepts a pointer to the grid point and 3 doubles (x,y,z) giving its location
