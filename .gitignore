@@ -37,6 +37,7 @@
 dynogrid
 *~
 sim_*
+batch_*
 
 #TeX
 *.aux
