@@ -17,26 +17,79 @@ static void scale_vec(vec3 *v, double factor) {
 }
 
 // inits all grid points to 0 in E and B
-grid_cell*** init_grid() {
-	grid_cell ***grid_cells = (grid_cell***) malloc( (nx+1) * sizeof(grid_cell**) ); // allocate an array of pointers to rows-depthwise
+// isize, etc. are lengths of real cell dimensions. ghost and NULL cells are added in this function
+grid_cell**** init_grid(int isize, int jsize, int ksize, int x_divs, int y_divs, int z_divs) {
+	// global vars (local indices)
+	imin = isize/2 - 1; // -1 for ghost on left
+	jmin = jsize/2 - 1;
+	kmin = ksize/2 - 1;
+	imax = imin + isize + 2; // +2 for ghosts on left and right
+	jmax = jmin + jsize + 2;
+	kmax = kmin + ksize + 2;
+	// global vars (global spatial positions)
+	px_min = ((double)(pid % x_divs))/x_divs * x_max - dx;
+	py_min = ((double)((pid - pid % x_divs)/x_divs % y_divs))/y_divs * y_max - dy;
+	pz_min = ((double)((pid - pid % x_divs - pid % (x_divs * y_divs))/(x_divs * y_divs)))/z_divs * z_max - dz;
+	
+	// local vars
+	int wi = 2*isize; // padding is 50% of isize (etc.) on each side
+	int wj = 2*jsize;
+	int wk = 2*ksize;
+	
+	
+	grid_cell ****grid_cells = (grid_cell****) malloc( (wi+1) * sizeof(grid_cell***) ); // allocate an array of pointers to rows-depthwise
 	int i, j, k, n;
-	for (i = 0; i <= nx; ++i) {
-		grid_cells[i] = (grid_cell**) malloc( (ny+1) * sizeof(grid_cell*) );  // allocate the row
-		for (j = 0; j <= ny; ++j) {
-			grid_cells[i][j] = (grid_cell*) malloc( (nz+1) * sizeof(grid_cell) );  // allocate the row
-			// initialize only the upper-left-forward grid_point (points[0] represents (z,y,x)==000, points[3] repr. (z,y,x)==011)
-			for (k = 0; k <= nz; ++k) {
-				grid_cells[i][j][k].points[0] = malloc( sizeof(grid_point) );
-				grid_cells[i][j][k].points[0]->E = (vec3) {0,0,0};
-				grid_cells[i][j][k].points[0]->B = (vec3) {0,0,0};
-				grid_cells[i][j][k].children = NULL;
+	int di, dj, dk, owner_id;
+	for (i = 0; i < wi; ++i) {
+		grid_cells[i] = (grid_cell***) malloc( (wj+1) * sizeof(grid_cell**) );  // allocate the row
+		for (j = 0; j < wj; ++j) {
+			grid_cells[i][j] = (grid_cell**) malloc( (wk+1) * sizeof(grid_cell*) );  // allocate the row
+			// each index goes from (ghost cell on left) to (initialization ghost cell on right) which is one past (ghost cell on right) for the
+			// purpose of initializing all points. each cell makes just one point, so an extra layer is needed at the end
+			for (k = 0; k < wk; ++k) {
+				// malloc for real, ghost, and 'init ghost' cells
+				if (i >= imin && i < imax+1 &&
+					j >= jmin && j < jmax+1 &&
+					k >= kmin && k < kmax+1) {
+					
+					grid_cells[i][j][k] = (grid_cell*) malloc( sizeof(grid_cell) );
+					
+					// initialize only the upper-left-forward grid_point (points[0] represents (z,y,x)==000, points[3] repr. (z,y,x)==011)
+					grid_cells[i][j][k]->points[0] = malloc( sizeof(grid_point) );
+					grid_cells[i][j][k]->points[0]->E = (vec3) {0,0,0};
+					grid_cells[i][j][k]->points[0]->B = (vec3) {0,0,0};
+					grid_cells[i][j][k]->children = NULL;
+					
+					// I think this will work, assuming true->1 and false->0
+					// 26 possible neighbors could own each ghost cell, but their pids can be constructed from true/false statements
+					di = (i == imax-1) - (i == imin); // +1 or -1
+					dj = (j == jmax-1) - (j == jmin);
+					dk = (k == kmax-1) - (k == kmin);
+					owner_id = pid;
+					owner_id += di;
+					owner_id += dj * x_divs;
+					owner_id += dk * x_divs * y_divs;
+					
+					// find bad cases where there is no proper owner_id, i.e. the above algorithm got a bad answer b/c ghost is out of simulation bounds
+					if ((di == 1  &&  px_min + dx * (isize+1.5) >= x_max) || 	// 1.5 is to prevent rounding issues, even though 1 should be enough
+						(dj == 1  &&  py_min + dy * (isize+1.5) >= y_max) ||
+						(dk == 1  &&  pz_min + dz * (isize+1.5) >= z_max) ||
+						(di == -1  &&  px_min + dx * 0.5 <= 0) ||
+						(dj == -1  &&  py_min + dy * 0.5 <= 0) ||
+						(dk == -1  &&  pz_min + dz * 0.5 <= 0)) {
+						
+						owner_id = -1;
+					}
+					
+					grid_cells[i][j][k]->owner = owner_id;
+				}
 			}
 		}
 	}
-	// make other 7 grid_point pointers of each grid cell point to grid points allocated by neighbors. except for right/upper/back boundaries
-	for (i = 0; i < nx; ++i) {
-		for (j = 0; j < ny; ++j) {
-			for (k = 0; k < nz; ++k) {
+	// make other 7 grid_point pointers of each grid cell point to grid points allocated by neighbors. except for fake 'init ghost' cells on right/bottom/back boundaries
+	for (i = imin; i < imax; ++i) {
+		for (j = jmin; j < jmax; ++j) {
+			for (k = kmin; k < kmax; ++k) {
 				// n should be thought of as binary (n for "neighbors")
 				for (n = 1; n < 8; ++n) {
 					grid_cells[i][j][k].points[n] = grid_cells[i+(n&1)][j+(n&2)/2][k+(n&4)/4].points[0];
@@ -47,59 +100,133 @@ grid_cell*** init_grid() {
 	return grid_cells;
 }
 
-// populates particles randomly within each grid cell inside the bounds of the specified prism. particles are evenly distrubuted across the cells
-// if the origin and dims of the prism don't algin exactly to grid points, they will be rounded to the nearest ones
-List init_particles(vec3 origin, vec3 dims, int part_per_cell) {
-	List particles = list_init();
-	int iy, ix, iz, k;
-	int ix_min = round_i(origin.x/dx), ix_max = round_i(dims.x/dx) + ix_min;
-	int iy_min = round_i(origin.y/dy), iy_max = round_i(dims.y/dy) + iy_min;
-	int iz_min = round_i(origin.z/dz), iz_max = round_i(dims.z/dz) + iz_min;
+// populates particles randomly within each grid cell inside the bounds of the specified prism. particles are evenly distributed across the cells
+// if the origin and dims of the prism don't align exactly to grid points, they will be rounded to the nearest ones
+void init_particles(grid_cell**** grid_cells, vec3 origin, vec3 dims, int part_per_cell) {
+	//ensure that the origin of the tungsten block aligns evenly with increments of dx, dy, and dz:
+	double tungsten_xmin = dx*(round_i(origin.x/dx)), tungsten_xmax = dx*(round_i(dims.x/dx)) + tungsten_xmin;
+	double tungsten_ymin = dy*(round_i(origin.y/dy)), tungsten_ymax = dy*(round_i(dims.y/dy)) + tungsten_ymin;
+	double tungsten_zmin = dz*(round_i(origin.z/dz)), tungsten_zmax = dz*(round_i(dims.z/dz)) + tungsten_zmin;
+	
+	int i, j, k, ppc; //i corresonds to x; j to y; k to z; ppc for particles per cell
+	double cell_xmin; cell_xmax, cell_ymin, cell_ymax, cell_zmin, cell_zmax;
+	particle *p; // pointer to the next particle to add...why declare this outside the loops???
 	double x,y,z; // the coords of the next particle to add
-	particle *p; // pointer to the next particle to add
-	for (ix = ix_min; ix < ix_max; ++ix) {
-		for (iy = iy_min; iy < iy_max; ++iy) {
-			for (iz = iz_min; iz < iz_max; ++iz) {
-				// add particles in this cell
-				for (k = 0; k < part_per_cell/2; ++k) {
-					// add a proton
-					p = (particle*) malloc(sizeof(particle));
+	for(i = imin; i < imax; i++){
+		cell_xmin = px_min + ((i-imin) * dx);
+		cell_xmax = cell_xmin + dx;
+		for(j = jmin; j < jmax; j++){
+			cell_ymin = py_min + ((j-jmin) * dy);
+			cell_ymax = cell_ymin + dy;
+			for(k = kmin; k < kmax; k++){
+				cell_zmin = pz_min + ((k-kmin) * dz);
+				cell_zmax = cell_zmin + dz;
+				
+				List particles = list_init(); //particles list for the current time step
+				List next_particles = list_init(); //particles list for the next time step...will be initiated to empty
+				
+				if(	(cell_xmax >= tungsten_xmin && cell_xmin <= tungsten_xmax) &&
+					(cell_ymax >= tungsten_ymin && cell_ymin <= tungsten_ymax) &&
+					(cell_zmax >= tungsten_zmin && cell_zmin <= tungsten_zmax) &&
+					(i > imin && i < imax) &&
+					(j > jmin && j < jmax) &&
+					(k > kmin && k < kmax)
+					){	
+					
+					//then this cell lies within the block of tungsten (and NOT a ghost cell), so it gets particles:
+					for (ppc = 0; ppc < part_per_cell/2; ppc++) {
+						// add a proton
+						p = (particle*) malloc(sizeof(particle));
 
-					x = rand_float(0, dx) + ix*dx;
-					y = rand_float(0, dy) + iy*dy;
-					z = rand_float(0, dz) + iz*dz;
-					*p = (particle) { 
-						{x, y, z},  //position
-						{0, 0, 0},  //momentum
-						BASE_PROTON_MASS * PROTON_WEIGHT,   //mass
-						BASE_PROTON_CHARGE * PROTON_WEIGHT, //charge
-						PROTON_WEIGHT  //weight
-						};
+						x = rand_float(0, dx) + cell_xmin;
+						y = rand_float(0, dy) + cell_ymin;
+						z = rand_float(0, dz) + cell_zmin;
+						*p = (particle) { 
+							{x, y, z},  //position
+							{0, 0, 0},  //momentum
+							BASE_PROTON_MASS * PROTON_WEIGHT,   //mass
+							BASE_PROTON_CHARGE * PROTON_WEIGHT, //charge
+							PROTON_WEIGHT  //weight
+							};
 
-					list_add(particles, p);
+						list_add(particles, p);
 
-					// add an electron
-					p = (particle*) malloc(sizeof(particle));
+						// add an electron
+						p = (particle*) malloc(sizeof(particle));
 
-					x = rand_float(0, dx) + ix*dx;
-					y = rand_float(0, dy) + iy*dy;
-					z = rand_float(0, dz) + iz*dz;
-					*p = (particle) { 
-						{x, y, z},  //position
-						{0, 0, 0},  //momentum
-						BASE_ELECTRON_MASS * ELECTRON_WEIGHT,   //mass
-						BASE_ELECTRON_CHARGE * ELECTRON_WEIGHT, //charge
-						ELECTRON_WEIGHT  //weight
-						};
+						x = rand_float(0, dx) + cell_xmin;
+						y = rand_float(0, dy) + cell_ymin;
+						z = rand_float(0, dz) + cell_zmin;
+						*p = (particle) { 
+							{x, y, z},  //position
+							{0, 0, 0},  //momentum
+							BASE_ELECTRON_MASS * ELECTRON_WEIGHT,   //mass
+							BASE_ELECTRON_CHARGE * ELECTRON_WEIGHT, //charge
+							ELECTRON_WEIGHT  //weight
+							};
 
-					list_add(particles, p);
-				}
-			}
-		}
-	}
-	list_reset_iter(&particles);
-	return particles;
-}
+						list_add(particles, p);
+						list_reset_iter(&particles); //do we need to do this or no??? (Joel asking, not sure if this is needed)
+					}//end ppc for loop
+				}//end if
+				//adding initial list of particles to cell:
+				(grid_cells[i][j][k])->part_list = particles;
+				//adding blank, but initialized list of particles for next time step:
+				(grid_cells[i][j][k])->next_list = next_particles;
+			}//end k for loop
+		}//end j for loop
+	}// end i for loop
+
+	// //old, sequential version...keeping around for now just in case we need to compare/revert anything from the above:
+	// int iy, ix, iz, k;
+	// int ix_min = round_i(origin.x/dx), ix_max = round_i(dims.x/dx) + ix_min;
+	// int iy_min = round_i(origin.y/dy), iy_max = round_i(dims.y/dy) + iy_min;
+	// int iz_min = round_i(origin.z/dz), iz_max = round_i(dims.z/dz) + iz_min;
+	// double x,y,z; // the coords of the next particle to add
+	// particle *p; // pointer to the next particle to add
+	// for (ix = ix_min; ix < ix_max; ++ix) {
+	// 	for (iy = iy_min; iy < iy_max; ++iy) {
+	// 		for (iz = iz_min; iz < iz_max; ++iz) {
+	// 			// add particles in this cell
+	// 			for (k = 0; k < part_per_cell/2; ++k) {
+	// 				// add a proton
+	// 				p = (particle*) malloc(sizeof(particle));
+
+	// 				x = rand_float(0, dx) + ix*dx;
+	// 				y = rand_float(0, dy) + iy*dy;
+	// 				z = rand_float(0, dz) + iz*dz;
+	// 				*p = (particle) { 
+	// 					{x, y, z},  //position
+	// 					{0, 0, 0},  //momentum
+	// 					BASE_PROTON_MASS * PROTON_WEIGHT,   //mass
+	// 					BASE_PROTON_CHARGE * PROTON_WEIGHT, //charge
+	// 					PROTON_WEIGHT  //weight
+	// 					};
+
+	// 				list_add(particles, p);
+
+	// 				// add an electron
+	// 				p = (particle*) malloc(sizeof(particle));
+
+	// 				x = rand_float(0, dx) + ix*dx;
+	// 				y = rand_float(0, dy) + iy*dy;
+	// 				z = rand_float(0, dz) + iz*dz;
+	// 				*p = (particle) { 
+	// 					{x, y, z},  //position
+	// 					{0, 0, 0},  //momentum
+	// 					BASE_ELECTRON_MASS * ELECTRON_WEIGHT,   //mass
+	// 					BASE_ELECTRON_CHARGE * ELECTRON_WEIGHT, //charge
+	// 					ELECTRON_WEIGHT  //weight
+	// 					};
+
+	// 				list_add(particles, p);
+	// 			}
+	// 		}
+	// 	}
+	// }
+	// list_reset_iter(&particles);
+	// return particles;
+}//end init_particles() function
 
 static bool need_to_coarsen(grid_cell* cell) {
 	int i, j;
@@ -271,20 +398,21 @@ bool refine(grid_cell* cell, double x_spat, double y_spat, double z_spat, vec3 *
 	return false;
 }
 	
-void output_grid(int itNum, int numFiles, grid_cell ***grid_cells, List particles) {
+void output_grid(int itNum, int numFiles, grid_cell ****grid_cells, List particles) {
 	output_grid_impl(itNum, numFiles, grid_cells, particles, "data");
 	//TODO: it should be true that itNum == time/dt. maybe we don't need to pass the itNum variable as an argument
 	// int itNum = round_i(time/dt);
 }
-void recursive_execute_coarsen(grid_cell* cell);
-void cleanup(grid_cell ***grid_cells) {
+
+//TODO: change these loop bounds to whatever suits the changing grid chunk size. not just imin to imax, right? there's uninitialized cells.
+void cleanup(grid_cell ****grid_cells) {
 	int x,y,z,i;
 	grid_cell* cell;
 	for (x = 0; x <= nx; x++) {
 		for (y = 0; y <= ny; y++) {
 			for (z = 0; z <= nz; z++) {
 				// coarsen completely (coarsest should have no children after)
-				cell = &grid_cells[x][y][z];
+				cell = grid_cells[x][y][z];
 				recursive_execute_coarsen(cell);
 				
 				// only free what was malloc'd per cell in init_grid

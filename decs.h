@@ -22,7 +22,17 @@ typedef struct {
 typedef struct grid_cell {
 	grid_point *points[8];
 	struct grid_cell **children;
-} grid_cell;
+	List part_list;
+	List next_list;
+	int owner; // proc id
+};
+typedef struct grid_cell grid_cell;
+
+// Declare some globals
+extern int imin, imax, jmin, jmax, kmin, kmax;	//Processor minimum indicies
+extern int pid;	//Processor ID
+extern double px_min, py_min, pz_min;	//Processor minimum x, y, and z
+extern int part_per_cell; //particles per cell
 
 #define C (3e8)
 
