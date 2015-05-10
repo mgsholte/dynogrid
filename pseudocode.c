@@ -1,7 +1,7 @@
 // All Pseudocode in here
 
 // GRID CELL PASSER
-
+/*
 some logic
 - load balancer just decides 'along the x axis, I'm sending [left or right], or not at all', then decides similarly for y and for z
 - then an algorithm figures out which procs this means we're sending to, and constructs lists of the trees to be sent (mpi_tree_send expects lists)
@@ -13,19 +13,19 @@ some logic
 	- wait all for these MPI_request objects
 	- unpack the received buffers (simple_tree*, particle*, and int* become just tree**, an array of tree pointers)
 	- assign those tree*s where they belong in their new home based on their loc's
-	
+*/
 
 // TODO: needs some work on properly separating the tasks onto their appropriate procs, i.e. giving vs taking
 
-// this one's definitely not correct
-// need to take and give with every neighbor for each 'direction' step, since you never know who'll be giving to you
+// this one may need more?
 trade_cells(base_grid)
 	for each (direction) // direction = x, y, z
 		give_and_take_cells(direction, base_grid)
 	end
 end trade_cells
 
-// determine which cells to send where, and send them
+// TODO: written only for x direction, need to generalize to y and z
+// determine which trees to send where, and send them. then take trees given to you, adjust your base_grid if necessary, and insert the trees
 give_and_take_cells(direction, tree**** base_grid)
 	int neighbors[numNeighbors] = proc neighbors
 	
@@ -67,6 +67,7 @@ give_and_take_cells(direction, tree**** base_grid)
 	simple_tree* buff_recv_trees[sizeof(neighbors)]
 	particle* buff_recv_parts[sizeof(neighbors)]
 	int* buff_recv_part_list_lengths[sizeof(neighbors)]
+	int lengths_of_buffs[sizeof(neighbors)][3] //one length for each of the above 3 buffers
 	
 	MPI_Request req_recv_trees[sizeof(neighbors)]
 	MPI_Request req_recv_parts[sizeof(neighbors)]
@@ -74,64 +75,121 @@ give_and_take_cells(direction, tree**** base_grid)
 	
 	// receive from neighbors: either buffers or nothing
 	for (neighbors)
-		trees_parts_and_lengths = mpi_tree_recv(neighbor_id, &buff_recv_trees[neighbor_id], &buff_recv_parts[neighbor_id], &buff_recv_part_list_lengths[neighbor_id])
+		trees_parts_and_lengths = mpi_tree_recv(neighbor_id, &buff_recv_trees[neighbor_id], &buff_recv_parts[neighbor_id], &buff_recv_part_list_lengths[neighbor_id], &lengths_of_buffs[neighbor_id])
 		req_recv_trees[neighbor_id] = trees_parts_and_lengths[0]
 		req_recv_parts[neighbor_id] = trees_parts_and_lengths[1]
 		req_recv_lengths[neighbor_id] = trees_parts_and_lengths[2]
 	end
 	
+	// wait for receives
 	MPI_Waitall(sizeof(neighbors), req_recv_trees);
 	MPI_Waitall(sizeof(neighbors), req_recv_parts);
 	MPI_Waitall(sizeof(neighbors), req_recv_lengths);
 	
-	// once receives are done, can start unpacking. somewhat the reverse of preparing to send
-	/*
-	List* new_trees[sizeof(neighbors)]
-	for (neighbors)
-		*new_trees[neighbor_id] = list_init();
-	end
-	*/
-	
-	// List of tree pointers
+	// once receives are done, can start unpacking buffers, putting new trees where they belong, while adjusting base_grid as necessary
 	List* new_trees;
 	tree* new_tree;
+	double pxmax = pxmin+dx*(imax-imin);
+	int j,k;
 	for (neighbors)
-		new_trees = mpi_tree_unpack(&buff_recv_trees[neighbor_id], &buff_recv_parts[neighbor_id], &buff_recv_part_list_lengths[neighbor_id]);
+		new_trees = mpi_tree_unpack(&buff_recv_trees[neighbor_id], &buff_recv_parts[neighbor_id], &buff_recv_part_list_lengths[neighbor_id], &lengths_of_buffs[neighbor_id]);
 		list_reset_iter(new_trees);
+		
+		// first new_tree is used to check if base_grid is big enough
+		if (list_has_next(*new_trees))
+			new_tree = (tree*) list_get_next(new_trees);
+		else
+			next neighbor // no new_tree's to see here
+		end
+		
+		// possibly change imin/imax plus possibly resize whole base_grid
+		// new_tree only provides spatial to work with, so compare that to pxmin
+		if ((new_tree->loc.x+dx/2) < pxmin)	//all new_tree's have same x. using dx/2 to prevent rounding issues
+			if (imin == 0)
+				resize_allocation(base_grid); //resets wi to 2*(imax-imin) and centers around (imin+imax)/2
+			else if (imin < 0)
+				printf("ERROR: unexpected imin < 0");
+				MPI_Finalize();
+				return -1;
+			end
+			--imin;
+			pxmin -= dx;
+		else if((new_tree->loc.x-dx/2) > pxmax)
+			if (imax == wi-1)
+				resize_allocation(base_grid);
+			else if (imax > wi-1)
+				printf("ERROR: unexpected imax > wi-1");
+				MPI_Finalize();
+				return -1;
+			end
+			++imax;
+		end
+		
+		// we're good now: let's insert our new_tree's
+		convert_ghost2real_and_reghost(base_grid, new_tree);
 		while (list_has_next(*new_trees))
 			new_tree = (tree*) list_get_next(new_trees);
 			convert_ghost2real_and_reghost(base_grid, new_tree);
 		end
+		
 	end
 	
-	
+	// wait for sends
+	MPI_Waitall(sizeof(neighbors), req_send_trees);
+	MPI_Waitall(sizeof(neighbors), req_send_parts);
+	MPI_Waitall(sizeof(neighbors), req_send_lengths);
 	
 end give_and_take_cells
 
-take_cells(direction, base_grid)
-	// not clear how to write this
-	recv_message(giver, taker_ids)
-	for (taker_ids)
-		convert_ghost2real_and_reghost(grid_cells, taker_id) // includes creating new ghosts as necessary
-	end
-end take_cells
 
-// TODO: written only for x direction, need to generalize to y and z
+// TODO: write this
+// re-allocates base_grid such that wi is 2*(imax-imin) and grid is centered around (imin+imax)/2 (so at least 50% padding each side)
+resize_allocation(tree**** base_grid) {
+	wi = 2*(imax-imin);
+	wj = 2*(jmax-jmin);
+	wk = 2*(kmax-kmin);
+	imin = wi/4;
+	imax = imin+wi/2;
+	jmin = wj/4;
+	jmax = jmin+wj/2;
+	kmin = wk/4;
+	kmax = kmin+wk/2;
+	
+	tree ****new_grid = (tree****) malloc( wi * sizeof(tree***) ); // allocate an array of pointers to rows-depthwise
+	int i, j, k, n;
+	for (i = 0; i < wi; ++i) {
+		new_grid[i] = (tree***) malloc( wj * sizeof(tree**) );  // allocate the row
+		for (j = 0; j < wj; ++j) {
+			new_grid[i][j] = (tree**) malloc( wk * sizeof(tree*) );  // allocate the row
+			for (k = 0; k < wk; ++k) {
+				if (i >= imin && i < imax &&
+					j >= jmin && j < jmax &&
+					k >= kmin && k < kmax) {
+					
+					new_grid[i][j][k] = base_grid[i][j][k]
+					
+				} else {
+					new_grid[i][j][k] = NULL;
+				
+				}
+			}
+		}
+	}
+}
+
+
+// TODO: write this. should it even be a separate function or not?
 convert_ghost2real_and_reghost(tree**** base_grid, tree* new_tree)
-	cell->owner = pid
-	if (taker_id.x == xmax)
-		++xmax
-		// init whole plane of new cells to NULL
-		resize_allocation(grid_cells) // if necessary, re-allocates grid_cells with new padding on each side that is 50% of current length of real cells
-		for (j = jmin:jmax)
-			for (k = kmin:kmax)
-				grid_cells[xmax-1][j][k] = NULL
-			end
-		end
-	end
-	for (neighbor cells of taker_id)
+	int i = imin + 1 + (int) round((new_tree->loc.x - pxmin)/dx); //round to force correct int value
+	int j = jmin + 1 + (int) round((new_tree->loc.y - pymin)/dy);
+	int k = kmin + 1 + (int) round((new_tree->loc.z - pzmin)/dz);
+	base_grid[i][j][k] = new_tree; //replaces the ghost that was there before
+	new_tree->owner = pid;
+	
+	// create new ghosts around new_tree as needed
+	for (neighbor trees of new_tree)
 		if (neighbor == NULL)
-			init cell
+			init cell	// find owner somehow
 			laser(cell)
 		end
 	end

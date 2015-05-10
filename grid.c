@@ -42,21 +42,19 @@ tree**** grid_init(int isize, int jsize, int ksize, int x_divs, int y_divs, int 
 	//pxmin = ((double)(pid % x_divs))/x_divs * x_max - dx;
 	//pymin = ((double)((pid - pid % x_divs)/x_divs % y_divs))/y_divs * y_max - dy;
 	//pzmin = ((double)((pid - pid % x_divs - pid % (x_divs * y_divs))/(x_divs * y_divs)))/z_divs * z_max - dz;
+	wi = 2*isize; // padding is 50% of isize (etc.) on each side
+	wj = 2*jsize;
+	wk = 2*ksize;
 	
-	// local vars
-	int wi = 2*isize; // padding is 50% of isize (etc.) on each side
-	int wj = 2*jsize;
-	int wk = 2*ksize;
-	
-	tree ****base_grid = (tree****) malloc( (wi+1) * sizeof(tree***) ); // allocate an array of pointers to rows-depthwise
+	tree ****base_grid = (tree****) malloc( wi * sizeof(tree***) ); // allocate an array of pointers to rows-depthwise
 	int i, j, k, n;
 	for (i = 0; i < wi; ++i) {
-		base_grid[i] = (tree***) malloc( (wj+1) * sizeof(tree**) );  // allocate the row
+		base_grid[i] = (tree***) malloc( wj * sizeof(tree**) );  // allocate the row
 		for (j = 0; j < wj; ++j) {
-			base_grid[i][j] = (tree**) malloc( (wk+1) * sizeof(tree*) );  // allocate the row
-			// each index goes from (ghost cell on left) to (initialization ghost cell on right) which is one past (ghost cell on right) for the
-			// purpose of initializing all points. each cell makes just one point, so an extra layer is needed at the end
+			base_grid[i][j] = (tree**) malloc( wk * sizeof(tree*) );  // allocate the row
 			for (k = 0; k < wk; ++k) {
+				// each index goes from (ghost cell on left) to (initialization ghost cell on right) which is one past (ghost cell on right) for the
+				//  purpose of initializing all points. each cell makes just one point, so an extra layer is needed at the end
 				// malloc for real, ghost, and 'init ghost' cells
 				if (i >= imin && i <= imax &&
 					j >= jmin && j <= jmax &&
