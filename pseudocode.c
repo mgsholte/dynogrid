@@ -92,6 +92,7 @@ give_and_take_cells(direction, tree**** base_grid)
 	double pxmax = pxmin+dx*(imax-imin);
 	int j,k;
 	for (neighbors)
+		//new_trees = mpi_tree_unpack(&buff_recv_trees[neighbor_id], &buff_recv_parts[neighbor_id], &buff_recv_part_list_lengths[neighbor_id], &lengths_of_buffs[neighbor_id]);
 		new_trees = mpi_tree_unpack(&buff_recv_trees[neighbor_id], &buff_recv_parts[neighbor_id], &buff_recv_part_list_lengths[neighbor_id], &lengths_of_buffs[neighbor_id]);
 		list_reset_iter(new_trees);
 		
@@ -142,16 +143,18 @@ give_and_take_cells(direction, tree**** base_grid)
 end give_and_take_cells
 
 
-// TODO: write this
-// re-allocates base_grid such that wi is 2*(imax-imin) and grid is centered around (imin+imax)/2 (so at least 50% padding each side)
-resize_allocation(tree**** base_grid) {
+// re-allocates base_grid such that wi is 2*(imax-imin) and grid is centered around (imin+imax)/2 (so 50% padding each side)
+void resize_allocation(tree**** base_grid) {
 	wi = 2*(imax-imin);
 	wj = 2*(jmax-jmin);
 	wk = 2*(kmax-kmin);
+	int di = wi/4-imin; //how far imin is being shifted to re-center
 	imin = wi/4;
 	imax = imin+wi/2;
+	int dj = wj/4-jmin;
 	jmin = wj/4;
 	jmax = jmin+wj/2;
+	int dk = wk/4-kmin;
 	kmin = wk/4;
 	kmax = kmin+wk/2;
 	
@@ -166,20 +169,20 @@ resize_allocation(tree**** base_grid) {
 					j >= jmin && j < jmax &&
 					k >= kmin && k < kmax) {
 					
-					new_grid[i][j][k] = base_grid[i][j][k]
+					new_grid[i][j][k] = base_grid[i-di][j-dj][k-dk]; //translating old tree*s onto new grid, includes some NULLs
 					
 				} else {
 					new_grid[i][j][k] = NULL;
-				
 				}
 			}
 		}
 	}
-}//
+	base_grid = new_grid;
+} //end resize_allocation
 
 
 // TODO: write this. should it even be a separate function or not?
-convert_ghost2real_and_reghost(tree**** base_grid, tree* new_tree)
+void convert_ghost2real_and_reghost(tree**** base_grid, tree* new_tree) {
 	int i = imin + 1 + (int) round((new_tree->loc.x - pxmin)/dx); //round to force correct int value
 	int j = jmin + 1 + (int) round((new_tree->loc.y - pymin)/dy);
 	int k = kmin + 1 + (int) round((new_tree->loc.z - pzmin)/dz);
@@ -193,7 +196,7 @@ convert_ghost2real_and_reghost(tree**** base_grid, tree* new_tree)
 			laser(cell)
 		end
 	end
-end convert
+} //convert_ghost2real_and_reghost
 
 ------------------------------------------------------------------------
 OLD  OLD  OLD  OLD  OLD  OLD  OLD  OLD  OLD  OLD

@@ -22,12 +22,14 @@ typedef struct {
 	List particles; // the particles within this cell
 	List new_particles; // the particles added to this cell for the next time step
 	int owner; // the rank of the processor which owns this cell
+	int[3][3] neighbor_owners; // exclusively for tree passing, used to construct new ghost cells (1 new tree = up to 9 new ghosts)
 } tree;
 
 // Simplified tree strcture for use in mpi passing routine...an octree data structure which represents a single cell at the coarsest level of the simulation. each node holds the verticies of the cell at its level of refinement
 typedef struct {
 	vec3 loc; // the (x,y,z) location of the lower-left-front point of the root node
 	int owner; // the rank of the processor which owns this cell
+	int neighbor_owners[9];
 } simple_tree;
 // create a tree only initializing 1 (0-th) of the 8 grid_points in the cell
 tree tree_init(vec3 loc, int owner);

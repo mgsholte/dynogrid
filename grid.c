@@ -66,8 +66,7 @@ tree**** grid_init(int isize, int jsize, int ksize, int x_divs, int y_divs, int 
 					
 					*(base_grid[i][j][k]) = tree_init(get_loc(i,j,k), pid);
 
-					// I think this will work, assuming true->1 and false->0
-					// 26 possible neighbors could own each ghost cell, but their pids can be constructed from true/false statements
+					// 26 possible neighbors could own each ghost cell, but their pids can be constructed from true/false statements. using true->1 and false->0
 					int di, dj, dk, owner_id;
 					di = (i == imax-1) - (i == imin); // +1 or -1
 					dj = (j == jmax-1) - (j == jmin);
