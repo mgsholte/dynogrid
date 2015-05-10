@@ -18,6 +18,7 @@ typedef struct {
 } neighbor;
 
 neighbor* neighbor_init(int pid);
+void neighbor_free(neighbor *n);
 
 void neighbor_add_cell(neighbor *n, tree *cell);
 

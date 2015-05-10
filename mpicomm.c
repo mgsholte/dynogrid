@@ -10,6 +10,32 @@ neighbor* neighbor_init(int pid) {
 	return n;
 }
 
+void neighbor_free(neighbor *n) {
+	// loop over the cells you received
+	int iCell;
+	// free recv buffers
+	for (iCell = 0; iCell < n->ncellrecvs; ++iCell) {
+		//TODO: don't think we need the if statement, just the free
+		if (n->recvbufs[iCell]) {
+			free(n->recvbufs[iCell]);
+			n->recvbufs[iCell] = NULL;
+		}
+	}
+	// free send buffers
+	for (iCell = 0; iCell < n->ncellsends; ++iCell) {
+		//TODO: don't think we need the if statement, just the free
+		if (n->sendbufs[iCell]) {
+			free(n->sendbufs[iCell]);
+			n->sendbufs[iCell] = NULL;
+		}
+	}
+	// free array storing the buffers
+	free(n->sendbufs);
+	free(n->recvbufs);
+	// free the neighbor itself
+	free(n);
+}
+
 void neighbor_add_cell(neighbor *n, tree *cell) {
 	list_add(&(n->part_lists), &(cell->particles));
 	//TODO: remove if unnecessary

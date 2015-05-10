@@ -340,38 +340,31 @@ void push_particles(tree ****grid) {
 	// for buffs that hane recieved
 	//		do the unpacking
 	//
-	// Also do some frees
-	// loop over your i-th neighbor
+	// free all your neighbors
+	//TODO: we can't save them because we don't know how long they will need to be next time step. maybe we can use realloc?
 	for (i = 0; i < nProcs; ++i) {
-		if (neighbors[i] == NULL) { // only receive from actual neighbors
+		neighbor *n = neighbors[i];
+		if (n == NULL) {
 			continue;
 		}
-
-		neighbor n = *neighbors[i];
-		// loop over the j-th cell you received from your i-th neighbor
+		// save list of received particles before freeing
 		int iCell;
-		for (iCell = 0; iCell < n.ncellrecvs; ++iCell) {
+		for (iCell = 0; iCell < n->ncellrecvs; ++iCell) {
 			// figure out which cell to put the particles in based on the coords of the 1st particle sent
-			List* destination = part_belongs_in(grid, n.recvbufs[iCell][0].pos);
-			// loop over the k-th particle received from the j-th cell
+			List* destination = part_belongs_in(grid, n->recvbufs[iCell][0].pos);
+			// loop over the the particles received from neighboring cell 'iCell'
 			int iPart;
-			for (iPart = 0; iPart < n.recvlens[iCell]; ++iPart) {
+			for (iPart = 0; iPart < n->recvlens[iCell]; ++iPart) {
 				// add the receivde particle to the appropriate cell's particle list
 				particle *tmp = (particle*) malloc(sizeof(particle));
-				*tmp = n.recvbufs[iCell][iPart];
+				*tmp = n->recvbufs[iCell][iPart];
 				list_add(destination, tmp);
 			}
-			free(n.recvbufs[iCell]);
 		}
-		// now free all of the remaining buffers, recvbufs already freed when saving the particles
-		//TODO: we can't save them because we don't know how long they will need to be next time step. maybe we can use realloc?
-		for (iCell = 0; i < n.ncellsends; ++iCell) {
-			free(n.sendbufs[i]);
-		}
-		free(n.sendbufs);
-		free(n.recvbufs);
+		// no longer need this neighbor. free it
+		neighbor_free(n);
+		neighbors[i] = NULL;
 	}
-
 	
 	//Combine all the lists
 	//This is the last step
@@ -379,7 +372,7 @@ void push_particles(tree ****grid) {
 		for (j=jmin; j<jmax; j++){
 			for (k=kmin; k<kmax; k++){
 				curCell = grid[i][j][k];
-				if (curCell != NULL){
+				if (curCell != NULL) {
 					// Add the next_list to the current list
 					list_combine(&(grid[i][j][k]->particles), &(grid[i][j][k]->new_particles));
 				}
