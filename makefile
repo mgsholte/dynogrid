@@ -24,7 +24,9 @@ push.c: dynamics.h decs.h
 
 .PHONY: run
 run: dynogrid
-	@mpiexec ./dynogrid
+	@rm -f batch_dynogrid
+	@qsub jobscript
+	@watch -n 10 qstat
 
 .PHONY: valgrind
 valgrind: dynogrid

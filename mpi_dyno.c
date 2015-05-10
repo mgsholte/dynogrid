@@ -10,9 +10,6 @@
 
 /*	custom MPI Datatype for our vec3 struct */
 int init_mpi_vec3(){
-	if (pid == 0) {
-		printf("init_mpi_vec3\n");
-	}
 	int err;
 	//declare the 4 fields required to create a custom MPI Datatype:
 	int count; //number of fields in our struct
@@ -41,15 +38,12 @@ int init_mpi_vec3(){
 
 /*	custom MPI Datatype for our particle struct */
 int init_mpi_particle(){
-	if (pid == 0) {
-		printf("init_mpi_particle\n");
-	}
 	int err;
 	//declare the 4 fields required to create a custom MPI Datatype:
 	int count; //number of fields in our struct
 	int block_lengths[5] = {1,1,1,1,1}; //the number of items in each block in our struct (e.g. arrays would have blockcounts of len(array))
 	MPI_Aint offsets[5]; //the offset of the start of each block in the struct, relative to the start of the struct (i.e. offset[0] = 0)
-	MPI_Datatype types[2] = {mpi_vec3, MPI_DOUBLE}; //the different data types included in the struct
+	MPI_Datatype types[5] = {mpi_vec3, mpi_vec3, MPI_DOUBLE, MPI_DOUBLE, MPI_DOUBLE}; //the different data types included in the struct
 	// MPI_Datatype mpi_grid_point; //the new custom MPI Datatype
 	
 	//set count, blocks, and types:
@@ -80,7 +74,7 @@ int init_mpi_grid_point(){
 	int count; //number of fields in our struct
 	int block_lengths[2] = {1,1}; //the number of items in each block in our struct (e.g. arrays would have blockcounts of len(array))
 	MPI_Aint offsets[2]; //the offset of the start of each block in the struct, relative to the start of the struct (i.e. offset[0] = 0)
-	MPI_Datatype types[1] = {mpi_vec3}; //the different data types included in the struct
+	MPI_Datatype types[2] = {mpi_vec3, mpi_vec3}; //the different data types included in the struct
 	// MPI_Datatype mpi_grid_point; //the new custom MPI Datatype
 	
 	//set count, blocks, and types:
@@ -137,11 +131,17 @@ int init_mpi_customs(){
 	// mpi_tree = (MPI_Datatype*) malloc(sizeof(MPI_Datatype));
 	// mpi_tree_node = (MPI_Datatype*) malloc(sizeof(MPI_Datatype));
 
+	if (pid == 0) {
+		printf("initing mpi_types\n");
+	}
 	//initializes our MPI custom data types:
 	err = init_mpi_vec3();
 	err = init_mpi_particle();	
 	err = init_mpi_grid_point();	
 	err = init_mpi_tree();	
+	if (pid == 0) {
+		printf("finished initing mpi_types\n");
+	}
 
 	return err;
 }//end init_mpi_custom()
