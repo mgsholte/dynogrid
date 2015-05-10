@@ -10,12 +10,15 @@
 
 /*	custom MPI Datatype for our vec3 struct */
 int init_mpi_vec3(){
+	if (pid == 0) {
+		printf("init_mpi_vec3\n");
+	}
 	int err;
 	//declare the 4 fields required to create a custom MPI Datatype:
 	int count; //number of fields in our struct
 	int block_lengths[3] = {1,1,1}; //the number of items in each block in our struct (e.g. arrays would have blockcounts of len(array))
 	MPI_Aint offsets[3]; //the offset of the start of each block in the struct, relative to the start of the struct (i.e. offset[0] = 0)
-	MPI_Datatype types[1] = {MPI_DOUBLE}; //the different data types included in the struct
+	MPI_Datatype types[3] = {MPI_DOUBLE,MPI_DOUBLE,MPI_DOUBLE}; //the different data types included in the struct
 	// MPI_Datatype mpi_vec3; //the new custom MPI Datatype
 	
 	//set count, blocks, and types:
@@ -38,6 +41,9 @@ int init_mpi_vec3(){
 
 /*	custom MPI Datatype for our particle struct */
 int init_mpi_particle(){
+	if (pid == 0) {
+		printf("init_mpi_particle\n");
+	}
 	int err;
 	//declare the 4 fields required to create a custom MPI Datatype:
 	int count; //number of fields in our struct
