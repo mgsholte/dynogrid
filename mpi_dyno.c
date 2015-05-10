@@ -270,6 +270,12 @@ MPI_Request* mpi_tree_send(List tree_list, int to_pid, simple_tree** simple_tree
 		all_particles_count += list_length(temp_tree.particles);
 		simple_trees_array[i]->loc = temp_tree.loc;
 		simple_trees_array[i]->owner = temp_tree.owner;
+		int row,col; //iterating nummbers, no specific meaning
+		for(row = 0; row < 3; row++){
+			for(col = 0; col < 3; col++){
+				simple_trees_array[i]->neighbor_owners[row*3 + col] = temp_tree.neighbor_owners[row][col];
+			}//end inner of
+		}//end outer for
 		i++;
 	}//end while
 
@@ -367,6 +373,14 @@ List mpi_tree_unpack(simple_tree** simple_trees_array, particle** all_particles_
 		tree_ptr->root = (TreeNode*) malloc(sizeof(TreeNode));
 		tree_ptr->loc = ((*simple_trees_array)[tree_num]).loc;
 		tree_ptr->owner = ((*simple_trees_array)[tree_num]).owner;
+		
+		int row,col; //iterating nummbers, no specific meaning
+		for(row = 0; row < 3; row++){
+			for(col = 0; col < 3; col++){
+				tree_ptr->neighbor_owners[row][col] = ((*simple_trees_array)[tree_num]).neighbor_owners[row*3 + col];
+			}//end inner of
+		}//end outer for
+
 		tree_ptr->particles = list_init();
 		tree_ptr->new_particles = list_init();
 		list_add(&trees_list, tree_ptr);
