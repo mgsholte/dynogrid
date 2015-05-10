@@ -99,7 +99,7 @@ int init_mpi_tree(){
 	int err;
 	//declare the 4 fields required to create a custom MPI Datatype:
 	int count; //number of fields in our struct
-	int block_lengths[2] = {1,1,9}; //the number of items in each block in our struct (e.g. arrays would have blockcounts of len(array))
+	int block_lengths[3] = {1,1,9}; //the number of items in each block in our struct (e.g. arrays would have blockcounts of len(array))
 	MPI_Aint offsets[3]; //the offset of the start of each block in the struct, relative to the start of the struct (i.e. offset[0] = 0)
 	MPI_Datatype types[3] = {mpi_vec3, MPI_INT, MPI_INT}; //the different data types included in the struct
 	// MPI_Datatype mpi_tree; //the new custom MPI Datatype

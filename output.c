@@ -21,8 +21,8 @@ static inline void testPFile(FILE *pfile, char *fname) {
 // print x,y,z coord of the point followed by |E|,|B| at the point
 // extra_args: pass a FILE* to the file where the point should be written
 bool output_one_point(grid_point *point, double x, double y, double z) {
-	double E = vec3_norm(point->E),
-		B = vec3_norm(point->B);
+	double E = vec3_norm(point->E);
+	double B = vec3_norm(point->B);
 	fprintf(pfile, "%lg,%lg,%lg,%lg,%lg\n", x, y, z, E, B);
 	return false;
 }
@@ -35,8 +35,8 @@ void output_grid_impl(int itNum, int numFiles, tree ****base_grid, const char su
 	// the # of chars needed to represent the biggest iteration # as a string. all iter #s will be padded to this value
 	int width_iter_num = round_i(log10(numFiles)+1);
 	// the file name. reused for all files so it needs to be large enough to hold the longest name. +1 at end holds string terminator
-    char fname[width_iter_num+11+suffix_len+1];
-	FILE *pfile;
+    char fname[3+width_iter_num+11+suffix_len+1];
+	// FILE *pfile;
 
 	static bool shouldWriteHeader = true;
     // create header file only once
@@ -54,12 +54,13 @@ void output_grid_impl(int itNum, int numFiles, tree ****base_grid, const char su
 		fprintf(pfile, "nx=%d,ny=%d,nz=%d\n", nx, ny, nz);
 		fprintf(pfile, "dx=%lg,dy=%lg,dz=%lg\n", dx, dy, dz);
 		fprintf(pfile, "numFiles=%d\n", numFiles);
+		fprintf(pfile, "pid=%d\n", pid);
 		fclose(pfile);
 	}
 
 	// GRID OUTPUT
 	// set file name to grid file and open
-	sprintf(fname, "%d_grid.%s", itNum, suffix);
+	sprintf(fname, "%d_%d_grid.%s", pid, itNum, suffix);
 	pfile = fopen(fname, "w");
 
     // test to ensure that the file was actually created and exists: 
@@ -85,7 +86,7 @@ void output_grid_impl(int itNum, int numFiles, tree ****base_grid, const char su
 
 	// PARTICLE OUTPUT
 	// set file name to particle file and open
-	sprintf(fname, "%d_particles.%s", itNum, suffix);
+	sprintf(fname, "%d_%d_particles.%s", pid, itNum, suffix);
 	pfile = fopen(fname, "w");
 
     // test to ensure that the file was actually created and exists: 
