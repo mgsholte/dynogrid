@@ -24,6 +24,11 @@ typedef struct {
 	int owner; // the rank of the processor which owns this cell
 } tree;
 
+// Simplified tree strcture for use in mpi passing routine...an octree data structure which represents a single cell at the coarsest level of the simulation. each node holds the verticies of the cell at its level of refinement
+typedef struct {
+	vec3 loc; // the (x,y,z) location of the lower-left-front point of the root node
+	int owner; // the rank of the processor which owns this cell
+} simple_tree;
 // create a tree only initializing 1 (0-th) of the 8 grid_points in the cell
 tree tree_init(vec3 loc);
 
