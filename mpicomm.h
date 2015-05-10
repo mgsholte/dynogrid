@@ -17,7 +17,7 @@ typedef struct {
 	int *sendlens, *recvlens;
 } neighbor;
 
-neighbor neighbor_init(int pid);
+neighbor* neighbor_init(int pid);
 
 void neighbor_add_cell(neighbor *n, tree *cell);
 
