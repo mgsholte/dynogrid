@@ -29,7 +29,7 @@ We have developed a 3D PIC code with a standard Boris particle pusher \cite{bird
 
 
 \section{Code Description}
-Introduce PIC codes.
+PIC codes are commonly used in computational physics.  A PIC code typically consists of an array of grid points that define electromagnetic field values, and particles that move continuously throughout the grid.  We created a fairly simple 3D laser-plasma code with externally defined fields (the laser), and physical effects such as particle collision and photon pair production omitted.  We did however add an adaptive grid which makes load balancing more complex
 
 \subsection{Particle Pusher}
 Particle-in-cell (PIC) codes used to simulate laser-plasma interactions commonly use the Boris pusher \cite{bird}, a second order accurate pusher for charged particles in electromagnetic fields.  The pusher is outlined in Fig.~\ref{fig:boris}.  Essentially, the particle is advanced a half time-step, the momentum is updated with $\vec{E}$ and rotated with $\vec{B}$, and the particle is moved a final half time-step.  With a properly set time step, a particle will never move more than one cell.

@@ -39,9 +39,9 @@ tree**** grid_init(int isize, int jsize, int ksize, int x_divs, int y_divs, int 
 	jmax = jmin + jsize + 2;
 	kmax = kmin + ksize + 2;
 	// global vars (global spatial positions)
-	//pxmin = ((double)(pid % x_divs))/x_divs * x_max - dx;
-	//pymin = ((double)((pid - pid % x_divs)/x_divs % y_divs))/y_divs * y_max - dy;
-	//pzmin = ((double)((pid - pid % x_divs - pid % (x_divs * y_divs))/(x_divs * y_divs)))/z_divs * z_max - dz;
+	pxmin = ((double)(pid % x_divs))/x_divs * x_max - dx;
+	pymin = ((double)((pid - pid % x_divs)/x_divs % y_divs))/y_divs * y_max - dy;
+	pzmin = ((double)((pid - pid % x_divs - pid % (x_divs * y_divs))/(x_divs * y_divs)))/z_divs * z_max - dz;
 	wi = 2*isize; // padding is 50% of isize (etc.) on each side
 	wj = 2*jsize;
 	wk = 2*ksize;

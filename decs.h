@@ -27,10 +27,8 @@ extern int wi, wj, wk; //Processor malloc size
 extern int pid;	//Processor ID
 extern double pxmin, pymin, pzmin;	//Processor minimum x, y, and z
 //global MPI custom data types:
-extern MPI_datatype *mpi_vec3, *mpi_particle, *mpi_grid_point, *mpi_tree, *mpi_tree_node;
 
-
-
+extern int nProcs;
 extern MPI_Datatype mpi_vec3, mpi_particle, mpi_tree, mpi_tree_node, mpi_grid_point;
 
 #define C (3e8)
