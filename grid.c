@@ -58,9 +58,6 @@ tree**** grid_init(int isize, int jsize, int ksize, int x_divs, int y_divs, int 
 					j >= jmin && j <= jmax &&
 					k >= kmin && k <= kmax) {
 					
-					// malloc
-					base_grid[i][j][k] = (tree*) malloc(sizeof(tree));
-					
 					// set owner
 					// 26 possible neighbors could own each ghost cell, but their pids can be constructed from true/false statements. using true->1 and false->0
 					int di, dj, dk, owner_id;
@@ -82,9 +79,18 @@ tree**** grid_init(int isize, int jsize, int ksize, int x_divs, int y_divs, int 
 
 						owner_id = -1;
 					}
+
+					//TODO: is this a good solution to out of bounds (non-existent) owners?
+					// cell would belong to a processor that is not in the simulation. set its owner to -1 to indicate that
+					if (owner_id < 0 || owner_id >= nProcs) {
+						owner_id = -1;
+					}
 					
-					// tree_init, includes setting points[0]
-					*(base_grid[i][j][k]) = tree_init(get_loc(i,j,k), owner_id);
+					//TODO: for debugging
+					printf("setting owner_id = %d for grid[%d][%d][%d]\n", owner_id,i ,j ,k);
+					
+					// tree_init, includes setting points[0] and allocing the tree
+					base_grid[i][j][k] = tree_init(get_loc(i,j,k), owner_id);
 
 				} else {
 					base_grid[i][j][k] = NULL;
