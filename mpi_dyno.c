@@ -99,21 +99,24 @@ int init_mpi_tree(){
 	int err;
 	//declare the 4 fields required to create a custom MPI Datatype:
 	int count; //number of fields in our struct
-	int block_lengths[2] = {1,1}; //the number of items in each block in our struct (e.g. arrays would have blockcounts of len(array))
-	MPI_Aint offsets[2]; //the offset of the start of each block in the struct, relative to the start of the struct (i.e. offset[0] = 0)
-	MPI_Datatype types[2] = {mpi_vec3, MPI_INT}; //the different data types included in the struct
+	int block_lengths[2] = {1,1,9}; //the number of items in each block in our struct (e.g. arrays would have blockcounts of len(array))
+	MPI_Aint offsets[3]; //the offset of the start of each block in the struct, relative to the start of the struct (i.e. offset[0] = 0)
+	MPI_Datatype types[3] = {mpi_vec3, MPI_INT, MPI_INT}; //the different data types included in the struct
 	// MPI_Datatype mpi_tree; //the new custom MPI Datatype
 	
 	//set count, blocks, and types:
-	count = 2;
+	count = 3;
 
 	//get the size of an mpi_vec3 datatype (our custom made datatype):
 	MPI_Aint size_of_mpi_vec3;
+	MPI_Aint size_of_mpi_int;
 	err = MPI_Type_extent(mpi_vec3, &size_of_mpi_vec3);
+	err = MPI_Type_extent(MPI_INT, &size_of_mpi_int);
 
 	//set offsets[]:	
 	offsets[0] = (MPI_Aint) (0);
 	offsets[1] = size_of_mpi_vec3;
+	offsets[2] = size_of_mpi_vec3 + size_of_mpi_int;
 
 	err = MPI_Type_create_struct(count, block_lengths, offsets, types, &mpi_tree);
 	err = MPI_Type_commit(&mpi_tree);
