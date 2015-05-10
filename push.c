@@ -75,9 +75,9 @@ static void push_one_cell(tree ****grid, List part_list) {
     while (list_has_next(part_list)) {
 		curr = (particle*) list_get_next(&part_list);
 
-         xlb = floor(((curr->pos).x - pxmin) * idx);
-        yub = floor(((curr->pos).y - pymin) * idy);
-		znb = floor(((curr->pos).z - pzmin) * idz);
+        xlb = floor(((curr->pos).x - pxmin) * idx) + imin + 1;
+        yub = floor(((curr->pos).y - pymin) * idy) + jmin + 1;
+		znb = floor(((curr->pos).z - pzmin) * idz) + kmin + 1;
 
 		double cmratio = curr->charge/curr->mass;
         part_mc = C*curr->mass;
@@ -105,9 +105,9 @@ static void push_one_cell(tree ****grid, List part_list) {
 		//Do interpolation to find e and b here.
         // x-left, y-up, and z-near indices
 		// Subtract out the local min to get the correct indicies
-        xl = floor(((curr->pos).x - pxmin) * idx);
-        yu = floor(((curr->pos).y - pymin) * idy);
-		zn = floor(((curr->pos).z - pzmin) * idz);
+        xl = floor(((curr->pos).x - pxmin) * idx) + imin + 1;
+        yu = floor(((curr->pos).y - pymin) * idy) + jmin + 1;
+		zn = floor(((curr->pos).z - pzmin) * idz) + kmin + 1;
 		// x-right fraction, ...
 		// This stays the same for parallel, I think
         xrf = ((curr->pos).x - xl*dx) / dx;
@@ -236,9 +236,9 @@ static void push_one_cell(tree ****grid, List part_list) {
 		// Pass the particles to neighbor cells if necessary
         // Ending x-left, y-up, and z-near indices
 		// Subtract out the local min to get the correct indicies
-        xle = floor(((curr->pos).x - pxmin) * idx);
-        yue = floor(((curr->pos).y - pymin) * idy);
-		zne = floor(((curr->pos).z - pzmin) * idz);
+        xle = floor(((curr->pos).x - pxmin) * idx) + imin + 1;
+        yue = floor(((curr->pos).y - pymin) * idy) + jmin + 1;
+		zne = floor(((curr->pos).z - pzmin) * idz) + kmin + 1;
 
 		// Check if cell has changed
 		// Guarenteed to still be in a cell or ghost cell controled by proc
@@ -253,9 +253,9 @@ static void push_one_cell(tree ****grid, List part_list) {
 // Finds the list that these particles belong in
 List* part_belongs_in(tree ****grid, vec3 pos) {
 	int i,j,k;
-    i = floor((pos.x - pxmin) / dx);
-    j = floor((pos.y - pymin) / dy);
-	k = floor((pos.z - pzmin) / dz);
+    i = floor((pos.x - pxmin) / dx) + imin + 1;
+    j = floor((pos.y - pymin) / dy) + jmin + 1;
+	k = floor((pos.z - pzmin) / dz) + kmin + 1;
 	return &(grid[i][j][k]->particles);
 }
 
