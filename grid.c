@@ -175,6 +175,10 @@ void init_particles(tree ****base_grid, vec3 origin, vec3 dims, int elec_per_cel
 }
 
 void output_grid(int itNum, int numFiles, tree ****base_grid) {
+	if(pid == 0) {
+		printf("output grid not yet implemented\n");
+	}
+	return;
 	output_grid_impl(itNum, numFiles, base_grid, "data");
 	//TODO: it should be true that itNum == time/dt. maybe we don't need to pass the itNum variable as an argument
 	// int itNum = round_i(time/dt);

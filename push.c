@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <stdio.h>
 #include <math.h>
 
 #include "decs.h"
@@ -280,6 +281,9 @@ void push_particles(tree ****grid) {
 	
 	//Allocate buffers and do the sends and recvs
 	neighbor *neighbors[nProcs]; // array of handles to neighboring procs. every proc is in the array, but non-neighbors will be null 
+	for (i = 0; i < nProcs; ++i) {
+		neighbors[i] = NULL;
+	}
 	// loop over each ghost cell.
 	// loop over entire grid to find the ghost cells, this is the easiest way to find them
 	// this can't be integrated with above identical loop since the push must be completed before checking to see which pushed things need to be sent to neighbors
@@ -292,7 +296,8 @@ void push_particles(tree ****grid) {
 					if (owner != pid) {
 						if (neighbors[owner] == NULL) {
 							neighbors[owner] = (neighbor*) malloc(sizeof(neighbor));
-							*neighbors[owner] = neighbor_init(i);
+							*(neighbors[owner]) = neighbor_init(owner);
+							printf("proc pid = %d, neighbor.pid = %d, owner = %d\n", pid, neighbors[owner]->pid, owner);
 						}
 						neighbor_add_cell(neighbors[owner], curCell);
 					}
@@ -307,7 +312,7 @@ void push_particles(tree ****grid) {
 	// send # of cell we will send
 	for (i = 0; i < nProcs; ++i) {
 		if (neighbors[i] != NULL) {
-			cell_count_requests[i] = neighbor_send_cell_count(*neighbors[i]);
+			cell_count_requests[i] = neighbor_send_cell_count(*(neighbors[i]));
 		} else {
 			cell_count_requests[i] = MPI_REQUEST_NULL;
 		}
@@ -320,7 +325,7 @@ void push_particles(tree ****grid) {
 	// send the cells themselves
 	for (i = 0; i < nProcs; ++i) {
 		if (neighbors[i] != NULL) {
-			neighbor_send_cells(*neighbors[i]);
+			neighbor_send_cells(*(neighbors[i]));
 		}
 	}
 

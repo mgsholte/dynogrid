@@ -3,7 +3,7 @@ CFLAGS = -g
 LFLAGS = -O3
 
 ALL_SRC := $(patsubst %.c,%.o,$(wildcard *.c))
-EXCLUDES = pseudocode.o
+EXCLUDES = pseudocode.o balance.o
 OBJS := $(filter-out $(EXCLUDES),$(ALL_SRC))
 
 
@@ -30,7 +30,7 @@ run: dynogrid
 
 .PHONY: debug
 debug: dynogrid
-	@idev -m 15
+	@idev -l h_rt=02:00:00
 
 .PHONY: valgrind
 valgrind: dynogrid
