@@ -37,3 +37,8 @@
 dynogrid
 *~
 sim_*
+
+#TeX
+*.aux
+*.log
+*.syncte*

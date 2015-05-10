@@ -236,7 +236,6 @@ static void push_one_cell(tree ****grid, List part_list) {
 		// Pass the particles to neighbor cells if necessary
         // Ending x-left, y-up, and z-near indices
 		// Subtract out the local min to get the correct indicies
-		int xle, yue, zne;
         xle = floor(((curr->pos).x - pxmin) * idx);
         yue = floor(((curr->pos).y - pymin) * idy);
 		zne = floor(((curr->pos).z - pzmin) * idz);
@@ -250,6 +249,16 @@ static void push_one_cell(tree ****grid, List part_list) {
 
     } 
 }
+
+// Finds the list that these particles belong in
+List* part_belongs_in(tree ****grid, vec3 pos){
+	int i,j,k;
+    i = floor((pos.x - pxmin) / dx);
+    j = floor((pos.y - pymin) / dy);
+	k = floor((pos.z - pzmin) / dz);
+	return &(grid[i][j][k]->part_list);
+}
+
 
 // Calls the pusher and cleans up afterward
 void push_particles(tree ****grid) {
@@ -337,7 +346,7 @@ void push_particles(tree ****grid) {
 		int iCell;
 		for (iCell = 0; iCell < n.ncellrecvs; ++iCell) {
 			// figure out which cell to put the particles in based on the coords of the 1st particle sent
-			tree destination = determine_cell_to_put_in(n.recvbufs[iCell][0].pos);
+			List* destination = part_belongs_in(grid, n.recvbufs[iCell][0].pos);
 			// loop over the k-th particle received from the j-th cell
 			int iPart;
 			for (iPart = 0; iPart < n.recvlen[iCell]; ++iPart) {
