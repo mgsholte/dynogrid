@@ -2,6 +2,8 @@
 
 // GRID CELL PASSER
 
+/**********************
+// Mark: this might be old. I didn't know how to merge this in git
 // TODO: needs some work on properly separating the tasks onto their appropriate procs, i.e. giving vs taking
 
 // this one's definitely not correct
@@ -9,6 +11,171 @@ trade_cells(grid_cells)
 	for each (direction) // direction = left, right, up, down, forward, back
 		take_cells(direction, grid_cells)
 		give_cells(direction, grid_cells)
+***********************/
+some logic
+- load balancer just decides 'along the x axis, I'm sending [left or right], or not at all', then decides similarly for y and for z
+- then an algorithm figures out which procs this means we're sending to, and constructs lists of the trees to be sent (mpi_tree_send expects lists)
+	- for this we look at all non-ghost cells at position imax-2 (1 from edge), since that's what we pass
+	- each looks at the owner of the ghost next to it (1 away in chosen x direction) and adds itself to a List for that proc
+- communication
+	- send each neighbor a List* (mpi_tree_send makes this an array), and make buffers and MPI_request objects
+	- receive from each neighbor, and make buffers and MPI_request objects
+	- wait all for these MPI_request objects
+	- unpack the received buffers (simple_tree*, particle*, and int* become just tree**, an array of tree pointers)
+	- assign those tree*s where they belong in their new home based on their loc's
+	
+
+// TODO: needs some work on properly separating the tasks onto their appropriate procs, i.e. giving vs taking
+
+// this one's definitely not correct
+// need to take and give with every neighbor for each 'direction' step, since you never know who'll be giving to you
+trade_cells(base_grid)
+	for each (direction) // direction = x, y, z
+		give_and_take_cells(direction, base_grid)
+	end
+end trade_cells
+
+// determine which cells to send where, and send them
+give_and_take_cells(direction, tree**** base_grid)
+	int neighbors[numNeighbors] = proc neighbors
+	
+	// create moving_trees: an array of List*s pointing to tree*s. The use of tree*s is not made explicit here, may need to cast later
+	// always List*, never just List, for C reasons
+	List* moving_trees[sizeof(neighbors)]
+	for (neighbors)
+		*moving_trees[neighbor_id] = list_init();
+	end
+	
+	// fill moving_trees
+	int neighbor_id
+	for (tree*s at position i = imax-2)
+		if (tree->owner == pid) //not a ghost
+			neighbor_id = base_grid[i+1][j][k]->owner
+			list_add(moving_trees[neighbor_id], tree*)
+		end
+	end
+	
+	// need a neighbors-sized buffer array filled with simple_tree/particle arrays. both get malloced in mpi_tree_send
+	simple_tree* buff_send_trees[sizeof(neighbors)]
+	particle* buff_send_parts[sizeof(neighbors)]
+	int* buff_send_part_list_lengths[sizeof(neighbors)]
+	
+	// need to track MPI_request objects for a waitall later, in order to be non-blocking
+	MPI_Request req_send_trees[sizeof(neighbors)]
+	MPI_Request req_send_parts[sizeof(neighbors)]
+	MPI_Request req_send_lengths[sizeof(neighbors)]
+	MPI_Request trees_parts_and_lengths[3]
+
+	// send moving_trees, they will be converted into buffers before send
+	for (neighbors)
+		trees_parts_and_lengths = mpi_tree_send(moving_trees[neighbor_id], neighbor_id, &buff_send_trees[neighbor_id], &buff_send_parts[neighbor_id], &buff_send_part_list_lengths[neighbor_id])
+		req_send_trees[neighbor_id] = trees_parts_and_lengths[0]
+		req_send_parts[neighbor_id] = trees_parts_and_lengths[1]
+		req_send_lengths[neighbor_id] = trees_parts_and_lengths[2]
+	end
+	
+	simple_tree* buff_recv_trees[sizeof(neighbors)]
+	particle* buff_recv_parts[sizeof(neighbors)]
+	int* buff_recv_part_list_lengths[sizeof(neighbors)]
+	
+	MPI_Request req_recv_trees[sizeof(neighbors)]
+	MPI_Request req_recv_parts[sizeof(neighbors)]
+	MPI_Request req_recv_lengths[sizeof(neighbors)]
+	
+	// receive from neighbors: either buffers or nothing
+	for (neighbors)
+		trees_parts_and_lengths = mpi_tree_recv(neighbor_id, &buff_recv_trees[neighbor_id], &buff_recv_parts[neighbor_id], &buff_recv_part_list_lengths[neighbor_id])
+		req_recv_trees[neighbor_id] = trees_parts_and_lengths[0]
+		req_recv_parts[neighbor_id] = trees_parts_and_lengths[1]
+		req_recv_lengths[neighbor_id] = trees_parts_and_lengths[2]
+	end
+	
+	MPI_Waitall(sizeof(neighbors), req_recv_trees);
+	MPI_Waitall(sizeof(neighbors), req_recv_parts);
+	MPI_Waitall(sizeof(neighbors), req_recv_lengths);
+	
+	// once receives are done, can start unpacking. somewhat the reverse of preparing to send
+	/*
+	List* new_trees[sizeof(neighbors)]
+	for (neighbors)
+		*new_trees[neighbor_id] = list_init();
+	end
+	*/
+	
+	// List of tree pointers
+	List* new_trees;
+	tree* new_tree;
+	for (neighbors)
+		new_trees = mpi_tree_unpack(&buff_recv_trees[neighbor_id], &buff_recv_parts[neighbor_id], &buff_recv_part_list_lengths[neighbor_id]);
+		list_reset_iter(new_trees);
+		while (list_has_next(*new_trees))
+			new_tree = (tree*) list_get_next(new_trees);
+			convert_ghost2real_and_reghost(base_grid, new_tree);
+		end
+	end
+	
+	
+	
+end give_and_take_cells
+
+take_cells(direction, base_grid)
+	// not clear how to write this
+	recv_message(giver, taker_ids)
+	for (taker_ids)
+		convert_ghost2real_and_reghost(grid_cells, taker_id) // includes creating new ghosts as necessary
+	end
+end take_cells
+
+// TODO: written only for x direction, need to generalize to y and z
+convert_ghost2real_and_reghost(tree**** base_grid, tree* new_tree)
+	cell->owner = pid
+	if (taker_id.x == xmax)
+		++xmax
+		// init whole plane of new cells to NULL
+		resize_allocation(grid_cells) // if necessary, re-allocates grid_cells with new padding on each side that is 50% of current length of real cells
+		for (j = jmin:jmax)
+			for (k = kmin:kmax)
+				grid_cells[xmax-1][j][k] = NULL
+			end
+		end
+	end
+	for (neighbor cells of taker_id)
+		if (neighbor == NULL)
+			init cell
+			laser(cell)
+		end
+	end
+end convert
+
+------------------------------------------------------------------------
+OLD  OLD  OLD  OLD  OLD  OLD  OLD  OLD  OLD  OLD
+------------------------------------------------------------------------
+// All Pseudocode in here
+
+/*
+give_cells
+	//excerpt
+	for (takers)
+		taker_ids = {}
+		for (taker's ghost cells)
+			if (taker_cell->owner == pid && pass_ids.contains(taker_cell->id)) // checking for right owner prob not necessary
+				// taker changes
+				pass particles from giver_cell to taker_cell // could use morton id to easily find giver cell; should this be per-cell or per-taker-proc?
+				taker_ids.add(taker_cell->id)
+				
+				// giver changes
+				giver_cell->owner = taker
+				--xmax;
+				// how do we deal with now-outdated ghosts? kill them or ignore them? killing means any ghosts at xmax+1 = NULL
+			end
+		end
+		send_message(taker, taker_ids)
+	end
+*/
+
+update_grid
+	foreach (grid_cell)
+		update_grid_cell(grid_cell)
 	end
 end trade_cells
 

@@ -1,0 +1,14 @@
+#!/bin/bash
+
+#$ -N dynogrid
+#$ -o batch_dynogrid
+#$ -j y
+#$ -q development
+#$ -l h_rt=00:05:00
+#$ -pe 8way 12
+#$ -V
+#$ -cwd
+
+#$ -A NewMaterials
+
+ibrun ./dynogrid 2 2 2

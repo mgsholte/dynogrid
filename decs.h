@@ -1,6 +1,8 @@
 #ifndef DECS_H
 #define DECS_H
 
+#include <mpi.h>
+
 #include "vector.h"
 
 //Definitions go here to avoid clutter elsewhere
@@ -19,20 +21,14 @@ typedef struct {
 	// double rho; // average charge density at grid point
 } grid_point;
 
-typedef struct grid_cell {
-	grid_point *points[8];
-	struct grid_cell **children;
-	List part_list;
-	List next_list;
-	int owner; // proc id
-};
-typedef struct grid_cell grid_cell;
-
 // Declare some globals
 extern int imin, imax, jmin, jmax, kmin, kmax;	//Processor minimum indicies
 extern int pid;	//Processor ID
-extern double px_min, py_min, pz_min;	//Processor minimum x, y, and z
-extern int part_per_cell; //particles per cell
+extern double pxmin, pymin, pzmin;	//Processor minimum x, y, and z
+//global MPI custom data types:
+
+extern int nProcs;
+extern MPI_Datatype mpi_vec3, mpi_particle, mpi_tree, mpi_tree_node, mpi_grid_point;
 
 #define C (3e8)
 

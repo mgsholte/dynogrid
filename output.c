@@ -5,10 +5,11 @@
 
 #include "grid.h"
 #include "list.h"
+#include "vector.h"
+#include "tree.h"
 
-static inline double norm(const vec3 v) {
-	return sqrt(v.x*v.x + v.y*v.y + v.z*v.z);
-}
+// only way I could see to make output_one_point work with tree_apply_function
+static FILE *pfile = NULL;
 
 static inline void testPFile(FILE *pfile, char *fname) {
 	if (pfile == NULL) {
@@ -17,32 +18,18 @@ static inline void testPFile(FILE *pfile, char *fname) {
 	}
 }
 
-/*	Recursive function to output the grid_point data for each grid_cell:
-	Notes:	(1) only data for leaf grid_cell's needs to be output
-			(2) each leaf grid_cell only needs to output its (0,0) coordinate grid_point (I think...)
-*/
-void output_one_cell(grid_cell* cell, double x_spat, double y_spat, double z_spat, int depth, FILE *pfile){
-	//BASE CASE:
-	if(cell->children == NULL){
-		double E = norm(((cell)->points[0])->E);
-		double B = norm(((cell)->points[0])->B);
-		fprintf(pfile, "%lg,%lg,%lg,%lg,%lg\n", x_spat, y_spat, z_spat, E, B);
-	}
-	//RECURSIVE STEP:
-	else{
-		int cn; //child num
-		for(cn = 0; cn < 8; cn++){
-			output_one_cell(cell->children[cn], x_spat+(cn&1)*dx/pow(2.0,depth+1),
-									   y_spat+((cn&2)/2)*dy/pow(2.0,depth+1),
-									   z_spat+((cn&4)/4)*dz/pow(2.0,depth+1), depth+1, pfile);
-									   // z_spat+((cn&1)/4)*dz/pow(2.0,depth+1), depth+1);
-		}//end for
-	}//end else
-}//end out_one_coarse_cell() function
+// print x,y,z coord of the point followed by |E|,|B| at the point
+// extra_args: pass a FILE* to the file where the point should be written
+bool output_one_point(grid_point *point, double x, double y, double z) {
+	double E = vec3_norm(point->E),
+		B = vec3_norm(point->B);
+	fprintf(pfile, "%lg,%lg,%lg,%lg,%lg\n", x, y, z, E, B);
+	return false;
+}
 
-// grid_points and particles are the stuff to print
+// the base_grid has the trees which hold the points and particles to print
 // suffix is the suffix used in naming the output files
-void output_grid_impl(int itNum, int numFiles, grid_cell ****grid_cells, List particles, const char suffix[]) {
+void output_grid_impl(int itNum, int numFiles, tree ****base_grid, const char suffix[]) {
 	int suffix_len = strlen(suffix);
 
 	// the # of chars needed to represent the biggest iteration # as a string. all iter #s will be padded to this value
@@ -78,17 +65,17 @@ void output_grid_impl(int itNum, int numFiles, grid_cell ****grid_cells, List pa
     // test to ensure that the file was actually created and exists: 
 	testPFile(pfile, fname);
 
-    int i,j,k;
+    int i, j, k;
 	// double magE, magB;
 	// print |E|, |B| for each grid point
 	fprintf(pfile, "x, y, z, |E|, |B|\n");
-	// avoid ghost cells
 	for(i = imin+1; i < imax-1; ++i) {
 		for(j = jmin+1; j < jmax-1; ++j) {
             for(k = kmin+1; k < kmax-1; ++k) {
-            	if (grid_cells[i][j][k] != NULL) {
+            	if (base_grid[i][j][k] != NULL) {
+					// tell each cell to print all of the points inside it for which it is responsible
             		// TODO: make sure we aren't double outputting (via diff procs) or missing cells at the end of the grid
-					output_one_cell(grid_cells[i][j][k], px_min+i*dx, py_min+j*dy, pz_min+k*dz, 0, pfile);
+					tree_apply_fcn(base_grid[i][j][k], &output_one_point);
 				}
             }
         }
@@ -106,13 +93,20 @@ void output_grid_impl(int itNum, int numFiles, grid_cell ****grid_cells, List pa
 
 	fprintf(pfile, "x, y, z, |p|\n");
 	// print # of particles as a header
-	fprintf(pfile, "%d\n", list_length(particles));
-    list_reset_iter(&particles);
-	// print x,y,z,|p| for each particle
-    while(list_has_next(particles)) {
-        particle *ptc = list_get_next(&particles);
-        fprintf(pfile, "%lg,%lg,%lg,%lg\n", (ptc->pos).x, (ptc->pos).y, (ptc->pos).z, norm(ptc->p));
-    }
+	//fprintf(pfile, "%d\n", list_length(particles));
+	for (i = 0; i < nx; ++i) {
+		for (j = 0; j < ny; ++j) {
+            for (k = 0; k < nz; ++k) {
+				// print x,y,z,|p| for each particle in the cell
+				List particles = base_grid[i][j][k]->particles;
+				list_reset_iter(&particles);
+				while(list_has_next(particles)) {
+					particle *ptc = (particle*) list_get_next(&particles);
+					fprintf(pfile, "%lg,%lg,%lg,%lg\n", (ptc->pos).x, (ptc->pos).y, (ptc->pos).z, vec3_norm(ptc->p));
+				}
+			}
+		}
+	}
     fclose(pfile);
 }
 
