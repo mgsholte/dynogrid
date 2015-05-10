@@ -40,9 +40,7 @@ vec3 interp3(vec3 field000, vec3 field001, vec3 field010, vec3 field100, vec3 fi
 }
 
 // Particle pusher!!!!
-static void push_one_cell(tree cell) {
-	List part_list = cell.particles;
-
+static void push_one_cell(tree ****grid, List part_list) {
 	list_reset_iter(&part_list);
 	if (!list_has_next(part_list))
 			return;
@@ -51,6 +49,8 @@ static void push_one_cell(tree cell) {
     double ux, uy, uz;
     double root;
     int xl, yu, zn;
+	int xlb, yub, znb;
+	int xle, yue, zne;
     double xrf, ydf, zff;
     vec3 E, B;
     double uxm, uym, uzm;
@@ -74,6 +74,10 @@ static void push_one_cell(tree cell) {
     //loop over all the particles
     while (list_has_next(part_list)) {
 		curr = (particle*) list_get_next(&part_list);
+
+         xlb = floor(((curr->pos).x - pxmin) * idx);
+        yub = floor(((curr->pos).y - pymin) * idy);
+		znb = floor(((curr->pos).z - pzmin) * idz);
 
 		double cmratio = curr->charge/curr->mass;
         part_mc = C*curr->mass;
@@ -112,9 +116,9 @@ static void push_one_cell(tree cell) {
         /*E = interp3(grid[xl][yu][zn].E, grid[xl][yu][zn+1].E, grid[xl][yu+1][zn].E, grid[xl+1][yu][zn].E, grid[xl][yu+1][zn+1].E, grid[xl+1][yu][zn+1].E, grid[xl][yu+1][zn+1].E, grid[xl+1][yu+1][zn+1].E, xrf, ydf, zff);
         B = interp3(grid[xl][yu][zn].B, grid[xl][yu][zn+1].B, grid[xl][yu+1][zn].B, grid[xl+1][yu][zn].B, grid[xl][yu+1][zn+1].B, grid[xl+1][yu][zn+1].B, grid[xl][yu+1][zn+1].B, grid[xl+1][yu+1][zn+1].B, xrf, ydf, zff);*/
 
-		TreeNode *cellIter = cell.root;
+		TreeNode *cellIter = grid[xl][yu][zn]->root;
 		//Find the finest cell that contains the particle
-		while (cellIter->children != NULL){
+		while (cellIter->children != NULL) {
 			if (xrf < .5){
 				if (ydf < .5){
 					if (zff < .5){
@@ -239,9 +243,9 @@ static void push_one_cell(tree cell) {
 
 		// Check if cell has changed
 		// Guarenteed to still be in a cell or ghost cell controled by proc
-		if (xle != xl || yue != yu || zne != zn){
+		if (xle != xlb || yue != yub || zne != znb) {
 			// add curr to the next_list of grid[xle][yue][zne]
-			particle_pass(&(grid[xle][yue][zne]->next_list), &(grid[xl][yu][zn]->part_list), curr);
+			list_pass(&(grid[xle][yue][zne]->new_particles), &part_list, curr);
 		}
 
     } 
@@ -258,7 +262,7 @@ void push_particles(tree ****grid) {
 				curCell = grid[i][j][k];
 				if (curCell != NULL) {
 					if (curCell->owner == pid) {
-						push_one_cell(*curCell);
+						push_one_cell(grid, curCell->particles);
 					}
 				}
 			}
@@ -266,8 +270,7 @@ void push_particles(tree ****grid) {
 	}
 	
 	//Allocate buffers and do the sends and recvs
-	neighbor *neighbors; // array of lists of particle lists to send to each neighbor proc
-	neighbors = (neighbor*) calloc( nProcs*sizeof(neighbor) );
+	neighbor *neighbors[nProcs]; // array of handles to neighboring procs. every proc is in the array, but non-neighbors will be null 
 	// loop over each ghost cell.
 	// loop over entire grid to find the ghost cells, this is the easiest way to find them
 	// this can't be integrated with above identical loop since the push must be completed before checking to see which pushed things need to be sent to neighbors
@@ -279,9 +282,10 @@ void push_particles(tree ****grid) {
 					int owner = curCell->owner;
 					if (owner != pid) {
 						if (neighbors[owner] == NULL) {
-							neighbors[owner] = neighbor_init(i);
+							neighbors[owner] = (neighbor*) malloc(sizeof(neighbor));
+							*neighbors[owner] = neighbor_init(i);
 						}
-						neighbor_add_cell(&(neighbors[owner]), curCell);
+						neighbor_add_cell(neighbors[owner], curCell);
 					}
 				}
 			}
@@ -294,28 +298,27 @@ void push_particles(tree ****grid) {
 	// send # of cell we will send
 	for (i = 0; i < nProcs; ++i) {
 		if (neighbors[i] != NULL) {
-			cell_count_requests[i] = neighbor_send_cell_count(neighbors[i]);
+			cell_count_requests[i] = neighbor_send_cell_count(*neighbors[i]);
 		} else {
 			cell_count_requests[i] = MPI_REQUEST_NULL;
 		}
 	}
 
 	//TODO: can we ignore status for waitall?
-	MPI_Waitall(cell_count_requests, MPI_STATUSES_IGNORE);
+	MPI_Waitall(nProcs, cell_count_requests, MPI_STATUSES_IGNORE);
 
 	MPI_Request **cell_requests = (MPI_Request**) malloc( nProcs*sizeof(MPI_Request) );
 	// send the cells themselves
 	for (i = 0; i < nProcs; ++i) {
 		if (neighbors[i] != NULL) {
-			cell_requests[i] = neighbor_send_cells(neighbors[i]);
+			neighbor_send_cells(*neighbors[i]);
 		}
 	}
 
 	// wait to finish recving data from all your neighbors
 	for (i = 0; i < nProcs; ++i) {
 		if (neighbors[i] != NULL) {
-			//TODO: can we ignore status for waitall?
-			MPI_Waitall(cell_requests[i], MPI_STATUSES_IGNORE);
+			neighbor_recv_cells(*neighbors[i]);
 		}
 	}
 
@@ -325,10 +328,11 @@ void push_particles(tree ****grid) {
 	// Also do some frees
 	// loop over your i-th neighbor
 	for (i = 0; i < nProcs; ++i) {
-		neighbor n = neighbors[i];
-		if (n == NULL) { // only receive from actual neighbors
+		if (neighbors[i] == NULL) { // only receive from actual neighbors
 			continue;
 		}
+
+		neighbor n = *neighbors[i];
 		// loop over the j-th cell you received from your i-th neighbor
 		int iCell;
 		for (iCell = 0; iCell < n.ncellrecvs; ++iCell) {
@@ -360,7 +364,7 @@ void push_particles(tree ****grid) {
 				curCell = grid[i][j][k];
 				if (curCell != NULL){
 					// Add the next_list to the current list
-					list_combine(&(grid[i][j][k]->part_list), &(grid[i][j][k]->next_list));
+					list_combine(&(grid[i][j][k]->particles), &(grid[i][j][k]->next_list));
 				}
 			}
 		}

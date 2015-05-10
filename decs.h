@@ -26,6 +26,7 @@ extern int imin, imax, jmin, jmax, kmin, kmax;	//Processor minimum indicies
 extern int pid;	//Processor ID
 extern double pxmin, pymin, pzmin;	//Processor minimum x, y, and z
 
+extern int nProcs;
 extern MPI_Datatype mpi_vec3, mpi_particle, mpi_tree, mpi_tree_node, mpi_grid_point;
 
 #define C (3e8)

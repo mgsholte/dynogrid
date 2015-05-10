@@ -154,11 +154,10 @@ int free_mpi_customs(){
 
 /*	send a particle list */
 // 'n' is the neighboring proc where we are sending the particle list 'part_list' of cell 'iCell'
-MPI_Request mpi_list_send(List part_list, neighbor n, int iCell) {
+void mpi_list_send(List part_list, neighbor n, int iCell) {
 	/*	pack particles from List into array (freeing each particle as we pack it...
 		this will free the particles, while keeping the list structure in place for
 		reuse next time	*/
-	MPI_Request req;
 	int nParts = list_length(part_list);
 	particle *buf = (particle *)malloc(nParts * sizeof(particle));
 	
@@ -184,8 +183,9 @@ MPI_Request mpi_list_send(List part_list, neighbor n, int iCell) {
 	n.sendlens[iCell] = nParts;
 
 	/* MPI command to actually send the array of particles (non-blocking) */
+	MPI_Request req;
 	MPI_Isend(buf, nParts, mpi_particle, n.pid, 1, MPI_COMM_WORLD, &req);
-	return req;
+	MPI_Request_free(&req);
 }//end mpi_list_send
 
 /*	recv a particle list */
