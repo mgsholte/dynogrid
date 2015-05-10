@@ -61,9 +61,6 @@ tree**** grid_init(int isize, int jsize, int ksize, int x_divs, int y_divs, int 
 					// malloc
 					base_grid[i][j][k] = (tree*) malloc(sizeof(tree));
 					
-					// tree_init, includes setting points[0]
-					*(base_grid[i][j][k]) = tree_init(get_loc(i,j,k), pid);
-
 					// set owner
 					// 26 possible neighbors could own each ghost cell, but their pids can be constructed from true/false statements. using true->1 and false->0
 					int di, dj, dk, owner_id;
@@ -86,6 +83,9 @@ tree**** grid_init(int isize, int jsize, int ksize, int x_divs, int y_divs, int 
 						owner_id = -1;
 					}
 					
+					// tree_init, includes setting points[0]
+					*(base_grid[i][j][k]) = tree_init(get_loc(i,j,k), owner_id);
+
 				} else {
 					base_grid[i][j][k] = NULL;
 				}

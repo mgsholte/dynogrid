@@ -20,7 +20,7 @@ void output_grid(int itNum, int numFiles, tree ****base_grid);
 //void cleanup(grid_cell ***grid_cells);
 
 inline vec3 get_loc(int ix, int iy, int iz) {
-	return (vec3) { ix*dx, iy*dy, iz*dz };
+	return (vec3) { (ix-imin)*dx + pxmin, (iy-jmin)*dy + pymin, (iz-kmin)*dz + pzmin };
 }
 
 #endif //GRID_H
