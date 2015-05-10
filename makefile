@@ -2,7 +2,10 @@ CC = mpicc -cc=clang
 CFLAGS = -g -ferror-limit=4 -Werror
 LFLAGS = -O3
 
-OBJS := $(patsubst %.c,%.o,$(wildcard *.c))
+ALL_SRC := $(patsubst %.c,%.o,$(wildcard *.c))
+EXCLUDES = 
+OBJS := $(filter-out $(EXCLUDES),$(ALL_SRC))
+
 
 .PHONY: all
 all: dynogrid
