@@ -99,26 +99,24 @@ int init_mpi_tree(){
 	int err;
 	//declare the 4 fields required to create a custom MPI Datatype:
 	int count; //number of fields in our struct
-	int block_lengths[2]; //the number of items in each block in our struct (e.g. arrays would have blockcounts of len(array))
+	int block_lengths[2] = {1,1}; //the number of items in each block in our struct (e.g. arrays would have blockcounts of len(array))
 	MPI_Aint offsets[2]; //the offset of the start of each block in the struct, relative to the start of the struct (i.e. offset[0] = 0)
-	MPI_Datatype types[2]; //the different data types included in the struct
+	MPI_Datatype types[2] = {mpi_vec3, MPI_INT}; //the different data types included in the struct
 	// MPI_Datatype mpi_tree; //the new custom MPI Datatype
 	
 	//set count, blocks, and types:
 	count = 2;
-	block_lengths = {1,1};
-	types = {mpi_vec3, MPI_INT};
 
 	//get the size of an mpi_vec3 datatype (our custom made datatype):
 	MPI_Aint size_of_mpi_vec3;
 	err = MPI_Type_extent(mpi_vec3, &size_of_mpi_vec3);
 
 	//set offsets[]:	
-	offsets[0] = static_cast<MPI_Aint>(0);
+	offsets[0] = (MPI_Aint) (0);
 	offsets[1] = size_of_mpi_vec3;
 
-	err = MPI_Type_create_struct(count, block_lengths, offsets, types, mpi_tree);
-	err = MPI_Type_commit(mpi_tree);
+	err = MPI_Type_create_struct(count, block_lengths, offsets, types, &mpi_tree);
+	err = MPI_Type_commit(&mpi_tree);
 	return err;
 }//end init_mpi_tree()
 
@@ -247,7 +245,7 @@ MPI_Request* mpi_tree_send(List tree_list, int to_pid, simple_tree** simple_tree
 	int error;
 
 	//Allocate an array to hold 3 MPI_Request items to be returned to caller:
-	MPI_Request reqs[] = (MPI_Request*) malloc(sizeof(MPI_request)*3);
+	MPI_Request *reqs = (MPI_Request*) malloc(sizeof(MPI_Request)*3);
 
 	int trees_len = list_length(tree_list);
 	*simple_trees_array = (simple_tree*) malloc(sizeof(simple_tree) * trees_len);
@@ -257,41 +255,41 @@ MPI_Request* mpi_tree_send(List tree_list, int to_pid, simple_tree** simple_tree
 	//convert the list of tree pointers to an array of simple_tree's and pack into an array:
 	tree temp_tree;
 	int i = 0;
-	list_reset_iter(tree_list);
+	list_reset_iter(&tree_list);
 	while(list_has_next(tree_list)){
-		temp_tree = *((tree*) list_get_next(tree_list));
-		all_particles_count += list_length(temp_tree->particles);
-		(simple_trees_array[i]).loc = temp_tree.loc;
-		(simple_trees_array[i]).owner = temp_tree.owner;
+		temp_tree = *((tree*) list_get_next(&tree_list));
+		all_particles_count += list_length(temp_tree.particles);
+		simple_trees_array[i]->loc = temp_tree.loc;
+		simple_trees_array[i]->owner = temp_tree.owner;
 		i++;
 	}//end while
 
 	//aggregate and pack all of the particles in the trees_list into one big array of particles:
 	*all_particles_array = (particle*) malloc(sizeof(particle) * all_particles_count);
-	list_reset_iter(tree_list);
+	list_reset_iter(&tree_list);
 	i = 0;
 	int j, k = 0;
 	while(list_has_next(tree_list)){
-		List part_list = (List) (list_get_next(tree_list)).particles;
-		list_reset_iter(part_list);
+		List part_list = ((tree*)list_get_next(&tree_list))->particles;
+		list_reset_iter(&part_list);
 		j = 0;
 		while(list_has_next(part_list)){
-			all_particles_array[i] = *((particle*)list_get_next(part_list));
+			(*all_particles_array)[i] = *((particle*)list_get_next(&part_list));
 			list_pop(&part_list);
 			i++;
 			j++;	
 		}//end inner while
-		part_counts[k] = j;
+		(*part_counts)[k] = j;
 		list_pop(&tree_list);
 		k++;
 	}//end while	
 
 	/* MPI command to actually send the array of trees (non-blocking) */
-	error = MPI_Isend(simple_trees_array, trees_len, mpi_tree, to_pid, 0, MPI_COMM_WORLD, &(req[0]));
-	error = MPI_Isend(all_particles_array, all_particles_count, mpi_particle, to_pid, 1, MPI_COMM_WORLD, &(req[1]));
-	error = MPI_Isend(part_counts, trees_len, MPI_INT, to_pid, 2, MPI_COMM_WORLD, &(req[2]));
+	error = MPI_Isend(simple_trees_array, trees_len, mpi_tree, to_pid, 0, MPI_COMM_WORLD, &(reqs[0]));
+	error = MPI_Isend(all_particles_array, all_particles_count, mpi_particle, to_pid, 1, MPI_COMM_WORLD, &(reqs[1]));
+	error = MPI_Isend(*part_counts, trees_len, MPI_INT, to_pid, 2, MPI_COMM_WORLD, &(reqs[2]));
 	
-	return &reqs;
+	return reqs;
 }//end mpi_tree_send
 
 
@@ -300,7 +298,7 @@ MPI_Request* mpi_tree_send(List tree_list, int to_pid, simple_tree** simple_tree
 MPI_Request* mpi_tree_recv(int from_pid, simple_tree** simple_trees_array, particle** all_particles_array, int** part_counts){
 	
 	MPI_Status status;
-	MPI_Request reqs[] = (MPI_Request*) malloc(sizeof(MPI_request)*3);
+	MPI_Request *reqs = (MPI_Request*) malloc(sizeof(MPI_Request)*3);
 
 //IRECV THE ARRAY OF SIMPLE_TREES:
 	int trees_len;
@@ -316,7 +314,7 @@ MPI_Request* mpi_tree_recv(int from_pid, simple_tree** simple_trees_array, parti
 	*simple_trees_array = (simple_tree*) malloc(sizeof(simple_tree) * trees_len);
 
     // Now receive the message with the allocated buffer (non-blocking, so unpacking must be done in separate function)
-	error = MPI_Irecv(simple_trees_array, trees_len, mpi_tree, from_pid, 0, MPI_COMM_WORLD, &(req[0]));
+	MPI_Irecv(simple_trees_array, trees_len, mpi_tree, from_pid, 0, MPI_COMM_WORLD, &(reqs[0]));
 	
 //IRECV THE ARRAY OF PARTICLES:
     int all_particles_count;
@@ -330,7 +328,7 @@ MPI_Request* mpi_tree_recv(int from_pid, simple_tree** simple_trees_array, parti
 	*all_particles_array = (particle*) malloc(sizeof(particle) * all_particles_count);
 
     // Now receive the message with the allocated buffer (non-blocking, so unpacking must be done in separate function)
-	error = MPI_Irecv(all_particles_array, all_particles_count, mpi_particle, from_pid, 1, MPI_COMM_WORLD, &(req[1]));
+	MPI_Irecv(all_particles_array, all_particles_count, mpi_particle, from_pid, 1, MPI_COMM_WORLD, &(reqs[1]));
 	
 //IRECV THE INT ARRAY OF PARTICLE_OFFSETS:
     MPI_Probe(from_pid, 2, MPI_COMM_WORLD, &status);
@@ -343,9 +341,9 @@ MPI_Request* mpi_tree_recv(int from_pid, simple_tree** simple_trees_array, parti
 	*part_counts = (int*) malloc(sizeof(int) * all_particles_count);
 
     // Now receive the message with the allocated buffer (non-blocking, so unpacking must be done in separate function)
-	error = MPI_Irecv(part_counts, all_particles_count, MPI_INT, from_pid, 2, MPI_COMM_WORLD, &(req[2]));
+	MPI_Irecv(*part_counts, all_particles_count, MPI_INT, from_pid, 2, MPI_COMM_WORLD, &(reqs[2]));
 	
-	return &reqs;
+	return reqs;
 }//end mpi_tree_recv
 
 
