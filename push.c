@@ -313,7 +313,7 @@ void push_particles(tree ****grid) {
 	// send # of cell we will send
 	for (i = 0; i < nProcs; ++i) {
 		if (neighbors[i] != NULL) {
-			cell_count_requests[i] = neighbor_send_cell_count(*(neighbors[i]));
+			cell_count_requests[i] = neighbor_send_cell_count(neighbors[i]);
 		} else {
 			cell_count_requests[i] = MPI_REQUEST_NULL;
 		}
@@ -326,14 +326,14 @@ void push_particles(tree ****grid) {
 	// send the cells themselves
 	for (i = 0; i < nProcs; ++i) {
 		if (neighbors[i] != NULL) {
-			neighbor_send_cells(*(neighbors[i]));
+			neighbor_send_cells(neighbors[i]);
 		}
 	}
 
 	// wait to finish recving data from all your neighbors
 	for (i = 0; i < nProcs; ++i) {
 		if (neighbors[i] != NULL) {
-			neighbor_recv_cells(*neighbors[i]);
+			neighbor_recv_cells(neighbors[i]);
 		}
 	}
 
