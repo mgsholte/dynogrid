@@ -37,10 +37,12 @@ void neighbor_free(neighbor *n) {
 }
 
 void neighbor_add_cell(neighbor *n, tree *cell) {
-	list_add(&(n->part_lists), &(cell->particles));
-	//TODO: remove if unnecessary
-	//n->ncellsends = list_length(n->part_lists);
-	n->ncellsends += 1;
+	if (list_length(cell->particles)!=0){
+		list_add(&(n->part_lists), &(cell->particles));
+		//TODO: remove if unnecessary
+		//n->ncellsends = list_length(n->part_lists);
+		n->ncellsends += 1;
+	}
 }
 
 MPI_Request neighbor_send_cell_count(neighbor *n) {
