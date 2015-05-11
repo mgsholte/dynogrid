@@ -2,7 +2,6 @@
 #include <math.h>
 
 #include <mpi.h>
-// #include <omp.h>
 
 #include "decs.h"
 #include "grid.h"
@@ -21,10 +20,13 @@ static double min(const double x, const double y, const double z) {
 //	v->x *= factor;	v->y *= factor;	v->z *= factor;
 //}
 
+// define extern vars from decs.h
 int imin, imax, jmin, jmax, kmin, kmax;	//Processor minimum indicies
+int g_xwidth, g_ywidth, g_zwidth; // the dimensions of the base grid array
 int pid;	//Processor ID
 double pxmin, pymin, pzmin;	//Processor minimum x, y, and z
 double time = 0.;
+
 //global MPI custom data types:
 int nProcs;
 MPI_Datatype mpi_vec3, mpi_particle, mpi_grid_point, mpi_tree, mpi_tree_node;

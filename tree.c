@@ -18,21 +18,25 @@ tree* tree_init(vec3 loc, int owner) {
 	return ans;
 }
 
+// fwd decl for tree_free
+static void coarsen(TreeNode *node);
+
 void tree_free(tree *t) {
+	TreeNode *root = t->root;
 	// remove all children from the root
-	coarsen(t->root);
+	coarsen(root);
 
 	// remove only the 0-th grid_point since that is what was initialized by tree_init
-	free(t->points[0]);
-	t->points[0] = NULL;
+	free(root->points[0]);
+	root->points[0] = NULL;
 
 	// free the root itself
-	free(t->root);
+	free(root);
 	t->root = NULL;
 
 	// free the 2 particle lists
-	list_free(particles);
-	list_free(new_particles);
+	list_free(t->particles);
+	list_free(t->new_particles);
 
 	// finally, free the tree itself
 	free(t);
@@ -118,6 +122,7 @@ static bool need_to_refine(TreeNode *cell) {
 }
 
 static void coarsen(TreeNode *cell) {
+	int i, j;
 	// can't coarsen a cell with no children
 	if (cell->children[0] == NULL) {
 		return;
@@ -128,7 +133,6 @@ static void coarsen(TreeNode *cell) {
 	}
 
 	// now, remove your children
-	int i, j;
 	for(i = 0; i < 8; i++) {
 		TreeNode *pChild = cell->children[i];
 		for(j = 0; j < 8; j++) {

@@ -338,6 +338,14 @@ void push_particles(tree ****grid) {
 		}
 	}
 
+	// receive particle data from all neighbors (non-blocking)
+	for (i = 0; i < nProcs; ++i) {
+		if (neighbors[i] != NULL) {
+			// send request array will be null if there were no cells to recv
+			cell_recv_reqs[i] = neighbor_recv_cells(neighbors[i]);
+		}
+	}
+
 	// for each neighboring processor, wait for all the particle sends to finish posting
 	for (i = 0; i < nProcs; ++i) {
 		neighbor *n = neighbors[i];
@@ -347,15 +355,6 @@ void push_particles(tree ****grid) {
 		if (cell_send_reqs[i] != NULL) {
 			MPI_Waitall(2*(n->ncellsends), cell_send_reqs[i], MPI_STATUSES_IGNORE);
 			free(cell_send_reqs[i]);
-		}
-	}
-
-
-	// receive particle data from all neighbors (non-blocking)
-	for (i = 0; i < nProcs; ++i) {
-		if (neighbors[i] != NULL) {
-			// send request array will be null if there were no cells to recv
-			cell_recv_reqs[i] = neighbor_recv_cells(neighbors[i]);
 		}
 	}
 
