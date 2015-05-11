@@ -330,6 +330,7 @@ void push_particles(tree ****grid) {
 	MPI_Request *cell_send_reqs[nProcs];
 	MPI_Request *cell_recv_reqs[nProcs];
 
+	int totSends = 0;
 	// send the cell particle lists themselves (non-blocking)
 	for (i = 0; i < nProcs; ++i) {
 		if (neighbors[i] != NULL) {
@@ -337,6 +338,7 @@ void push_particles(tree ****grid) {
 			cell_send_reqs[i] = neighbor_send_cells(neighbors[i]);
 		}
 	}
+
 
 	// receive particle data from all neighbors (non-blocking)
 	for (i = 0; i < nProcs; ++i) {
@@ -370,7 +372,7 @@ void push_particles(tree ****grid) {
 		}
 	}
 
-	// for buffs that hane recieved
+	// for buffs that have recieved
 	//		do the unpacking
 	//
 	// free all your neighbors
