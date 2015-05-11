@@ -54,14 +54,11 @@ MPI_Request* neighbor_send_cell_count(neighbor *n) {
 // 2 isends for every cell being sent to the neighbor
 MPI_Request* neighbor_send_cells(neighbor *n) {
 	MPI_Request *reqs;
-	if (n->ncellsends == 0) { // no cells to receive, but still need to wait on something in push.c
-		reqs = (MPI_Request*) malloc(2*sizeof(MPI_Request));
-		reqs[0] = MPI_REQUEST_NULL;
-		reqs[1] = MPI_REQUEST_NULL;
-		return reqs;
+	if (n->ncellsends == 0) { // no cells to receive
+		return NULL;
 	}
 	
-	reqs = (MPI_Request*) malloc(n->ncellrecvs * sizeof(MPI_Request));
+	reqs = (MPI_Request*) malloc(2*(n->ncellsends) * sizeof(MPI_Request));
 	// allocate the buffers for sending particles
 	n->sendbufs = (particle **)malloc(n->ncellsends * sizeof(particle*));
 	// need to allocate array of # of particles to send in each cell
@@ -84,10 +81,8 @@ MPI_Request* neighbor_send_cells(neighbor *n) {
 
 MPI_Request* neighbor_recv_cells(neighbor *n) {
 	MPI_Request *reqs;
-	if (n->ncellrecvs == 0) {  // no cells to receive, but still need to wait on something in push.c
-		reqs = (MPI_Request*) malloc(sizeof(MPI_Request));
-		reqs[0] = MPI_REQUEST_NULL;
-		return reqs;
+	if (n->ncellrecvs == 0) {  // no cells to receive
+		return NULL;
 	}
 	// otherwise, we wait on the recv request of each cell send operation
 	reqs = (MPI_Request*) malloc(n->ncellrecvs * sizeof(MPI_Request));

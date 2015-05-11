@@ -70,7 +70,7 @@ double time; // changes every iteration
 
 #define E0 (8.68e13) // SI units, used Intensity=10^21 W/(cm)^2
 #define B0 (2.895e5) // used B0=E0/c
-#define THRESHOLD_E (0.1*E0) // threshold for refining E
-#define THRESHOLD_B (0.1*B0) // threshold for refining B
+#define THRESHOLD_E (1.1*E0) // threshold for refining E
+#define THRESHOLD_B (1.1*B0) // threshold for refining B
 
 #endif //DECS_H

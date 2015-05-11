@@ -75,8 +75,8 @@ tree**** grid_init(int isize, int jsize, int ksize, int x_divs, int y_divs, int 
 					
 					// find bad cases where there is no proper owner_id, i.e. the above algorithm got a bad answer b/c ghost is out of simulation bounds
 					if ((di == 1  &&  pxmin + dx * (isize+1.5) >= x_max) || 	// 1.5 is to prevent rounding issues, even though 1 should be enough
-						(dj == 1  &&  pymin + dy * (isize+1.5) >= y_max) ||
-						(dk == 1  &&  pzmin + dz * (isize+1.5) >= z_max) ||
+						(dj == 1  &&  pymin + dy * (jsize+1.5) >= y_max) ||
+						(dk == 1  &&  pzmin + dz * (ksize+1.5) >= z_max) ||
 						(di == -1  &&  pxmin + dx * 0.5 <= 0) ||
 						(dj == -1  &&  pymin + dy * 0.5 <= 0) ||
 						(dk == -1  &&  pzmin + dz * 0.5 <= 0)) {
@@ -86,9 +86,9 @@ tree**** grid_init(int isize, int jsize, int ksize, int x_divs, int y_divs, int 
 
 					//TODO: is this a good solution to out of bounds (non-existent) owners?
 					// cell would belong to a processor that is not in the simulation. set its owner to -1 to indicate that
-					if (owner_id < 0 || owner_id >= nProcs) {
-						owner_id = -1;
-					}
+				//	if (owner_id < 0 || owner_id >= nProcs) {
+				//		owner_id = -1;
+				//	}
 					
 					//TODO: for debugging
 					printf("setting owner_id = %d for grid[%d][%d][%d]\n", owner_id,i ,j ,k);
