@@ -18,6 +18,26 @@ tree* tree_init(vec3 loc, int owner) {
 	return ans;
 }
 
+void tree_free(tree *t) {
+	// remove all children from the root
+	coarsen(t->root);
+
+	// remove only the 0-th grid_point since that is what was initialized by tree_init
+	free(t->points[0]);
+	t->points[0] = NULL;
+
+	// free the root itself
+	free(t->root);
+	t->root = NULL;
+
+	// free the 2 particle lists
+	list_free(particles);
+	list_free(new_particles);
+
+	// finally, free the tree itself
+	free(t);
+}
+
 // see notes for tree_apply_fcn
 // cn is the index of the node in its parent's children array
 static void tree_node_apply_fcn(TreeNode *node, int cn, bool (*f)(grid_point *,double,double,double), double x, double y, double z, vec3 *h) {
@@ -98,31 +118,29 @@ static bool need_to_refine(TreeNode *cell) {
 }
 
 static void coarsen(TreeNode *cell) {
-	int i, j;
-	if (!cell->children[0]) {
+	// can't coarsen a cell with no children
+	if (cell->children[0] == NULL) {
 		return;
 	}
 	// 1st, coarsen your children so you have no grandchildren
 	for(i = 0; i < 8; i++) {
 		coarsen(cell->children[i]);
 	}
-	// remove your children
+
+	// now, remove your children
+	int i, j;
 	for(i = 0; i < 8; i++) {
 		TreeNode *pChild = cell->children[i];
-		bool hasChildren = (pChild->children[0] != 0);
 		for(j = 0; j < 8; j++) {
-			if(i != j && ((j&i) == i)) { //don't free points i==j bc the parent still needs them. also, other children may have already freed one of your points so don't double free
-				//free each child's 7 points that are no longer needed:
+			// don't free points i==j bc the parent still needs them. also, other children may have already freed one of your points so don't double free
+			if(i != j && ((j&i) == i)) { 
 				free(pChild->points[j]);
 			}
-			// free childrens' child pointers
-			if(hasChildren) {
-				free(pChild->children[j]);
-				pChild->children[j] = NULL;
-			}
+			pChild->points[j] = NULL;
+			//NB: grandchildren already freed by the call to coarsen(cell->children[i])
 		}
 		// free your child pointers
-		free(cell->children[i]);
+		free(pChild);
 		cell->children[i] = NULL;
 	}
 }

@@ -62,9 +62,6 @@ tree**** grid_init(int isize, int jsize, int ksize, int x_divs, int y_divs, int 
 					j >= jmin && j <= jmax &&
 					k >= kmin && k <= kmax) {
 
-					// malloc
-					base_grid[i][j][k] = (tree*) malloc(sizeof(tree));
-					
 					// choose owner
 					// 26 possible neighbors could own each ghost cell, but their pids can be constructed from true/false statements. using true->1 and false->0
 					int di, dj, dk, owner_id;
@@ -102,7 +99,7 @@ tree**** grid_init(int isize, int jsize, int ksize, int x_divs, int y_divs, int 
 					}
 					
 					// tree_init, includes setting points[0] and owner
-					*(base_grid[i][j][k]) = tree_init(get_loc(i,j,k), owner_id);
+					base_grid[i][j][k] = tree_init(get_loc(i,j,k), owner_id);
 
 				} else {
 					base_grid[i][j][k] = NULL;
@@ -114,6 +111,7 @@ tree**** grid_init(int isize, int jsize, int ksize, int x_divs, int y_divs, int 
 	for (i = imin; i < imax; ++i) {
 		for (j = jmin; j < jmax; ++j) {
 			for (k = kmin; k < kmax; ++k) {
+				// no need to check for NULLs here since the starting grid is always a simple rectangular geometry. complications only arise once load balancing has started
 				// n should be thought of as binary (n for "neighbors")
 				for (n = 1; n < 8; ++n) {
 					base_grid[i][j][k]->root->points[n] = base_grid[i+getX(n)][j+getY(n)][k+getZ(n)]->root->points[0];
@@ -202,40 +200,7 @@ void output_grid(int itNum, int numFiles, tree ****base_grid) {
 	// int itNum = round_i(time/dt);
 }
 
-/* haven't yet integrated this function with the tree system
-void recursive_execute_coarsen(grid_cell* cell);
-//TODO: change these loop bounds to whatever suits the changing grid chunk size. not just imin to imax, right? there's uninitialized cells.
-void cleanup(grid_cell ****grid_cells) {
-	int x,y,z,i;
-	grid_cell* cell;
-	for (x = 0; x <= nx; x++) {
-		for (y = 0; y <= ny; y++) {
-			for (z = 0; z <= nz; z++) {
-				// coarsen completely (coarsest should have no children after)
-				cell = grid_cells[x][y][z];
-				recursive_execute_coarsen(cell);
-				
-				// only free what was malloc'd per cell in init_grid
-				free(cell->points[0]);
-			}
-			// frees cells and cell.children address
-			free(grid_cells[x][y]);
-		}
-		free(grid_cells[x]);
-	}
-	free(grid_cells);
+void grid_free(tree ****base_grid) {
+	int i, j, k;
+	for (i = 0; i < wi
 }
-void recursive_execute_coarsen(grid_cell* cell) {
-	// BASE CASE or if at coarsest cell size from the start
-	if (cell->children == NULL) {
-		return;
-	}
-	else {
-		int child_num;
-		for(child_num = 0; child_num < 8; child_num++) {
-			recursive_execute_coarsen(cell->children[child_num]);
-		}
-		execute_coarsen(cell);
-	}
-}
-*/

@@ -31,8 +31,14 @@ typedef struct {
 	int owner; // the rank of the processor which owns this cell
 	int neighbor_owners[9];
 } simple_tree;
-// create a tree only initializing 1 (0-th) of the 8 grid_points in the cell
+
+// allocate a tree only initializing 1 (0-th) of the 8 grid_points in the cell
+// you must link the other 7 grid points yourself.
+// all calls to tree_init should be matched by a call to tree_free
 tree* tree_init(vec3 loc, int owner);
+
+// every call to tree_init should be matched by a call to this when the tree is no longer needed
+void tree_free(tree *t);
 
 // apply the function f to every point in the tree. f is a fcn that
 // accepts a pointer to the grid point and 3 doubles (x,y,z) giving its location
