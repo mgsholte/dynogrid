@@ -21,6 +21,10 @@ static inline int min(const int x, const int y) {
 	return x < y ? x : y;
 }
 
+inline vec3 get_loc(int ix, int iy, int iz) {
+	return (vec3) { (ix-imin)*dx + pxmin, (iy-jmin)*dy + pymin, (iz-kmin)*dz + pzmin };
+}
+
 // inits all grid points with E=B=0 for all of them
 // isize, etc. are lengths of real cell dimensions. ghost and NULL cells are added in this function
 // imin|imax, etc. are the start|end indexes for the real+ghost cell dims

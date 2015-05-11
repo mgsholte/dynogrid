@@ -65,7 +65,7 @@ void neighbor_send_cells(neighbor *n) {
 		// pointer to the particle list (not an array)
 		List *curSendList = (List*) list_get_next(&n->part_lists);
 		
-		mpi_list_send(*curSendList, *n, i);
+		mpi_list_send(*curSendList, n, i);
 		//requests[i] = mpi_list_recv(n, i);
 		++i;
 	}
@@ -82,7 +82,7 @@ void neighbor_recv_cells(neighbor *n) {
 		// pointer to the particle list (not an array)
 		List *curSendList = (List*) list_get_next(&n->part_lists);
 		
-		mpi_list_recv(*n, i);
+		mpi_list_recv(n, i);
 		++i;
 	}
 }

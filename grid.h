@@ -19,8 +19,6 @@ void init_particles(tree ****base_grid, vec3 origin, vec3 dims, int elec_per_cel
 void output_grid(int itNum, int numFiles, tree ****base_grid);
 //void cleanup(grid_cell ***grid_cells);
 
-inline vec3 get_loc(int ix, int iy, int iz) {
-	return (vec3) { (ix-imin)*dx + pxmin, (iy-jmin)*dy + pymin, (iz-kmin)*dz + pzmin };
-}
+vec3 get_loc(int ix, int iy, int iz);
 
 #endif //GRID_H
