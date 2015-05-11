@@ -30,7 +30,7 @@ run: dynogrid
 
 .PHONY: debug
 debug: dynogrid
-	@idev -l h_rt=00:10:00
+	@idev -l h_rt=01:00:00
 
 .PHONY: valgrind
 valgrind: dynogrid

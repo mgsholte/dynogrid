@@ -308,42 +308,63 @@ void push_particles(tree ****grid) {
 	}
 
 	// array to the requests so that we can wait for all receives to finish
-	MPI_Request *cell_count_requests = (MPI_Request*) malloc( nProcs*sizeof(MPI_Request) );
+	MPI_Request *cell_count_requests = (MPI_Request*) malloc( 2*nProcs*sizeof(MPI_Request) );
 
 	// send # of cell we will send
 	for (i = 0; i < nProcs; ++i) {
 		if (neighbors[i] != NULL) {
-			cell_count_requests[i] = neighbor_send_cell_count(neighbors[i]);
+			MPI_Request *tmp = neighbor_send_cell_count(neighbors[i]);
+			cell_count_requests[2*i] = tmp[0];
+			cell_count_requests[2*i+1] = tmp[1];
+			free(tmp);
 		} else {
-			cell_count_requests[i] = MPI_REQUEST_NULL;
+			cell_count_requests[2*i] = MPI_REQUEST_NULL;
+			cell_count_requests[2*i+1] = MPI_REQUEST_NULL;
 		}
 	}
 
 	//TODO: can we ignore status for waitall?
-	MPI_Waitall(nProcs, cell_count_requests, MPI_STATUSES_IGNORE);
+	MPI_Waitall(2*nProcs, cell_count_requests, MPI_STATUSES_IGNORE);
+	free(cell_count_requests);
 
-	MPI_Request **cell_requests = (MPI_Request**) malloc( nProcs*sizeof(MPI_Request) );
+	MPI_Request **cell_send_reqs = (MPI_Request**) malloc( nProcs*sizeof(MPI_Request*) );
+	MPI_Request **cell_recv_reqs = (MPI_Request**) malloc( nProcs*sizeof(MPI_Request*) );
 	// send the cells themselves
 	for (i = 0; i < nProcs; ++i) {
 		if (neighbors[i] != NULL) {
-			neighbor_send_cells(neighbors[i]);
+			cell_send_reqs[i] = neighbor_send_cells(neighbors[i]);
 		}
 	}
 
-	// wait to finish recving data from all your neighbors
-	for (i = 0; i < nProcs; ++i) {
-		if (neighbors[i] != NULL) {
-			cell_requests[i] = neighbor_recv_cells(neighbors[i]);
-		}
-	}
-
+	// wait for all the sends to finish posting
 	for (i = 0; i < nProcs; ++i) {
 		neighbor *n = neighbors[i];
 		if (n == NULL) {
 			continue;
 		}
-		MPI_Waitall(n->ncellrecvs, cell_requests[i], MPI_STATUSES_IGNORE);
+		MPI_Waitall(2*(n->ncellsends), cell_send_reqs[i], MPI_STATUSES_IGNORE);
+		free(cell_send_reqs[i]);
 	}
+	free(cell_send_reqs);
+
+
+	// wait to finish recving data from all your neighbors
+	for (i = 0; i < nProcs; ++i) {
+		if (neighbors[i] != NULL) {
+			cell_recv_reqs[i] = neighbor_recv_cells(neighbors[i]);
+		}
+	}
+
+	// wait for all the recvs to finish posting
+	for (i = 0; i < nProcs; ++i) {
+		neighbor *n = neighbors[i];
+		if (n == NULL) {
+			continue;
+		}
+		MPI_Waitall(n->ncellrecvs, cell_recv_reqs[i], MPI_STATUSES_IGNORE);
+		free(cell_recv_reqs[i]);
+	}
+	free(cell_recv_reqs);
 
 	// for buffs that hane recieved
 	//		do the unpacking

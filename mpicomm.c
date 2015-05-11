@@ -41,20 +41,27 @@ void neighbor_add_cell(neighbor *n, tree *cell) {
 	}
 }
 
-MPI_Request neighbor_send_cell_count(neighbor *n) {
-	MPI_Request request;
+// always return 2 requests, one for the send, the other for the recv
+MPI_Request* neighbor_send_cell_count(neighbor *n) {
+	MPI_Request *reqs = (MPI_Request*) malloc(2*sizeof(MPI_Request));
 	// tell neighbors how many cells you will send them
-	MPI_Isend(&(n->ncellsends), 1, MPI_INT, n->pid, TAG_N_CELLS, MPI_COMM_WORLD, &request);
+	MPI_Isend(&(n->ncellsends), 1, MPI_INT, n->pid, TAG_N_CELLS, MPI_COMM_WORLD, &reqs[0]);
 	// recv same info back from them
-	MPI_Irecv(&(n->ncellrecvs), 1, MPI_INT, n->pid, TAG_N_CELLS, MPI_COMM_WORLD, &request);
-	return request;
+	MPI_Irecv(&(n->ncellrecvs), 1, MPI_INT, n->pid, TAG_N_CELLS, MPI_COMM_WORLD, &reqs[1]);
+	return reqs;
 }
 
-void neighbor_send_cells(neighbor *n) {
-	if (n->ncellsends == 0) {
-		return;
+// 2 isends for every cell being sent to the neighbor
+MPI_Request* neighbor_send_cells(neighbor *n) {
+	MPI_Request *reqs;
+	if (n->ncellsends == 0) { // no cells to receive, but still need to wait on something in push.c
+		reqs = (MPI_Request*) malloc(2*sizeof(MPI_Request));
+		reqs[0] = MPI_REQUEST_NULL;
+		reqs[1] = MPI_REQUEST_NULL;
+		return reqs;
 	}
-	//MPI_Request *requests = (MPI_Request*) calloc(n.ncellsends, sizeof(MPI_Request));
+	
+	reqs = (MPI_Request*) malloc(n->ncellrecvs * sizeof(MPI_Request));
 	// allocate the buffers for sending particles
 	n->sendbufs = (particle **)malloc(n->ncellsends * sizeof(particle*));
 	// need to allocate array of # of particles to send in each cell
@@ -66,9 +73,13 @@ void neighbor_send_cells(neighbor *n) {
 		// pointer to the particle list (not an array)
 		List *curSendList = (List*) list_get_next(&n->part_lists);
 		
-		mpi_list_send(*curSendList, n, i);
+		// list_send always sends 2 requests
+		MPI_Request *tmp = mpi_list_send(*curSendList, n, i);
+		reqs[2*i] = tmp[0]; reqs[2*i+1] = tmp[1];
+		free(tmp);
 		++i;
 	}
+	return reqs;
 }
 
 MPI_Request* neighbor_recv_cells(neighbor *n) {
