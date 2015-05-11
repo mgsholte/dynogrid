@@ -308,9 +308,9 @@ void push_particles(tree ****grid) {
 	}
 
 	// array to the requests so that we can wait for all receives to finish
-	MPI_Request *cell_count_requests = (MPI_Request*) malloc( 2*nProcs*sizeof(MPI_Request) );
+	MPI_Request cell_count_requests[2*nProcs];
 
-	// send # of cell we will send
+	// send # of particle lists we will be sending
 	for (i = 0; i < nProcs; ++i) {
 		if (neighbors[i] != NULL) {
 			MPI_Request *tmp = neighbor_send_cell_count(neighbors[i]);
@@ -325,18 +325,19 @@ void push_particles(tree ****grid) {
 
 	//TODO: can we ignore status for waitall?
 	MPI_Waitall(2*nProcs, cell_count_requests, MPI_STATUSES_IGNORE);
-	free(cell_count_requests);
 
-	MPI_Request **cell_send_reqs = (MPI_Request**) malloc( nProcs*sizeof(MPI_Request*) );
-	MPI_Request **cell_recv_reqs = (MPI_Request**) malloc( nProcs*sizeof(MPI_Request*) );
-	// send the cells themselves
+	// store the particle send/recv requests so we can wait on them to post after initiating them
+	MPI_Request *cell_send_reqs[nProcs];
+	MPI_Request *cell_recv_reqs[nProcs];
+
+	// send the cell particle lists themselves (non-blocking)
 	for (i = 0; i < nProcs; ++i) {
 		if (neighbors[i] != NULL) {
 			cell_send_reqs[i] = neighbor_send_cells(neighbors[i]);
 		}
 	}
 
-	// wait for all the sends to finish posting
+	// for each neighboring processor, wait for all the particle sends to finish posting
 	for (i = 0; i < nProcs; ++i) {
 		neighbor *n = neighbors[i];
 		if (n == NULL) {
@@ -345,17 +346,16 @@ void push_particles(tree ****grid) {
 		MPI_Waitall(2*(n->ncellsends), cell_send_reqs[i], MPI_STATUSES_IGNORE);
 		free(cell_send_reqs[i]);
 	}
-	free(cell_send_reqs);
 
 
-	// wait to finish recving data from all your neighbors
+	// receive particle data from all neighbors (non-blocking)
 	for (i = 0; i < nProcs; ++i) {
 		if (neighbors[i] != NULL) {
 			cell_recv_reqs[i] = neighbor_recv_cells(neighbors[i]);
 		}
 	}
 
-	// wait for all the recvs to finish posting
+	// for each neighboring processor, wait for all the particle recvs to finish posting
 	for (i = 0; i < nProcs; ++i) {
 		neighbor *n = neighbors[i];
 		if (n == NULL) {
@@ -364,7 +364,6 @@ void push_particles(tree ****grid) {
 		MPI_Waitall(n->ncellrecvs, cell_recv_reqs[i], MPI_STATUSES_IGNORE);
 		free(cell_recv_reqs[i]);
 	}
-	free(cell_recv_reqs);
 
 	// for buffs that hane recieved
 	//		do the unpacking
