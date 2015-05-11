@@ -219,20 +219,24 @@ void mpi_list_send(List part_list, neighbor *n, int iCell) {
 	n->sendbufs[iCell] = buf;
 	n->sendlens[iCell] = nParts;
 
-	/* MPI command to actually send the array of particles (non-blocking) */
+	/* MPI command to send the number of particles in the array (non-blocking) */
 	MPI_Request req;
-	MPI_Isend(buf, nParts, mpi_particle, n->pid, 1, MPI_COMM_WORLD, &req);
+	MPI_Isend(&n->sendlens[iCell], 1, MPI_INT, n->pid, TAG_LIST_LENGTH, MPI_COMM_WORLD, &req);
+	MPI_Request_free(&req);
+
+	/* MPI command to actually send the array of particles (non-blocking) */
+	MPI_Isend(buf, nParts, mpi_particle, n->pid, TAG_PARTICLES, MPI_COMM_WORLD, &req);
 	MPI_Request_free(&req);
 }//end mpi_list_send
 
 /*	recv a particle list */
 // iCell is the index of the cell being received in neighbors recvbuffer
 MPI_Request mpi_list_recv(neighbor *n, int iCell) {
-	int nParts, tag = 0;
+	int nParts;
 	MPI_Request req;
 
 	// recv the # of particles it will be receiving from the sending proc
-	MPI_Recv(&nParts, 1, MPI_INT, n->pid, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+	MPI_Recv(&nParts, 1, MPI_INT, n->pid, TAG_LIST_LENGTH, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
 	/* TODO: could these replace the above irecv?
 	// determine # of particles that were sent so we can alloc recvbuffer
@@ -242,9 +246,12 @@ MPI_Request mpi_list_recv(neighbor *n, int iCell) {
 	*/
 
 	// allocate buffer to receive these particles
+	// and store it and its length in 
 	n->recvbufs[iCell] = (particle *)malloc(nParts * sizeof(particle));
+	n->recvlens[iCell] = nParts;
+
 	// receive the particles themselves
-	MPI_Irecv((void*) n->recvbufs[iCell], nParts, mpi_particle, n->pid, tag, MPI_COMM_WORLD, &req);
+	MPI_Irecv((void*) n->recvbufs[iCell], nParts, mpi_particle, n->pid, TAG_PARTICLES, MPI_COMM_WORLD, &req);
 	
 	return req;
 }//end mpi_list_pass

@@ -46,9 +46,9 @@ void neighbor_add_cell(neighbor *n, tree *cell) {
 MPI_Request neighbor_send_cell_count(neighbor *n) {
 	MPI_Request request;
 	// tell neighbors how many cells you will send them
-	MPI_Isend(&(n->ncellsends), 1, MPI_INT, n->pid, 1, MPI_COMM_WORLD, &request);
+	MPI_Isend(&(n->ncellsends), 1, MPI_INT, n->pid, TAG_N_CELLS, MPI_COMM_WORLD, &request);
 	// recv same info back from them
-	MPI_Irecv(&(n->ncellrecvs), 1, MPI_INT, n->pid, 1, MPI_COMM_WORLD, &request);
+	MPI_Irecv(&(n->ncellrecvs), 1, MPI_INT, n->pid, TAG_N_CELLS, MPI_COMM_WORLD, &request);
 	return request;
 }
 

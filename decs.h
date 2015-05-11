@@ -9,6 +9,10 @@
 
 typedef enum { false, true } bool;
 
+enum {
+	TAG_N_CELLS, TAG_LIST_LENGTH, TAG_PARTICLES
+};
+
 // Define the particle structure
 typedef struct {
 	vec3 pos, p;  // position, momentum
