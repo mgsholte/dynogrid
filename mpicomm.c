@@ -15,74 +15,95 @@ void neighbor_free(neighbor *n) {
 	int iCell;
 	// free recv buffers
 	for (iCell = 0; iCell < n->ncellrecvs; ++iCell) {
-		//TODO: don't think we need the if statement, just the free
-		if (n->recvbufs[iCell]) {
-			free(n->recvbufs[iCell]);
-			n->recvbufs[iCell] = NULL;
-		}
+		free(n->recvbufs[iCell]);
 	}
 	// free send buffers
 	for (iCell = 0; iCell < n->ncellsends; ++iCell) {
-		//TODO: don't think we need the if statement, just the free
-		if (n->sendbufs[iCell]) {
-			free(n->sendbufs[iCell]);
-			n->sendbufs[iCell] = NULL;
-		}
+		free(n->sendbufs[iCell]);
 	}
 	// free array storing the buffers
-	free(n->sendbufs);
-	free(n->recvbufs);
+	if (n->ncellsends != 0) {
+		free(n->sendbufs);
+	}
+	if (n->ncellrecvs != 0) {
+		free(n->recvbufs);
+	}
 	// free the neighbor itself
 	free(n);
 }
 
 void neighbor_add_cell(neighbor *n, tree *cell) {
-	list_add(&(n->part_lists), &(cell->particles));
-	//TODO: remove if unnecessary
-	//n->ncellsends = list_length(n->part_lists);
-	n->ncellsends += 1;
+	if (list_length(cell->particles)!=0){
+		list_add(&(n->part_lists), &(cell->particles));
+		//TODO: remove if unnecessary
+		//n->ncellsends = list_length(n->part_lists);
+		n->ncellsends += 1;
+	}
 }
 
-MPI_Request neighbor_send_cell_count(neighbor n) {
-	MPI_Request request;
+// always return 2 requests, one for the send, the other for the recv
+MPI_Request* neighbor_send_cell_count(neighbor *n) {
+	MPI_Request *reqs = (MPI_Request*) malloc(2*sizeof(MPI_Request));
 	// tell neighbors how many cells you will send them
-	MPI_Isend(&n.ncellsends, 1, MPI_INT, n.pid, 1, MPI_COMM_WORLD, &request);
+	MPI_Isend(&(n->ncellsends), 1, MPI_INT, n->pid, TAG_N_CELLS, MPI_COMM_WORLD, &reqs[0]);
 	// recv same info back from them
-	MPI_Irecv(&n.ncellrecvs, 1, MPI_INT, n.pid, 1, MPI_COMM_WORLD, &request);
-	return request;
+	MPI_Irecv(&(n->ncellrecvs), 1, MPI_INT, n->pid, TAG_N_CELLS, MPI_COMM_WORLD, &reqs[1]);
+	return reqs;
 }
 
-void neighbor_send_cells(neighbor n) {
-	//MPI_Request *requests = (MPI_Request*) calloc(n.ncellsends, sizeof(MPI_Request));
+// 2 isends for every cell being sent to the neighbor
+MPI_Request* neighbor_send_cells(neighbor *n) {
+	MPI_Request *reqs;
+	if (n->ncellsends == 0) { // no cells to receive, but still need to wait on something in push.c
+		reqs = (MPI_Request*) malloc(2*sizeof(MPI_Request));
+		reqs[0] = MPI_REQUEST_NULL;
+		reqs[1] = MPI_REQUEST_NULL;
+		return reqs;
+	}
+	
+	reqs = (MPI_Request*) malloc(n->ncellrecvs * sizeof(MPI_Request));
 	// allocate the buffers for sending particles
-	n.sendbufs = (particle **)malloc(n.ncellsends * sizeof(particle*));
+	n->sendbufs = (particle **)malloc(n->ncellsends * sizeof(particle*));
 	// need to allocate array of # of particles to send in each cell
-	n.sendlens = (int*) malloc( n.ncellsends*sizeof(int) );
+	n->sendlens = (int*) malloc( n->ncellsends*sizeof(int) );
 	// now loop over each cell and send the particles themselves
 	int i = 0;
-	list_reset_iter(&n.part_lists);
-	while(list_has_next(n.part_lists)) {
+	list_reset_iter(&n->part_lists);
+	while(list_has_next(n->part_lists)) {
 		// pointer to the particle list (not an array)
-		List *curSendList = (List*) list_get_next(&n.part_lists);
+		List *curSendList = (List*) list_get_next(&n->part_lists);
 		
-		mpi_list_send(*curSendList, n, i);
-		//requests[i] = mpi_list_recv(n, i);
+		// list_send always sends 2 requests
+		MPI_Request *tmp = mpi_list_send(*curSendList, n, i);
+		reqs[2*i] = tmp[0]; reqs[2*i+1] = tmp[1];
+		free(tmp);
 		++i;
 	}
+	return reqs;
 }
 
-void neighbor_recv_cells(neighbor n) {
+MPI_Request* neighbor_recv_cells(neighbor *n) {
+	MPI_Request *reqs;
+	if (n->ncellrecvs == 0) {  // no cells to receive, but still need to wait on something in push.c
+		reqs = (MPI_Request*) malloc(sizeof(MPI_Request));
+		reqs[0] = MPI_REQUEST_NULL;
+		return reqs;
+	}
+	// otherwise, we wait on the recv request of each cell send operation
+	reqs = (MPI_Request*) malloc(n->ncellrecvs * sizeof(MPI_Request));
 	// allocate the buffers for recving particles
-	n.recvbufs = (particle **)malloc(n.ncellrecvs * sizeof(particle*));
+	n->recvbufs = (particle **)malloc(n->ncellrecvs * sizeof(particle*));
 	// need to allocate array of # of particles to recv in each cell
-	n.recvlens = (int*) malloc( n.ncellrecvs*sizeof(int) );
+	n->recvlens = (int*) malloc(n->ncellrecvs * sizeof(int));
 	int i = 0;
-	list_reset_iter(&n.part_lists);
-	while(list_has_next(n.part_lists)) {
+	list_reset_iter(&n->part_lists);
+	while(list_has_next(n->part_lists)) {
 		// pointer to the particle list (not an array)
-		List *curSendList = (List*) list_get_next(&n.part_lists);
+		List *curSendList = (List*) list_get_next(&n->part_lists);
 		
-		mpi_list_recv(n, i);
+		reqs[i] = mpi_list_recv(n, i);
 		++i;
 	}
+
+	return reqs;
 }

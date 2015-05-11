@@ -21,6 +21,10 @@ static inline int min(const int x, const int y) {
 	return x < y ? x : y;
 }
 
+inline vec3 get_loc(int ix, int iy, int iz) {
+	return (vec3) { (ix-imin)*dx + pxmin, (iy-jmin)*dy + pymin, (iz-kmin)*dz + pzmin };
+}
+
 // inits all grid points with E=B=0 for all of them
 // isize, etc. are lengths of real cell dimensions. ghost and NULL cells are added in this function
 // imin|imax, etc. are the start|end indexes for the real+ghost cell dims
@@ -44,12 +48,12 @@ tree**** grid_init(int isize, int jsize, int ksize, int x_divs, int y_divs, int 
 	int wj = 2*jsize;
 	int wk = 2*ksize;
 	
-	tree ****base_grid = (tree****) malloc( (wi+1) * sizeof(tree***) ); // allocate an array of pointers to rows-depthwise
+	tree ****base_grid = (tree****) malloc( wi * sizeof(tree***) ); // allocate an array of pointers to rows-depthwise
 	int i, j, k, n;
 	for (i = 0; i < wi; ++i) {
-		base_grid[i] = (tree***) malloc( (wj+1) * sizeof(tree**) );  // allocate the row
+		base_grid[i] = (tree***) malloc( wj * sizeof(tree**) );  // allocate the row
 		for (j = 0; j < wj; ++j) {
-			base_grid[i][j] = (tree**) malloc( (wk+1) * sizeof(tree*) );  // allocate the row
+			base_grid[i][j] = (tree**) malloc( wk * sizeof(tree*) );  // allocate the row
 			for (k = 0; k < wk; ++k) {
 				// for each real, ghost, and 'init ghost' cell, we: malloc, tree_init, set owner, then after set each tree's 8 points correctly
 				// each index goes from (ghost cell on left) to (initialization ghost cell on right) which is one past (ghost cell on right) for the
@@ -57,11 +61,11 @@ tree**** grid_init(int isize, int jsize, int ksize, int x_divs, int y_divs, int 
 				if (i >= imin && i <= imax &&
 					j >= jmin && j <= jmax &&
 					k >= kmin && k <= kmax) {
-					
+
 					// malloc
 					base_grid[i][j][k] = (tree*) malloc(sizeof(tree));
 					
-					// set owner
+					// choose owner
 					// 26 possible neighbors could own each ghost cell, but their pids can be constructed from true/false statements. using true->1 and false->0
 					int di, dj, dk, owner_id;
 					di = (i == imax-1) - (i == imin); // +1 or -1
@@ -82,8 +86,22 @@ tree**** grid_init(int isize, int jsize, int ksize, int x_divs, int y_divs, int 
 
 						owner_id = -1;
 					}
+
+					//TODO: is this a good solution to out of bounds (non-existent) owners?
+					// cell would belong to a processor that is not in the simulation. set its owner to -1 to indicate that
+					if (owner_id < 0 || owner_id >= nProcs) {
+						owner_id = -1;
+					}
 					
-					// tree_init, includes setting points[0]
+					//TODO: for debugging
+					printf("setting owner_id = %d for grid[%d][%d][%d]\n", owner_id,i ,j ,k);
+					
+					// find init ghosts. these should be recognized as such even if they also fall out of simulation bounds. so owner_id = -2 trumps -1
+					if (i == imax || j == jmax || k == kmax) {
+						owner_id = -2;
+					}
+					
+					// tree_init, includes setting points[0] and owner
 					*(base_grid[i][j][k]) = tree_init(get_loc(i,j,k), owner_id);
 
 				} else {
@@ -103,6 +121,7 @@ tree**** grid_init(int isize, int jsize, int ksize, int x_divs, int y_divs, int 
 			}
 		}
 	}
+	
 	return base_grid;
 }
 

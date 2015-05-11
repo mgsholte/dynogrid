@@ -17,9 +17,9 @@ some logic
 
 #include "grid.h"
 
-// TODO: needs some work on properly separating the tasks onto their appropriate procs, i.e. giving vs taking
 
-// this one may need more?
+// TODO: This is not up to date with how load balancer logic will work
+// Correct logic: for each neighbor, say whether you're giving left (into them), right (into them), or neither (possibly receiving), and by how many "faces" if you choose one of the first two
 trade_cells(base_grid)
 	// dirs (directions) is an array of chars, each is a char dir6 (direction w/ 6 possibilities)
 	// each dir6 can be:
@@ -180,9 +180,10 @@ void resize_allocation(tree**** base_grid) {
 		for (j = 0; j < wj; ++j) {
 			new_grid[i][j] = (tree**) malloc( wk * sizeof(tree*) );  // allocate the row
 			for (k = 0; k < wk; ++k) {
-				if (i >= imin && i < imax &&
-					j >= jmin && j < jmax &&
-					k >= kmin && k < kmax) {
+				// include init ghosts
+				if (i >= imin && i <= imax &&
+					j >= jmin && j <= jmax &&
+					k >= kmin && k <= kmax) {
 					
 					new_grid[i][j][k] = base_grid[i-di][j-dj][k-dk]; //translating old tree*s onto new grid, includes some NULLs
 					
@@ -196,12 +197,16 @@ void resize_allocation(tree**** base_grid) {
 } //end resize_allocation
 
 
-// TODO: write this. should it even be a separate function or not?
-// dir6 is direction tree was passed to get here, can be 'l','r','u','d','f','b'
+// TODO: write this
+// dir6 is direction that tree was passed to get here, can be 'l','r','u','d','f','b'
+// init ghosts are always present (for their points), so during convert we should treat them like NULLs and recreate them as necessary
+//  - only when moving left, up, or forward are old init ghosts destroyed (not actually positive about this)
+//  - when moving left, up, or forward, up to 23 new init ghosts are needed; otherwise up to 14 new init ghosts are needed
 void convert_ghost2real_and_reghost(tree**** base_grid, tree* new_tree, char dir6) {
 	int i = imin + 1 + (int) round((new_tree->loc.x - pxmin)/dx); //round to force correct int value
 	int j = jmin + 1 + (int) round((new_tree->loc.y - pymin)/dy);
 	int k = kmin + 1 + (int) round((new_tree->loc.z - pzmin)/dz);
+	
 	base_grid[i][j][k] = new_tree; //replaces the ghost that was there before
 	new_tree->owner = pid;
 	
@@ -237,12 +242,14 @@ void convert_ghost2real_and_reghost(tree**** base_grid, tree* new_tree, char dir
 	/*
 	logic
 	- points:
-		- note tree_init creates points[0], this must be overwritten if wrong
 		- new_tree also needs to share points
-		- beware of difference between tree and TreeNode!
+	- 
 		
 	*/
 	
+	// create new ghosts
+	// when dir6 is left, up, or forward, you're moving into init ghosts and so can use pre-existing ones in your layer. however you need to create a new layer of them.
+	// when dir6 is right, down, or back, there are no init ghosts where you're going so you have to make ones in your layer. however there is no new layer to make.
 	for (*d1 = -1; *d1 <= 1; ++*d1) {
 		for (*d2 = -1; *d2 <= 1; ++*d2) {
 			if (base_grid[i+di][j+dj][k+dk] == NULL) {
@@ -253,9 +260,41 @@ void convert_ghost2real_and_reghost(tree**** base_grid, tree* new_tree, char dir
 				// tree_init, includes setting points[0] and owner
 				*(base_grid[i+di][j+dj][k+dk]) = tree_init(get_loc(i+di,j+dj,k+dk), new_tree->neighbor_owners[1+*d1][1+*d2]);
 				
-				// set grid points correctly
+			// if init ghost then convert into ghost instead of re-mallocing
+			else if (base_grid[i+di][j+dj][k+dk]->owner == -2) {
+				base_grid[i+di][j+dj][k+dk]->owner = new_tree->neighbor_owners[1+*d1][1+*d2];
 				
-				laser(cell)
+			}
+			// if neither NULL nor init ghost, this cell is already real or ghost and should be left alone
+		}
+	}
+	// create new init ghosts. then make other 7 points point to neighbor points, but only for recently made ghosts
+	int n;
+	for (*d1 = -1; *d1 <= 1; ++*d1) {
+		for (*d2 = -1; *d2 <= 1; ++*d2) {
+			// recently made ghosts can be identified by points[1] == NULL (which is specifically set in tree_init)
+			// second condition is to avoid choosing init ghosts as well
+			if (base_grid[i+di][j+dj][k+dk]->root->points[1] == NULL && base_grid[i+di][j+dj][k+dk]->owner != -2) {
+			
+				// create new init ghosts as necessary. n should be thought of as binary for getX etc. (n for "neighbors")
+				for (n = 1; n < 8; ++n) {
+					if (base_grid[i+di+getX(n)][j+dj+getY(n)][k+dk+getZ(n)] == NULL) {
+					
+						// malloc
+						base_grid[i+di+getX(n)][j+dj+getY(n)][k+dk+getZ(n)] = (tree*) malloc(sizeof(tree));
+				
+						// tree_init, includes setting points[0] and owner = -2
+						*(base_grid[i+di+getX(n)][j+dj+getY(n)][k+dk+getZ(n)]) = tree_init(get_loc(i+di+getX(n),j+dj+getY(n),k+dk+getZ(n)), -2);
+					}
+				}
+				
+				// make other 7 points point to neighbor points
+				for (n = 1; n < 8; ++n) {
+					base_grid[i+di][j+dj][k+dk]->root->points[n] = base_grid[i+di+getX(n)][j+dj+getY(n)][k+dk+getZ(n)]->root->points[0];
+				}
+				
+				// laser
+				tree_apply_fcn(base_grid[i+di][j+dj][k+dk], &laser);
 			}
 		}
 	}
