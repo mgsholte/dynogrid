@@ -27,6 +27,7 @@ typedef struct {
 
 // Declare some globals
 extern int imin, imax, jmin, jmax, kmin, kmax;	//Processor minimum indicies
+extern int g_xwidth, g_ywidth, g_zwidth; // the dimensions of the base grid array
 extern int pid;	//Processor ID
 extern double pxmin, pymin, pzmin;	//Processor minimum x, y, and z
 //global MPI custom data types:

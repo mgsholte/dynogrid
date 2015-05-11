@@ -123,6 +123,26 @@ tree**** grid_init(int isize, int jsize, int ksize, int x_divs, int y_divs, int 
 	return base_grid;
 }
 
+void grid_free(tree ****base_grid) {
+	int i, j, k;
+	for (i = 0; i < g_xwidth; ++i) {
+		for (j = 0; j < g_ywidth; ++j) {
+			for (k = 0; k < g_zwidth; ++k) {
+				tree *t = base_grid[i][j][k];
+				if (t != NULL) {
+					tree_free(t);
+					base_grid[i][j][k] = NULL;
+				}
+			}
+			free(base_grid[i][j]);
+			base_grid[i][j] = NULL;
+		}
+		free(base_grid[i]);
+		base_grid[i] = NULL;
+	}
+	free(base_grid);
+}
+
 // populates particles randomly within each grid cell inside the bounds of the specified prism. particles are evenly distrubuted across the cells
 // if the origin and dims of the prism don't algin exactly to grid points, they will be rounded to the nearest ones
 void init_particles(tree ****base_grid, vec3 origin, vec3 dims, int elec_per_cell) {
@@ -200,7 +220,3 @@ void output_grid(int itNum, int numFiles, tree ****base_grid) {
 	// int itNum = round_i(time/dt);
 }
 
-void grid_free(tree ****base_grid) {
-	int i, j, k;
-	for (i = 0; i < wi
-}

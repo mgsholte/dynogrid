@@ -101,8 +101,7 @@ int main(int argc, char *argv[]) {
 	 
 	printf("simulation finished\n");
 
-	//list_free(particles);
-	//cleanup(grid_cells);
+	grid_free(base_grid);
 
 	MPI_Finalize();
 
