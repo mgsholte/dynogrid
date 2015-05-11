@@ -333,8 +333,16 @@ void push_particles(tree ****grid) {
 	// wait to finish recving data from all your neighbors
 	for (i = 0; i < nProcs; ++i) {
 		if (neighbors[i] != NULL) {
-			neighbor_recv_cells(neighbors[i]);
+			cell_requests[i] = neighbor_recv_cells(neighbors[i]);
 		}
+	}
+
+	for (i = 0; i < nProcs; ++i) {
+		neighbor *n = neighbors[i];
+		if (n == NULL) {
+			continue;
+		}
+		MPI_Waitall(n->ncellrecvs, cell_requests[i], MPI_STATUSES_IGNORE);
 	}
 
 	// for buffs that hane recieved
