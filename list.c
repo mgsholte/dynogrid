@@ -26,35 +26,41 @@ void list_add(List *list, void *payload) {
 	new_node->payload = payload;
 	new_node->next = list->sentinel->next;
 	list->sentinel->next = new_node;
-	++list->length;
+	++(list->length);
 }
 
-// remove the node currently being iterated
+// remove the node currently being iterated (the one last returned by list_get_next)
 void list_pop(List *l) {
 	Node *x = l->prev->next;  // get node to be removed
 	l->prev->next = x->next;  // unlink it
-	l->iter = x->next;        // reset iterator
+	l->iter = l->prev;        // reset iterator
 	free(x->payload);         // free the payload at the deleted node
 	free(x);                  // free node itself
-	--l->length;
+	--(l->length);
 }
 
-// Moves a particle from a donor list to a recipient list
-void list_pass(List *recip, List *donor, void *payload){
-	list_add(recip, payload);
-	Node *x = donor->prev->next;
+// Moves an elem (the one last returned by list_get_next(donor)) from a donor list to a recipient list. donated item will be 1st elem in recip list
+// no memory is alloced or freed in the process
+void list_pass(List *recip, List *donor) {
+	// get the node to be passed
+	Node *x = donor->iter; 
+	// unlink it from donor list
 	donor->prev->next = x->next;
-	donor->iter = x->next;
-	free(x);
-	--donor->length;
+	// reset donor iter and elem count
+	donor->iter = donor->prev;
+	--(donor->length);
+	// link node into recip list
+	x->next = recip->sentinel->next;
+	recip->sentinel->next = x;
+	++(recip->length);
 }
 
 // Add everithing in the donor list to the recipient list
 // You have to traverse the list to connect the last node no matter what, so this probably isn't too slow
-void list_combine(List *recip, List *donor){
+void list_combine(List *recip, List *donor) {
 	list_reset_iter(donor);
 	while (list_has_next(*donor))
-		list_pass(recip, donor, list_get_next(donor));
+		list_pass(recip, donor);
 }
 
 void list_reset_iter(List *l) {
