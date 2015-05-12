@@ -1,26 +1,21 @@
 CC = mpicc
-CFLAGS = -g
+LD = mpicc
+CFLAGS = -g -MMD
 LFLAGS = -O3
 
-ALL_SRC := $(patsubst %.c,%.o,$(wildcard *.c))
-EXCLUDES = pseudocode.o balance.o
-OBJS := $(filter-out $(EXCLUDES),$(ALL_SRC))
-
+ALL_SRC := $(wildcard *.c)
+EXCLUDES = pseudocode balance
+SRCS := $(filter-out $(addsuffix .c,$(EXCLUDES)),$(ALL_SRC))
+OBJS := $(patsubst %.c,%.o,$(SRCS))
 
 .PHONY: all
 all: dynogrid
 
 dynogrid: $(OBJS)
-	$(CC) $(LFLAGS) $^ -o $@ -lm
+	$(LD) $(LFLAGS) $^ -o $@ -lm
 
 %.o: %.c
-	$(CC) -c $(CFLAGS) $^ -o $@
-
-push.c: dynamics.h decs.h
-	@touch $@
-
-%.c: %.h decs.h
-	@touch $@
+	$(CC) -c $(CFLAGS) $< -o $@
 
 .PHONY: run
 run: dynogrid
@@ -37,5 +32,8 @@ valgrind: dynogrid
 	@valgrind -v --leak-check=full ./dynogrid
 
 clean:
+	@/bin/rm -f *.d
 	@/bin/rm -f *.o
 	@/bin/rm -f dynogrid
+
+-include $(OBJS:%.o=%.d)
