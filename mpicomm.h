@@ -25,12 +25,12 @@ void neighbor_free(neighbor *n);
 void neighbor_add_cell(neighbor *n, tree *cell);
 
 // give to (and recv from) your neighbor a count of how many cells will be communicated in the next steps
-MPI_Request* neighbor_send_cell_count(neighbor *n);
+MPI_Request* neighbor_comm_cell_count(neighbor *n);
 
 // give to (and recv from) your neighbor an array of how many particles are in each cell being communicated
-MPI_Request* neighbor_send_cell_lengths(neighbor *n);
+MPI_Request* neighbor_comm_cell_lengths(neighbor *n);
 
 // give to (and recv from) your neigbor an array of all the arrays of particles in a cell -- one for each cell
-MPI_Request* neighbor_send_cells(neighbor *n);
+MPI_Request* neighbor_comm_cells(neighbor *n);
 
 #endif //MPICOMM_H

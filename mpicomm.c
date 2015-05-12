@@ -16,18 +16,19 @@ void neighbor_free(neighbor *n) {
 	// free recv buffers
 	for (iCell = 0; iCell < n->ncellrecvs; ++iCell) {
 		free(n->recvbufs[iCell]);
-		free(n->recvlens[iCell]);
 	}
 	// free send buffers
 	for (iCell = 0; iCell < n->ncellsends; ++iCell) {
 		free(n->sendbufs[iCell]);
-		free(n->sendlens[iCell]);
 	}
+	// free list len buffers
+	free(n->recvlens);
+	free(n->sendlens);
 	// free array storing the buffers
 	free(n->sendbufs);
 	free(n->recvbufs);
 	// free the particle list
-	list_free(part_lists);
+	list_free(n->part_lists);
 	// free the neighbor itself
 	free(n);
 }

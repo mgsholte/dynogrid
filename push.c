@@ -245,7 +245,7 @@ static void push_one_cell(tree ****grid, List part_list) {
 		// Guarenteed to still be in a cell or ghost cell controled by proc
 		if (xle != xlb || yue != yub || zne != znb) {
 			// add curr to the next_list of grid[xle][yue][zne]
-			list_pass(&(grid[xle][yue][zne]->new_particles), &part_list, curr);
+			list_pass(&(grid[xle][yue][zne]->new_particles), &part_list);
 		}
 
     } 
