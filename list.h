@@ -17,8 +17,8 @@ typedef struct {
 } List;
 
 // list creation/deletion
-List list_init();
-void list_free(List list);
+List* list_init();
+void list_free(List *list);
 
 // list modification
 void list_add(List *list, void *payload);
@@ -26,11 +26,11 @@ void list_pop(List *list);
 
 // list iteration
 void list_reset_iter(List *l);
-bool list_has_next(List l);
+bool list_has_next(List *l);
 void* list_get_next(List *l);
 
 // list query
-int list_length(List list);
+int list_length(List *list);
 
 // particle passing
 void list_pass(List *recip, List *donor);

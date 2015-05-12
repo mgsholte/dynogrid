@@ -2,16 +2,20 @@
 
 #include "list.h"
 
-List list_init() {
+List* list_init() {
 	Node *sentinel = (Node*) malloc(sizeof(Node));
+	sentinel->payload = NULL;
 	sentinel->next = sentinel;
 
-	return (List) { sentinel, sentinel, sentinel, 0 };
+	List *list = (List*) malloc(sizeof(List));
+	*list = (List) { sentinel, sentinel, sentinel, 0 };
+	return list;
 }
 
 void list_free(List list) {
 	list_reset_iter(&list);
 	while(list_has_next(list)) {
+		list_get_next(list);
 		list_pop(&list);
 	}
 	list_reset_iter(&list);
