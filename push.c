@@ -257,7 +257,7 @@ List* part_belongs_in(tree ****grid, vec3 pos) {
     i = floor((pos.x - pxmin) / dx) + imin;
     j = floor((pos.y - pymin) / dy) + jmin;
 	k = floor((pos.z - pzmin) / dz) + kmin;
-	return &(grid[i][j][k]->particles);
+	return grid[i][j][k]->particles;
 }
 
 

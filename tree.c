@@ -14,7 +14,12 @@ tree* tree_init(vec3 loc, int owner) {
 	root->children[0] = NULL; // don't need to set others b/c they'll be set later
 
 	tree *ans = (tree*) malloc(sizeof(tree));
-	*ans = (tree) { root, loc, list_init(), list_init(), owner };
+	
+	*ans = (tree) { root, loc, list_init(), list_init(), owner, 
+			{{-1, -1, -1}, //TODO: real init of this var
+			 {-1, -1, -1},
+			 {-1, -1, -1}}
+		 };
 	return ans;
 }
 
@@ -178,7 +183,7 @@ static void refine(TreeNode* cell, double x, double y, double z, vec3 *h) {
 					pChildPoint->E = (vec3) { 0., 0., 0. };
 					pChildPoint->B = (vec3) { 0., 0., 0. };
 					// set value at grid point by averaging appropriate parent points (the nearest neighbors)
-					int ip, jp, kp;  // the parent point direction
+					unsigned int ip, jp, kp;  // the parent point direction
 					int basep = closest_parent(i,j,k);
 					for (ip = 0; ip <= isI; ++ip) {
 						for (jp = 0; jp <= isJ; ++jp) {

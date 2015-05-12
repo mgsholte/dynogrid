@@ -99,7 +99,7 @@ void output_grid_impl(int itNum, int numFiles, tree ****base_grid, const char su
 		for (j = 0; j < ny; ++j) {
             for (k = 0; k < nz; ++k) {
 				// print x,y,z,|p| for each particle in the cell
-				List particles = base_grid[i][j][k]->particles;
+				List *particles = base_grid[i][j][k]->particles;
 				list_reset_iter(particles);
 				while(list_has_next(particles)) {
 					particle *ptc = (particle*) list_get_next(particles);
