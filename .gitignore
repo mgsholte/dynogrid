@@ -31,13 +31,14 @@
 
 # Misc
 .*.swp
+batch_*
+*.d
 
 # Project
 *.data
 dynogrid
-*~
 sim_*
-batch_*
+*~
 
 #TeX
 *.aux
