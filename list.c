@@ -12,16 +12,19 @@ List* list_init() {
 	return list;
 }
 
-void list_free(List list) {
-	list_reset_iter(&list);
+void list_free(List *list) {
+	list_reset_iter(list);
 	while(list_has_next(list)) {
 		list_get_next(list);
-		list_pop(&list);
+		list_pop(list);
 	}
-	list_reset_iter(&list);
+	//TODO: is this necessary?
+	list_reset_iter(list);
 	if (list_has_next(list))
-		list_pop(&list);
+		list_pop(list);
+
 	free(list.sentinel);
+	free(list);
 }
 
 void list_add(List *list, void *payload) {
@@ -63,8 +66,10 @@ void list_pass(List *recip, List *donor) {
 // You have to traverse the list to connect the last node no matter what, so this probably isn't too slow
 void list_combine(List *recip, List *donor) {
 	list_reset_iter(donor);
-	while (list_has_next(*donor))
+	while (list_has_next(*donor)) {
+		list_get_next(donor);
 		list_pass(recip, donor);
+	}
 }
 
 void list_reset_iter(List *l) {
@@ -72,8 +77,8 @@ void list_reset_iter(List *l) {
 	l->prev = l->sentinel;
 }
 
-bool list_has_next(List l) {
-	return l.iter->next != l.sentinel;
+bool list_has_next(List *l) {
+	return l->iter->next != l->sentinel;
 }
 
 //NB: should point to the node whose payload it returns. it must start off as the sentinel after a reset
@@ -90,7 +95,7 @@ static int node_length(Node *sentinel, Node *cur, int acc) {
 		: node_length(sentinel, cur->next, acc+1);
 }
 
-int list_length(List list) {
-	return list.length;
+int list_length(List *list) {
+	return list->length;
 	//return node_length(list.sentinel, list.sentinel->next, 0);
 }
