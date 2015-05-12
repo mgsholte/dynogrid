@@ -308,67 +308,64 @@ void push_particles(tree ****grid) {
 	}
 
 	// array to the requests so that we can wait for all receives to finish
-	MPI_Request cell_count_requests[2*nProcs];
+	MPI_Request cell_metadata_reqs[2*nProcs];
 
 	// send # of particle lists we will be sending
 	for (i = 0; i < nProcs; ++i) {
 		if (neighbors[i] != NULL) {
+			//TODO: tmp should be unneccessary. we should pass cell_metadata_reqs as an arg to the fcn and it should update the appropiate element itself
 			MPI_Request *tmp = neighbor_send_cell_count(neighbors[i]);
-			cell_count_requests[2*i] = tmp[0];
-			cell_count_requests[2*i+1] = tmp[1];
+			cell_metadata_reqs[2*i] = tmp[0];
+			cell_metadata_reqs[2*i+1] = tmp[1];
 			free(tmp);
 		} else {
-			cell_count_requests[2*i] = MPI_REQUEST_NULL;
-			cell_count_requests[2*i+1] = MPI_REQUEST_NULL;
+			cell_metadata_reqs[2*i] = MPI_REQUEST_NULL;
+			cell_metadata_reqs[2*i+1] = MPI_REQUEST_NULL;
 		}
 	}
 
-	//TODO: can we ignore status for waitall?
-	MPI_Waitall(2*nProcs, cell_count_requests, MPI_STATUSES_IGNORE);
+	//TODO: can we ignore status for waitall? internet says yes and this seems to work
+	MPI_Waitall(2*nProcs, cell_metadata_reqs, MPI_STATUSES_IGNORE);
+
+	// send lengths of the cells we are sending
+	//NB: reuse the same array for storing the requests as used for the cell_count send
+	for (i = 0; i < nProcs; ++i) {
+		if (neighbors[i] != NULL) {
+			//TODO: tmp should be unneccessary. we should pass cell_metadata_reqs as an arg to the fcn and it should update the appropiate element itself
+			MPI_Request *tmp = neighbor_send_cell_lengths(neighbors[i]);
+			cell_metadata_reqs[2*i] = tmp[0];
+			cell_metadata_reqs[2*i+1] = tmp[1];
+			free(tmp);
+		} else {
+			//TODO: since these were set in above loop, they should still be set to this value. we shouldn't need to do anything here, but this is safer
+			cell_metadata_reqs[2*i] = MPI_REQUEST_NULL;
+			cell_metadata_reqs[2*i+1] = MPI_REQUEST_NULL;
+		}
+	}
+
+	//TODO: can we ignore status for waitall? internet says yes and this seems to work
+	MPI_Waitall(2*nProcs, cell_metadata_reqs, MPI_STATUSES_IGNORE);
 
 	// store the particle send/recv requests so we can wait on them to post after initiating them
-	MPI_Request *cell_send_reqs[nProcs];
-	MPI_Request *cell_recv_reqs[nProcs];
+	MPI_Request *cell_data_reqs[nProcs];
 
-	int totSends = 0;
 	// send the cell particle lists themselves (non-blocking)
 	for (i = 0; i < nProcs; ++i) {
 		if (neighbors[i] != NULL) {
-			// send request array will be null if there were no cells to send
-			cell_send_reqs[i] = neighbor_send_cells(neighbors[i]);
+			// send/recv request array will be null if there were no cells to send or recv
+			cell_data_reqs[i] = neighbor_send_cells(neighbors[i]);
 		}
 	}
 
-
-	// receive particle data from all neighbors (non-blocking)
-	for (i = 0; i < nProcs; ++i) {
-		if (neighbors[i] != NULL) {
-			// send request array will be null if there were no cells to recv
-			cell_recv_reqs[i] = neighbor_recv_cells(neighbors[i]);
-		}
-	}
-
-	// for each neighboring processor, wait for all the particle sends to finish posting
+	// for each neighboring processor, wait for all the particle communication to finish
 	for (i = 0; i < nProcs; ++i) {
 		neighbor *n = neighbors[i];
 		if (n == NULL) {
 			continue;
 		}
-		if (cell_send_reqs[i] != NULL) {
-			MPI_Waitall(2*(n->ncellsends), cell_send_reqs[i], MPI_STATUSES_IGNORE);
-			free(cell_send_reqs[i]);
-		}
-	}
-
-	// for each neighboring processor, wait for all the particle recvs to finish posting
-	for (i = 0; i < nProcs; ++i) {
-		neighbor *n = neighbors[i];
-		if (n == NULL) {
-			continue;
-		}
-		if (cell_recv_reqs[i] != NULL) {
-			MPI_Waitall(n->ncellrecvs, cell_recv_reqs[i], MPI_STATUSES_IGNORE);
-			free(cell_recv_reqs[i]);
+		if (cell_data_reqs[i] != NULL) {
+			MPI_Waitall((n->ncellsends+n->ncellrecvs), cell_data_reqs[i], MPI_STATUSES_IGNORE);
+			free(cell_data_reqs[i]);
 		}
 	}
 
