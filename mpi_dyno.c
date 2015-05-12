@@ -190,7 +190,7 @@ int free_mpi_customs(){
 //MPI SEND AND RECV SUBROUTINES:
 
 /*	send a list of trees and each tree's particles */
-MPI_Request* mpi_tree_send(List tree_list, int to_pid, simple_tree** simple_trees_array, particle** all_particles_array, int** part_counts, char* dir6){
+MPI_Request* mpi_tree_send(List *tree_list, int to_pid, simple_tree** simple_trees_array, particle** all_particles_array, int** part_counts, char* dir6){
 	int error;
 
 	//Allocate an array to hold 3 MPI_Request items to be returned to caller:
@@ -199,21 +199,20 @@ MPI_Request* mpi_tree_send(List tree_list, int to_pid, simple_tree** simple_tree
 	int trees_len = list_length(tree_list);
 	*simple_trees_array = (simple_tree*) malloc(sizeof(simple_tree) * trees_len);
 	*part_counts = (int*) malloc(sizeof(int) * trees_len);
-	int all_particles_count;
+	int all_particles_count = 0;
 	
 	//convert the list of tree pointers to an array of simple_tree's and pack into an array:
-	tree temp_tree;
 	int i = 0;
-	list_reset_iter(&tree_list);
+	list_reset_iter(tree_list);
 	while(list_has_next(tree_list)){
-		temp_tree = *((tree*) list_get_next(&tree_list));
-		all_particles_count += list_length(temp_tree.particles);
-		simple_trees_array[i]->loc = temp_tree.loc;
-		simple_trees_array[i]->owner = temp_tree.owner;
+		tree *temp_tree = (tree*) list_get_next(tree_list);
+		all_particles_count += list_length(temp_tree->particles);
+		simple_trees_array[i]->loc = temp_tree->loc;
+		simple_trees_array[i]->owner = temp_tree->owner;
 		int row,col; //iterating nummbers, no specific meaning
 		for(row = 0; row < 3; row++){
 			for(col = 0; col < 3; col++){
-				simple_trees_array[i]->neighbor_owners[row*3 + col] = temp_tree.neighbor_owners[row][col];
+				simple_trees_array[i]->neighbor_owners[row*3 + col] = temp_tree->neighbor_owners[row][col];
 			}//end inner of
 		}//end outer for
 		i++;
@@ -221,21 +220,21 @@ MPI_Request* mpi_tree_send(List tree_list, int to_pid, simple_tree** simple_tree
 
 	//aggregate and pack all of the particles in the trees_list into one big array of particles:
 	*all_particles_array = (particle*) malloc(sizeof(particle) * all_particles_count);
-	list_reset_iter(&tree_list);
+	list_reset_iter(tree_list);
 	i = 0;
 	int j, k = 0;
 	while(list_has_next(tree_list)){
-		List part_list = ((tree*)list_get_next(&tree_list))->particles;
-		list_reset_iter(&part_list);
+		List *part_list = ((tree*)list_get_next(tree_list))->particles;
+		list_reset_iter(part_list);
 		j = 0;
 		while(list_has_next(part_list)){
-			(*all_particles_array)[i] = *((particle*)list_get_next(&part_list));
-			list_pop(&part_list);
+			(*all_particles_array)[i] = *((particle*)list_get_next(part_list));
+			list_pop(part_list);
 			i++;
 			j++;	
 		}//end inner while
 		(*part_counts)[k] = j;
-		list_pop(&tree_list);
+		list_pop(tree_list);
 		k++;
 	}//end while	
 
@@ -308,13 +307,14 @@ MPI_Request* mpi_tree_recv(int from_pid, simple_tree** simple_trees_array, parti
 }//end mpi_tree_recv
 
 
-List mpi_tree_unpack(simple_tree** simple_trees_array, particle** all_particles_array, int** part_counts, int* (buf_lens[])){
+List* mpi_tree_unpack(simple_tree** simple_trees_array, particle** all_particles_array, int** part_counts, int* (buf_lens[])){
 	int error;
-	List trees_list = list_init();
+	List* trees_list = list_init();
 
 	int trees_len = (*buf_lens)[0];
 
-	int tree_num,part_num,tot_parts;
+	int tot_parts = 0;
+	int tree_num,part_num;
 	// unpack array of simple_trees back into regular trees and from an array into a list:
 	for(tree_num = 0; tree_num < trees_len; tree_num++) {
 		tree* tree_ptr = (tree*) malloc(sizeof(tree));
@@ -331,9 +331,9 @@ List mpi_tree_unpack(simple_tree** simple_trees_array, particle** all_particles_
 
 		tree_ptr->particles = list_init();
 		tree_ptr->new_particles = list_init();
-		list_add(&trees_list, tree_ptr);
+		list_add(trees_list, tree_ptr);
 		for(part_num = 0; part_num < (*part_counts)[tree_num]; part_num++){
-			list_add(&tree_ptr->particles, (particle*) all_particles_array[tot_parts]);
+			list_add(tree_ptr->particles, (particle*) all_particles_array[tot_parts]);
 			tot_parts++;
 		}//end inner for
 	}//end for

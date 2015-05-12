@@ -41,8 +41,8 @@ vec3 interp3(vec3 field000, vec3 field001, vec3 field010, vec3 field100, vec3 fi
 }
 
 // Particle pusher!!!!
-static void push_one_cell(tree ****grid, List part_list) {
-	list_reset_iter(&part_list);
+static void push_one_cell(tree ****grid, List *part_list) {
+	list_reset_iter(part_list);
 	if (!list_has_next(part_list))
 			return;
 
@@ -74,7 +74,7 @@ static void push_one_cell(tree ****grid, List part_list) {
 	particle *curr;
     //loop over all the particles
     while (list_has_next(part_list)) {
-		curr = (particle*) list_get_next(&part_list);
+		curr = (particle*) list_get_next(part_list);
 
         xlb = floor(((curr->pos).x - pxmin) * idx) + imin + 1;
         yub = floor(((curr->pos).y - pymin) * idy) + jmin + 1;
@@ -99,7 +99,7 @@ static void push_one_cell(tree ****grid, List part_list) {
 		// Check if out of bounds
 		// This check stays the same when parallel, since each processor will have the appropriate ghost cells
 		if ((((curr->pos).x <= 0 || (curr->pos).y <= 0) || (curr->pos).z <= 0) || (((curr->pos).x >= x_max || (curr->pos).y >= y_max) || (curr->pos).z >= z_max)){
-			list_pop(&part_list);
+			list_pop(part_list);
 			continue;
 		}
 
@@ -221,7 +221,7 @@ static void push_one_cell(tree ****grid, List part_list) {
 
 		// Check if out of bounds
 		if ((((curr->pos).x <= 0 || (curr->pos).y <= 0) || (curr->pos).z <= 0) || (((curr->pos).x >= x_max || (curr->pos).y >= y_max) || (curr->pos).z >= z_max)){
-			list_pop(&part_list);
+			list_pop(part_list);
 			continue;
 		}
 
@@ -245,7 +245,7 @@ static void push_one_cell(tree ****grid, List part_list) {
 		// Guarenteed to still be in a cell or ghost cell controled by proc
 		if (xle != xlb || yue != yub || zne != znb) {
 			// add curr to the next_list of grid[xle][yue][zne]
-			list_pass(&(grid[xle][yue][zne]->new_particles), &part_list);
+			list_pass((grid[xle][yue][zne]->new_particles), part_list);
 		}
 
     } 
@@ -405,7 +405,7 @@ void push_particles(tree ****grid) {
 				curCell = grid[i][j][k];
 				if (curCell != NULL) {
 					// Add the next_list to the current list
-					list_combine(&(grid[i][j][k]->particles), &(grid[i][j][k]->new_particles));
+					list_combine(grid[i][j][k]->particles, grid[i][j][k]->new_particles);
 				}
 			}
 		}

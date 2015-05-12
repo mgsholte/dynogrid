@@ -23,7 +23,7 @@ void list_free(List *list) {
 	if (list_has_next(list))
 		list_pop(list);
 
-	free(list.sentinel);
+	free(list->sentinel);
 	free(list);
 }
 
@@ -66,7 +66,7 @@ void list_pass(List *recip, List *donor) {
 // You have to traverse the list to connect the last node no matter what, so this probably isn't too slow
 void list_combine(List *recip, List *donor) {
 	list_reset_iter(donor);
-	while (list_has_next(*donor)) {
+	while (list_has_next(donor)) {
 		list_get_next(donor);
 		list_pass(recip, donor);
 	}

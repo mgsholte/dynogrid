@@ -35,7 +35,7 @@ void neighbor_add_cell(neighbor *n, tree *cell) {
 	// only add cells that have particles to send
 	if (list_length(cell->particles) != 0) {
 		//TODO: could init sendlens here and set its values rather than doing that in send_cell_lengths
-		list_add(&(n->part_lists), &(cell->particles));
+		list_add(n->part_lists, cell->particles);
 		n->ncellsends += 1;
 	}
 }
@@ -59,11 +59,11 @@ MPI_Request* neighbor_comm_cell_lengths(neighbor *n) {
 	n->sendlens = (int*) malloc(n->ncellsends * sizeof(int));
 	// now fill the entries in the sendlens array with the lengths of the lists to send
 	int iCell = 0;
-	list_reset_iter(&n->part_lists);
+	list_reset_iter(n->part_lists);
 	while(list_has_next(n->part_lists)) {
 		// pointer to the particle list (not an array)
-		List *curSendList = (List*) list_get_next(&n->part_lists);
-		n->sendlens[iCell++] = list_length(*curSendList);
+		List *curSendList = (List*) list_get_next(n->part_lists);
+		n->sendlens[iCell++] = list_length(curSendList);
 	}
 	
 	// do the non-blocking send
@@ -92,16 +92,16 @@ MPI_Request* neighbor_comm_cells(neighbor *n) {
 
 	// now loop over each cell and send the particles themselves
 	int iCell = 0;
-	list_reset_iter(&n->part_lists);
+	list_reset_iter(n->part_lists);
 	while(list_has_next(n->part_lists)) {
 		// pointer to the particle list (not an array)
-		List *curSendList = (List*) list_get_next(&n->part_lists);
+		List *curSendList = (List*) list_get_next(n->part_lists);
 		// allocate the buffer used for the send of this cell
 		particle *sendbuf = (particle *)malloc(n->sendlens[iCell] * sizeof(particle));
 		// populate the buffer with the list contents
 		int iPart = 0;
 		list_reset_iter(curSendList);
-		while(list_has_next(*curSendList)) {
+		while(list_has_next(curSendList)) {
 			sendbuf[iPart++] = *((particle*) list_get_next(curSendList));
 			// we don't need to keep the particle on this proc anymore so remove it from the list (which also frees it)
 			list_pop(curSendList);

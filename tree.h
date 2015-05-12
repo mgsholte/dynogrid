@@ -19,8 +19,8 @@ typedef struct TreeNode {
 typedef struct {
 	TreeNode *root;
 	vec3 loc; // the (x,y,z) location of the lower-left-front point of the root node in absolute coords
-	List particles; // the particles within this cell
-	List new_particles; // the particles added to this cell for the next time step
+	List *particles; // the particles within this cell
+	List *new_particles; // the particles added to this cell for the next time step
 	int owner; // the rank of the processor which owns this cell
 	int neighbor_owners[3][3]; // exclusively for tree passing, used to construct new ghost cells (1 new tree = up to 9 new ghosts)
 } tree;

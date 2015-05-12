@@ -185,7 +185,7 @@ void init_particles(tree ****base_grid, vec3 origin, vec3 dims, int elec_per_cel
 						PROTON_WEIGHT  //weight
 						};
 
-					list_add(&cell.particles, p);
+					list_add(cell.particles, p);
 
 					// add an electron
 					p = (particle*) malloc(sizeof(particle));
@@ -201,16 +201,17 @@ void init_particles(tree ****base_grid, vec3 origin, vec3 dims, int elec_per_cel
 						ELECTRON_WEIGHT  //weight
 						};
 
-					list_add(&cell.particles, p);
+					list_add(cell.particles, p);
 				}
 				// reset the iterator after adding the particles. probably redundant since this should be called anytime before starting an iteration
-				list_reset_iter(&cell.particles);
+				list_reset_iter(cell.particles);
 			}
 		}
 	}
 }
 
 void output_grid(int itNum, int numFiles, tree ****base_grid) {
+	//TODO
 	if(pid == 0) {
 		printf("output grid not yet implemented\n");
 	}

@@ -14,7 +14,7 @@ typedef struct {
 	// and, by extension, the lens of the sendlens/recvlens arrays
 	int ncellsends, ncellrecvs;
 	// a list of the particle lists to send to this neighbor
-	List part_lists;
+	List *part_lists;
 	// array of buffers for sending/recving each particle list
 	particle **sendbufs, **recvbufs;
 	// the # of particles to send in a given cell aka sendlen[i] is the length of sendbuf[i], etc.
