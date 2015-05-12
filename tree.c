@@ -168,11 +168,11 @@ static void refine(TreeNode* cell, double x, double y, double z, vec3 *h) {
 	// the elem children_points[i][j][k] holds the point given by the vector x=i, y=j, z=k where i|j|k=2 means move 2 points in that direction, i.e. the verticies of the original, unsplit cell
 	grid_point* children_points[3][3][3];
 	for (i = 0; i < 3; ++i) {
-		bool isI = (i == 1);
+		bool isI = (bool) (i == 1);
 		for (j = 0; j < 3; ++j) {
-			bool isJ = (j == 1);
+			bool isJ = (bool) (j == 1);
 			for (k = 0; k < 3; ++k) {
-				bool isK = (k == 1);
+				bool isK = (bool) (k == 1);
 				// gives the index of the closest parent cell with indicies rounded down
 				//TODO: these divide by 2s are really just an extra shift
 				#define closest_parent(i,j,k) (((i/2)<<2) + ((j/2)<<1) + (k/2))

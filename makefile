@@ -1,6 +1,6 @@
 CC = mpicc
 LD = mpicc
-CFLAGS = -g -MMD -Wextra -Wparentheses -Werror -fmax-errors=4
+CFLAGS = -g -MMD -Wcheck -Werror
 LFLAGS = -O3
 
 ALL_SRC := $(wildcard *.c)

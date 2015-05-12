@@ -78,7 +78,7 @@ void list_reset_iter(List *l) {
 }
 
 bool list_has_next(List *l) {
-	return l->iter->next != l->sentinel;
+	return (bool) (l->iter->next != l->sentinel);
 }
 
 //NB: should point to the node whose payload it returns. it must start off as the sentinel after a reset
