@@ -1,8 +1,6 @@
-#include <mpi.h>
 #include <stdlib.h>
 
 #include "mpicomm.h"
-#include "mpi_dyno.h"
 
 neighbor* neighbor_init(int pid) {
 	neighbor *n = (neighbor*) malloc(sizeof(neighbor));

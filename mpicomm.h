@@ -1,6 +1,8 @@
 #ifndef MPICOMM_H
 #define MPICOMM_H
 
+#include <mpi.h>
+
 #include "decs.h"
 #include "list.h"
 #include "tree.h"
