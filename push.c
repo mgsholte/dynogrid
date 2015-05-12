@@ -360,10 +360,7 @@ void push_particles(tree ****grid) {
 	// for each neighboring processor, wait for all the particle communication to finish
 	for (i = 0; i < nProcs; ++i) {
 		neighbor *n = neighbors[i];
-		if (n == NULL) {
-			continue;
-		}
-		if (cell_data_reqs[i] != NULL) {
+		if (n != NULL) {
 			MPI_Waitall((n->ncellsends+n->ncellrecvs), cell_data_reqs[i], MPI_STATUSES_IGNORE);
 			free(cell_data_reqs[i]);
 		}
