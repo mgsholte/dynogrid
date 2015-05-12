@@ -33,16 +33,16 @@ void neighbor_free(neighbor *n) {
 }
 
 void neighbor_add_cell(neighbor *n, tree *cell) {
-	if (list_length(cell->particles)!=0){
+	// only add cells that have particles to send
+	if (list_length(cell->particles) != 0) {
+		//TODO: could init sendlens here and set its values rather than doing that in send_cell_lengths
 		list_add(&(n->part_lists), &(cell->particles));
-		//TODO: remove if unnecessary
-		//n->ncellsends = list_length(n->part_lists);
 		n->ncellsends += 1;
 	}
 }
 
 // always return 2 requests, one for the send, the other for the recv
-MPI_Request* neighbor_send_cell_count(neighbor *n) {
+MPI_Request* neighbor_comm_cell_count(neighbor *n) {
 	MPI_Request *reqs = (MPI_Request*) malloc(2 * sizeof(MPI_Request));
 	// tell neighbors how many cells you will send them
 	MPI_Isend(&(n->ncellsends), 1, MPI_INT, n->pid, TAG_N_CELLS, MPI_COMM_WORLD, &reqs[0]);
@@ -53,7 +53,7 @@ MPI_Request* neighbor_send_cell_count(neighbor *n) {
 
 //TODO: name -> neighbor_comm_cell_lengths since it is both send and recv
 // always returns an array of 2 requests
-MPI_Request* neighbor_send_cell_lengths(neighbor *n) {
+MPI_Request* neighbor_comm_cell_lengths(neighbor *n) {
 	MPI_Request *reqs = (MPI_Request*) malloc(2 * sizeof(MPI_Request));
 
 	// need to allocate the array of # of particles to send in each cell
@@ -87,7 +87,7 @@ MPI_Request* neighbor_send_cell_lengths(neighbor *n) {
 }
 
 // 2 isends for every cell being sent to the neighbor
-MPI_Request* neighbor_send_cells(neighbor *n) {
+MPI_Request* neighbor_comm_cells(neighbor *n) {
 	// allocate the array to hold the buffers for sending particles
 	n->sendbufs = (particle **)malloc(n->ncellsends * sizeof(particle*));
 

@@ -7,9 +7,10 @@
 
 typedef struct {
 	// the id of the neighbor processor
+	int pid;
 	// the # of cells to send/recv aka the lens of the send/recv bufs
 	// and, by extension, the lens of the sendlens/recvlens arrays
-	int pid, ncellsends, ncellrecvs;
+	int ncellsends, ncellrecvs;
 	// a list of the particle lists to send to this neighbor
 	List part_lists;
 	// array of buffers for sending/recving each particle list

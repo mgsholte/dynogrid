@@ -271,6 +271,7 @@ void push_particles(tree ****grid) {
 				// Check if valid cell
 				curCell = grid[i][j][k];
 				if (curCell != NULL) {
+					// check if we own it
 					if (curCell->owner == pid) {
 						push_one_cell(grid, curCell->particles);
 					}
@@ -314,7 +315,7 @@ void push_particles(tree ****grid) {
 	for (i = 0; i < nProcs; ++i) {
 		if (neighbors[i] != NULL) {
 			//TODO: tmp should be unneccessary. we should pass cell_metadata_reqs as an arg to the fcn and it should update the appropiate element itself
-			MPI_Request *tmp = neighbor_send_cell_count(neighbors[i]);
+			MPI_Request *tmp = neighbor_comm_cell_count(neighbors[i]);
 			cell_metadata_reqs[2*i] = tmp[0];
 			cell_metadata_reqs[2*i+1] = tmp[1];
 			free(tmp);
@@ -332,7 +333,7 @@ void push_particles(tree ****grid) {
 	for (i = 0; i < nProcs; ++i) {
 		if (neighbors[i] != NULL) {
 			//TODO: tmp should be unneccessary. we should pass cell_metadata_reqs as an arg to the fcn and it should update the appropiate element itself
-			MPI_Request *tmp = neighbor_send_cell_lengths(neighbors[i]);
+			MPI_Request *tmp = neighbor_comm_cell_lengths(neighbors[i]);
 			cell_metadata_reqs[2*i] = tmp[0];
 			cell_metadata_reqs[2*i+1] = tmp[1];
 			free(tmp);
@@ -353,7 +354,7 @@ void push_particles(tree ****grid) {
 	for (i = 0; i < nProcs; ++i) {
 		if (neighbors[i] != NULL) {
 			// send/recv request array will be null if there were no cells to send or recv
-			cell_data_reqs[i] = neighbor_send_cells(neighbors[i]);
+			cell_data_reqs[i] = neighbor_comm_cells(neighbors[i]);
 		}
 	}
 
@@ -361,6 +362,7 @@ void push_particles(tree ****grid) {
 	for (i = 0; i < nProcs; ++i) {
 		neighbor *n = neighbors[i];
 		if (n != NULL) {
+			//TODO: can we ignore status for waitall? internet says yes and this seems to work
 			MPI_Waitall((n->ncellsends+n->ncellrecvs), cell_data_reqs[i], MPI_STATUSES_IGNORE);
 			free(cell_data_reqs[i]);
 		}
