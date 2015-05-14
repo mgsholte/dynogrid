@@ -95,7 +95,14 @@ Our pusher follows the implementation in EPOCH \cite{epoch}, but with some modif
 
 \section{Parallelization}
 
-\subsection{List Passer}
+\subsection{Particle List Passer}
+Particles move throughout the simulation volume and often end up in a different cell at the end of any given time step.  Since different cells can be on different processors, all processors must stop at the end of every time step to pass particles and reconcile their differences with neighbors.  To facilitate this, each base grid cell keeps a list of the particles in it and a separate list of the particles that hove moved into it.  All of the particles that need to be passed are thus in the second list of the ghost cells and there is no need to traverse a list of all particles to find those that need to be passed.  This is implemented in three steps in functions in \texttt{push.c}, \texttt{mpicomm.c}, and \texttt{mpi\_dyno.c}.
+
+Before the communication, each processor assembles a list of its neighbors by checking the owner of each of its ghost cells.  The neighbor relationship is one-to-one, i.e., if A is B's neighbor, B is A's neighbor.  Thus each processor can communicate directly with only the processors it needs to.
+
+First, each processor communicates to each neighbor how many particle lists it will pass, so the neighbors know how many to expect.  This is followed by an \texttt{MPI\_WaitAll} command to ensure synchronization.  Next, the neighbors communicate the size of each list to be sent, followed by another \texttt{MPI\_WaitAll}.
+
+In the third step, the particles are themselves passed.  First, the singly-linked lists of particles are packed in to buffers that are continuous arrays of particles.  These buffers are then sent.  Memory for the receive is allocated based on the previous two communications and the receive is executed, followed by a final \texttt{MPI\_WaitAll}.  Finally, the particles are unpacked into their respective lists.
 
 \subsection{Cell Passer}
 
@@ -103,6 +110,11 @@ Our pusher follows the implementation in EPOCH \cite{epoch}, but with some modif
 
 
 \section{Theoretical Performance}
+For sequential performance, performance should depend on the number of particles and grid points in the simulation.  Essentially, computation time should be 
+\begin{equation}
+\mathcal{O}(N + M),
+\end{equation}
+where $N$ is the number of particles and $M$ is the number of grid points.  Since we are using an adaptive grid, $M$ is not constant, however, we will treat it as a constant here.  I (Scott) expect that full, physics-accurate simulations will refine in one area and simultaneously coarsen in another, keeping the total number (but not the processor distribution) of grid points generally constant.  This is especially true for our test problem.
 
 \section{Performance Results}
 
