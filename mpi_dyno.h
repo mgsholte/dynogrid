@@ -5,13 +5,11 @@
 
 #include "decs.h"
 #include "list.h"
-#include "mpicomm.h"
 
-int init_mpi_vec3();
-int init_mpi_particle();
-int init_mpi_grid_point();
+MPI_Request* mpi_tree_send(List *tree_list, int to_pid, simple_tree** simple_trees_array, particle** all_particles_array, int** part_counts, char* dir6);
 
-int init_mpi_customs();
-int free_mpi_customs();
+MPI_Request* mpi_tree_recv(int from_pid, simple_tree** simple_trees_array, particle** all_particles_array, int** part_counts, int* (buf_lens[]), char* dir6);
+
+List* mpi_tree_unpack(simple_tree** simple_trees_array, particle** all_particles_array, int** part_counts, int* (buf_lens[]));
 
 #endif //MPI_DYNO_H

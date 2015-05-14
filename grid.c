@@ -146,7 +146,6 @@ void grid_free(tree ****base_grid) {
 // populates particles randomly within each grid cell inside the bounds of the specified prism. particles are evenly distrubuted across the cells
 // if the origin and dims of the prism don't algin exactly to grid points, they will be rounded to the nearest ones
 void init_particles(tree ****base_grid, vec3 origin, vec3 dims, int elec_per_cell) {
-	//TODO: this assumes that ix=0 gives the cell with origin at x=0. this is not necessarily the case looking at grid_init(). each proc needs to know an offset where its grid begins. i.e. ix=0 on my local grid corresponds to ix=offset on the global grid
 	int iy, ix, iz, n;
 	int ix_min = round_i((origin.x-pxmin)/dx)+imin, ix_max = round_i(dims.x/dx) + ix_min;
 	int iy_min = round_i((origin.y-pymin)/dy)+jmin, iy_max = round_i(dims.y/dy) + iy_min;

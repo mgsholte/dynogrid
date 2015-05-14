@@ -1,4 +1,6 @@
 #include <stdlib.h>
+#include <string.h> // for memcpy
+#include <stdio.h> // for printf in debugging
 
 #include "list.h"
 
@@ -8,7 +10,10 @@ List* list_init() {
 	sentinel->next = sentinel;
 
 	List *list = (List*) malloc(sizeof(List));
-	*list = (List) { sentinel, sentinel, sentinel, 0 };
+	// the following allows us to set sentinel even though it is a const pointer
+	List tmp = (List) { sentinel, sentinel, sentinel, 0 };
+	memcpy(list, &tmp, sizeof(List));
+
 	return list;
 }
 
@@ -20,10 +25,15 @@ void list_free(List *list) {
 	}
 	//TODO: is this necessary?
 	list_reset_iter(list);
-	if (list_has_next(list))
+	if (list_has_next(list)) {
+		list_get_next(list);
 		list_pop(list);
-
+	}
 	free(list->sentinel);
+	//TODO: should be unnecessary
+	memset(list, NULL, sizeof(Node*)); // <==> list->sentinel = NULL;
+	
+
 	free(list);
 }
 
@@ -70,6 +80,10 @@ void list_combine(List *recip, List *donor) {
 		list_get_next(donor);
 		list_pass(recip, donor);
 	}
+	//TODO: debugging
+	if (list_length(donor) != 0) {
+		printf("warning, found a bug in list_combine\n");
+	}
 }
 
 void list_reset_iter(List *l) {
@@ -81,7 +95,7 @@ bool list_has_next(List *l) {
 	return (bool) (l->iter->next != l->sentinel);
 }
 
-//NB: should point to the node whose payload it returns. it must start off as the sentinel after a reset
+//NB: iter should point to the node whose payload it returns. it must start off as the sentinel after a reset
 void* list_get_next(List *l) {
 	l->prev = l->iter;
 	l->iter = l->iter->next;

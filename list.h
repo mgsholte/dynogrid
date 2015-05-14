@@ -10,7 +10,7 @@ typedef struct Node {
 
 // singly linked circular list
 typedef struct {
-	Node *sentinel;  // dummy node which marks the beginning and end of the list
+	Node *const sentinel;  // const ptr to dummy node which marks the beginning and end of the list
 	Node *iter;      // pointer to next node returned when iterating over the list
 	Node *prev;      // allows for popping the current element during an iteration
 	int length;

@@ -4,14 +4,21 @@ CFLAGS = -g -MMD -Wcheck -Werror
 LFLAGS = -O3
 
 ALL_SRC := $(wildcard *.c)
-EXCLUDES = pseudocode balance
-SRCS := $(filter-out $(addsuffix .c,$(EXCLUDES)),$(ALL_SRC))
+EXCLUDES = mpi_dyno.c pseudocode.c balance.c $(wildcard *test.c)
+SRCS := $(filter-out $(EXCLUDES),$(ALL_SRC))
 OBJS := $(patsubst %.c,%.o,$(SRCS))
 
 .PHONY: all
 all: dynogrid
 
+.PHONY: tests
+tests: list_test
+	$<
+
 dynogrid: $(OBJS)
+	$(LD) $(LFLAGS) $^ -o $@ -lm
+
+list_test: list_test.o list.o
 	$(LD) $(LFLAGS) $^ -o $@ -lm
 
 %.o: %.c

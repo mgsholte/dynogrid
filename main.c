@@ -80,7 +80,6 @@ int main(int argc, char *argv[]) {
 
 	tree ****base_grid = grid_init(isize, jsize, ksize, x_divs, y_divs, z_divs);
 	// add particles to the specified cells
-	//TODO:init_particles
 	init_particles(base_grid, origin, dims, elec_per_cell);
 
 	printf("finished initializing. beginning simulation\n");
