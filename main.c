@@ -7,7 +7,7 @@
 #include "grid.h"
 #include "dynamics.h"
 #include "list.h"
-#include "mpi_dyno.h"
+#include "mpitypes.h"
 
 static double min(const double x, const double y, const double z) {
 	return (x < y)

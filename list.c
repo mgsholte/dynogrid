@@ -31,7 +31,7 @@ void list_free(List *list) {
 	}
 	free(list->sentinel);
 	//TODO: should be unnecessary
-	memset(list, NULL, sizeof(Node*)); // <==> list->sentinel = NULL;
+	memset(list, (int) NULL, sizeof(Node*)); // <==> list->sentinel = NULL;
 	
 
 	free(list);

@@ -91,7 +91,7 @@ tree**** grid_init(int isize, int jsize, int ksize, int x_divs, int y_divs, int 
 				//	}
 					
 					//TODO: for debugging
-					printf("setting owner_id = %d for grid[%d][%d][%d]\n", owner_id,i ,j ,k);
+					//printf("setting owner_id = %d for grid[%d][%d][%d]\n", owner_id,i ,j ,k);
 					
 					// find init ghosts. these should be recognized as such even if they also fall out of simulation bounds. so owner_id = -2 trumps -1
 					if (i == imax || j == jmax || k == kmax) {
