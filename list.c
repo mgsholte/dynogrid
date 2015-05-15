@@ -49,6 +49,9 @@ void list_add(List *list, void *payload) {
 // remove the node currently being iterated (the one last returned by list_get_next)
 void list_pop(List *l) {
 	Node *x = l->prev->next;  // get node to be removed
+	if (x == l->sentinel) {
+		printf("warning! popping the sentinel!\n");
+	}
 	l->prev->next = x->next;  // unlink it
 	l->iter = l->prev;        // reset iterator
 	free(x->payload);         // free the payload at the deleted node
@@ -61,6 +64,9 @@ void list_pop(List *l) {
 void list_pass(List *recip, List *donor) {
 	// get the node to be passed
 	Node *x = donor->iter; 
+	if (x == donor->sentinel) {
+		printf("warning! passing the sentinel!\n");
+	}
 	// unlink it from donor list
 	donor->prev->next = x->next;
 	// reset donor iter and elem count

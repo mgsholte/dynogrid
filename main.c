@@ -15,11 +15,6 @@ static double min(const double x, const double y, const double z) {
 			: (y < z ? y : z);
 }
 
-/**** define things declared in decs.h ****/
-//void scale_vec(vec3 *v, double factor) {
-//	v->x *= factor;	v->y *= factor;	v->z *= factor;
-//}
-
 // define extern vars from decs.h
 int imin, imax, jmin, jmax, kmin, kmax;	//Processor minimum indicies
 int g_xwidth, g_ywidth, g_zwidth; // the dimensions of the base grid array
@@ -94,6 +89,7 @@ int main(int argc, char *argv[]) {
 			printf("outputting grid\n");
 			output_grid((i/output_freq), (nSteps/output_freq), base_grid);
 		}
+		MPI_Barrier(MPI_COMM_WORLD);
 	}
 
 	// print final state unless it was already output on the last iteration of the above loop
