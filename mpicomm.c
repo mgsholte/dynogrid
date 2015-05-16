@@ -26,7 +26,7 @@ void neighbor_free(neighbor *n) {
 	free(n->sendbufs);
 	free(n->recvbufs);
 	// free the particle list
-	list_free(n->part_lists);
+	list_free(n->part_lists, false);
 	// free the neighbor itself
 	free(n);
 }
@@ -104,7 +104,7 @@ MPI_Request* neighbor_comm_cells(neighbor *n) {
 		while(list_has_next(curSendList)) {
 			sendbuf[iPart++] = *((particle*) list_get_next(curSendList));
 			// we don't need to keep the particle on this proc anymore so remove it from the list (which also frees it)
-			list_pop(curSendList);
+			list_pop(curSendList, true);
 		}
 		// save handles to send/recv buffers to free later
 		n->sendbufs[iCell++] = sendbuf;

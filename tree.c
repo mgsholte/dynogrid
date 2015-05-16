@@ -39,9 +39,9 @@ void tree_free(tree *t) {
 	free(root);
 	t->root = NULL;
 
-	// free the 2 particle lists
-	list_free(t->particles);
-	list_free(t->new_particles);
+	// free the 2 particle lists and the particles themselves
+	list_free(t->particles, true);
+	list_free(t->new_particles, true);
 
 	// finally, free the tree itself
 	free(t);

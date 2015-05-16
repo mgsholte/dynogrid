@@ -99,7 +99,7 @@ static void push_one_cell(tree ****grid, List *part_list) {
 		// Check if out of the simulation bounds
 		// This check stays the same when parallel, since each processor will have the appropriate ghost cells
 		if ((((curr->pos).x <= 0 || (curr->pos).y <= 0) || (curr->pos).z <= 0) || (((curr->pos).x >= x_max || (curr->pos).y >= y_max) || (curr->pos).z >= z_max)){
-			list_pop(part_list);
+			list_pop(part_list, true);
 			continue;
 		}
 
@@ -221,7 +221,7 @@ static void push_one_cell(tree ****grid, List *part_list) {
 
 		// Check again if out of bounds
 		if ((((curr->pos).x <= 0 || (curr->pos).y <= 0) || (curr->pos).z <= 0) || (((curr->pos).x >= x_max || (curr->pos).y >= y_max) || (curr->pos).z >= z_max)){
-			list_pop(part_list);
+			list_pop(part_list, true);
 			continue;
 		}
 

@@ -18,11 +18,11 @@ typedef struct {
 
 // list creation/deletion
 List* list_init();
-void list_free(List *list);
+void list_free(List *list, bool free_payloads);
 
 // list modification
 void list_add(List *list, void *payload);
-void list_pop(List *list);
+void list_pop(List *list, bool free_payload);
 
 // list iteration
 void list_reset_iter(List *l);

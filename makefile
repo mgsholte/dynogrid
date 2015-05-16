@@ -1,6 +1,6 @@
-CC = mpicc
-LD = mpicc
-CFLAGS = -g -MMD -Wcheck -Werror
+CC = mpicc -cc=clang
+LD = mpicc -cc=clang
+CFLAGS = -g -MMD -Werror
 LFLAGS = -O3
 
 ALL_SRC := $(wildcard *.c)
@@ -26,9 +26,7 @@ list_test: list_test.o list.o
 
 .PHONY: run
 run: dynogrid
-	@rm -f batch_dynogrid
-	@qsub jobscript
-	@watch -n 10 qstat
+	@mpirun -np 2 -hostfile hostfile ./dynogrid 1 2 1
 
 .PHONY: debug
 debug: dynogrid

@@ -17,17 +17,17 @@ List* list_init() {
 	return list;
 }
 
-void list_free(List *list) {
+void list_free(List *list, bool free_payloads) {
 	list_reset_iter(list);
 	while(list_has_next(list)) {
 		list_get_next(list);
-		list_pop(list);
+		list_pop(list, free_payloads);
 	}
 	//TODO: is this necessary?
 	list_reset_iter(list);
 	if (list_has_next(list)) {
 		list_get_next(list);
-		list_pop(list);
+		list_pop(list, free_payloads);
 	}
 	free(list->sentinel);
 	//TODO: should be unnecessary
@@ -47,14 +47,16 @@ void list_add(List *list, void *payload) {
 }
 
 // remove the node currently being iterated (the one last returned by list_get_next)
-void list_pop(List *l) {
+void list_pop(List *l, bool free_payload) {
 	Node *x = l->prev->next;  // get node to be removed
 	if (x == l->sentinel) {
 		printf("warning! popping the sentinel!\n");
 	}
 	l->prev->next = x->next;  // unlink it
 	l->iter = l->prev;        // reset iterator
-	free(x->payload);         // free the payload at the deleted node
+	if (free_payload) {
+		free(x->payload);         // free the payload at the deleted node
+	}
 	free(x);                  // free node itself
 	--(l->length);
 }
