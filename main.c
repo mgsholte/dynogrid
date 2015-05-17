@@ -43,7 +43,7 @@ int main(int argc, char *argv[]) {
 	MPI_Comm_rank(MPI_COMM_WORLD, &pid);
 	MPI_Comm_size(MPI_COMM_WORLD, &nProcs);
 	if(nProcs != x_divs*y_divs*z_divs){
-		printf("ERROR! nProcs != x_divs*y_divs*z_divs!\nMoron!!!\n");
+		printf("ERROR! nProcs (%d) != x_divs*y_divs*z_divs!\nMoron!!!\n", nProcs);
 		MPI_Finalize();
 		return -1;
 	}//end if

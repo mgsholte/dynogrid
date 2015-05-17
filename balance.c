@@ -1,5 +1,7 @@
-#include "balance.h"
 #include <stdio.h>
+#include <stdlib.h>
+
+#include "balance.h"
 
 
 bool is_real(tree* curCell){
@@ -42,6 +44,7 @@ void determine_neighbor_matchings(List* ne_matchings[], char dim, tree**** grid)
 	surface* prev_surf_match = NULL;
 	
 	if(dim == 'y'){
+		surface *surf_match = NULL;
 		for (i = imin; i < imax; ++i) {
 			for (j = jmin; j < jmax; ++j) {
 				for (k = kmin; k < kmax; ++k) {
@@ -74,34 +77,34 @@ void determine_neighbor_matchings(List* ne_matchings[], char dim, tree**** grid)
 						//set the layer value for the surface struct (i.e. )
 						layer = j;
 						
-						surface* surf_match;
-						List* list_of_cells; 
+						List *list_of_cells; 
 
-						if(prev_surf_match != NULL){
-							if(	prev_surf_match->neighbor == neighbor &&
-								prev_surf_match->layer == layer &&
-								prev_surf_match->dir == dir){
+						if( prev_surf_match != NULL &&
+							prev_surf_match->neighbor == neighbor &&
+							prev_surf_match->layer == layer &&
+							prev_surf_match->dir == dir){
 								//then we are dealing with the same surface matching
 								surf_match = prev_surf_match;
-								list_of_cells = surf_match->cells;
-							}//end inner if
 						}else{
-							surf_match = (surface*) malloc(sizeof(surface));
-							list_of_cells = list_init();
+							surf_match = malloc(sizeof(*surf_match));
+
+							surf_match->cells = list_init();
+							surf_match->neighbor = curCell->owner;
+							surf_match->dir = dir;
+							surf_match->layer = layer;
+
+							if((ne_matchings[surf_match->neighbor]) == NULL){
+								//then the List has not yet been initialized so we have to malloc it and initialize it:
+								ne_matchings[surf_match->neighbor] = list_init();
+							}
+							list_add(ne_matchings[surf_match->neighbor], surf_match);
 						}//end if else
 						
-						surf_match->neighbor = curCell->owner;
-						surf_match->dir = dir;
-						surf_match->layer = layer;
-						
+						list_of_cells = surf_match->cells;
 						if(dir < 0){
 							list_add(list_of_cells, nextCell);
 						}else if(dir > 0){
 							list_add(list_of_cells, prevCell);
-						}
-						if((ne_matchings[surf_match->neighbor]) == NULL){
-							//then the List has not yet been initialized so we have to malloc it and initialize it:
-							ne_matchings[surf_match->neighbor] = list_init();
 						}
 						/* reminder: 
 								ne_matchings ......	an array of
@@ -109,7 +112,6 @@ void determine_neighbor_matchings(List* ne_matchings[], char dim, tree**** grid)
 									where each list holds "surface"s (a new type of struct...see Balance.h)
 									each "surface" has meta data and
 									a List of trees */
-						list_add(ne_matchings[surf_match->neighbor], (void*) surf_match);
 						prev_surf_match = surf_match;
 						/* reminder ne_matchings[match->neighbor] is a List* */
 					}//end if(is_ghost())
