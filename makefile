@@ -38,6 +38,7 @@ valgrind: dynogrid
 
 clean:
 	@/bin/rm -f *.d
+	@/bin/rm -f idev*
 	@/bin/rm -f *.o
 	@/bin/rm -f dynogrid
 

@@ -9,6 +9,9 @@
 
 typedef enum { false, true } bool;
 
+#define MIN(a,b) (a<b?a:b)
+#define MIN3(a,b,c) (a<b?MIN(a,c):MIN(b,c))
+
 enum {
 	TAG_N_CELLS, TAG_LIST_LENGTH, TAG_PARTICLES, TAG_PROP_RIGHT, TAG_PROP_LEFT
 };
@@ -56,12 +59,9 @@ double time; // changes every iteration
 #define dz (z_max/nz)
 
 // Use the smallest of dx, dy, or dz!!!
-#define dt (dz/C)
+#define dt (MIN3(dx,dy,dz)/C)
 
 #define round_i(x) ((int) (x+0.5))
-//inline int round_i(double x) {
-//	return (int) (x+0.5);
-//}
 
 #define PROTON_WEIGHT (5.0)
 #define ELECTRON_WEIGHT (1.0)
