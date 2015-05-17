@@ -51,9 +51,9 @@ double time; // changes every iteration
 #define z_max (1e-4)
 
 // number of cells in each direction; nx+1 is number of grid points
-#define nx (32) 
-#define ny (32)
-#define nz (32)
+#define nx (16) 
+#define ny (16)
+#define nz (16)
 
 #define dx (x_max/nx)
 #define dy (y_max/ny)

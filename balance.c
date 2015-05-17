@@ -45,9 +45,9 @@ void determine_neighbor_matchings(List* ne_matchings[], char dim, tree**** grid)
 	
 	if(dim == 'y'){
 		surface *surf_match = NULL;
-		for (i = imin; i < imax; ++i) {
+		for (i = imin+1; i < imax-1; ++i) {
 			for (j = jmin; j < jmax; ++j) {
-				for (k = kmin; k < kmax; ++k) {
+				for (k = kmin+1; k < kmax-1; ++k) {
 					curCell = grid[i][j][k];
 					if(is_ghost(curCell)) {
 						//determine the direction of the neighbor (for this particular cell!!!)
@@ -64,7 +64,7 @@ void determine_neighbor_matchings(List* ne_matchings[], char dim, tree**** grid)
 						}else{
 							//we know we can access the j-1 and j+1 element of the grid
 							prevCell = grid[i][j-1][k];
-							nextCell = grid[i][j-1][k];
+							nextCell = grid[i][j+1][k];
 						
 							if(is_real(nextCell)){
 								dir = -1;
@@ -77,15 +77,15 @@ void determine_neighbor_matchings(List* ne_matchings[], char dim, tree**** grid)
 						//set the layer value for the surface struct (i.e. )
 						layer = j;
 						
-						List *list_of_cells; 
-
 						if( prev_surf_match != NULL &&
 							prev_surf_match->neighbor == neighbor &&
 							prev_surf_match->layer == layer &&
 							prev_surf_match->dir == dir){
 								//then we are dealing with the same surface matching
 								surf_match = prev_surf_match;
+								printf("surf_match = prev_surf_match\n");
 						}else{
+							printf("surf_match != prev_surf_match\n");
 							surf_match = malloc(sizeof(*surf_match));
 
 							surf_match->cells = list_init();
@@ -100,11 +100,10 @@ void determine_neighbor_matchings(List* ne_matchings[], char dim, tree**** grid)
 							list_add(ne_matchings[surf_match->neighbor], surf_match);
 						}//end if else
 						
-						list_of_cells = surf_match->cells;
 						if(dir < 0){
-							list_add(list_of_cells, nextCell);
+							list_add(surf_match->cells, nextCell);
 						}else if(dir > 0){
-							list_add(list_of_cells, prevCell);
+							list_add(surf_match->cells, prevCell);
 						}
 						/* reminder: 
 								ne_matchings ......	an array of
@@ -141,6 +140,7 @@ void determine_neighbor_matchings(List* ne_matchings[], char dim, tree**** grid)
 				list_get_next(ne_matchings[ne_num]);
 			}//end for
 			cur_surface = (surface*) (list_get_next(ne_matchings[ne_num]));
+			printf("before while length of ne_matchings[%d] is %d\n", ne_num, list_length(ne_matchings[ne_num]));
 			while(list_has_next(ne_matchings[ne_num])){
 				next_surface = (surface*) (list_get_next(ne_matchings[ne_num]));
 				if(	(cur_surface->layer == next_surface->layer) &&
@@ -148,10 +148,13 @@ void determine_neighbor_matchings(List* ne_matchings[], char dim, tree**** grid)
 					//then the surface matchings should belong to the same surface, thus should be combined:
 					//note, we already know that they have the same neighbor at this point bc of indexing into the array...
 					//so, combine next_surface into cur_surface and then free next_surface:
+					printf("Precombined cur_surface->cells length is %d\n", list_length(cur_surface->cells));
 					list_combine(cur_surface->cells, next_surface->cells);
+					printf("Postcombined cur_surface->cells length is %d\n", list_length(cur_surface->cells));
 					list_pop(ne_matchings[ne_num], true); //remove (and free) next_surface from the list
 				}//end if
 			}//end inner while
+			printf("After while length of ne_matchings[%d] is %d\ncount is %d \n", ne_num, list_length(ne_matchings[ne_num]), ct);
 			ct++;
 			list_reset_iter(ne_matchings[ne_num]);
 		}//end outer while
@@ -201,7 +204,7 @@ void Balance(tree ****grid){
 			list_reset_iter(ne_matchings[it]);
 			surface *surf;
 			if (list_length(ne_matchings[it]) > 1)
-				printf("\n BADDDDDDDDDD\n");
+				printf("\n BADDDDDDDDDD length is %d\n", list_length(ne_matchings[it]));
 			//while (list_has_next(ne_matchings[it])){}
 			surf = list_get_next(ne_matchings[it]);
 			if (surf->dir < 0)
@@ -219,6 +222,8 @@ void Balance(tree ****grid){
 	double left_pro, right_pro;
 	
 	while (mostwork > 1.1*avgwork){
+		//TODO: get rid of this.
+		work = avgwork;
 		// If you have a bit too much, don't worry
 		propensity = work - 1.05*avgwork;
 		//Tell neighbors propensity
