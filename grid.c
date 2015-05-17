@@ -42,11 +42,10 @@ tree**** grid_init(int isize, int jsize, int ksize, int x_divs, int y_divs, int 
 	pxmin = ((double)(pid % x_divs))/x_divs * x_max - dx;
 	pymin = ((double)((pid - pid % x_divs)/x_divs % y_divs))/y_divs * y_max - dy;
 	pzmin = ((double)((pid - pid % x_divs - (pid-pid % x_divs) % (x_divs * y_divs))/(x_divs * y_divs)))/z_divs * z_max - dz;
-	
-	// local vars
-	int wi = 2*isize; // padding is 50% of isize (etc.) on each side
-	int wj = 2*jsize;
-	int wk = 2*ksize;
+	// global vars (local total grid dimensions
+	wi = 2*isize; // padding is 50% of isize (etc.) on each side
+	wj = 2*jsize;
+	wk = 2*ksize;
 	
 	tree ****base_grid = (tree****) malloc( wi * sizeof(tree***) ); // allocate an array of pointers to rows-depthwise
 	int i, j, k, n;

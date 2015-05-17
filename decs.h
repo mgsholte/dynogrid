@@ -10,7 +10,7 @@
 typedef enum { false, true } bool;
 
 enum {
-	TAG_N_CELLS, TAG_LIST_LENGTH, TAG_PARTICLES
+	TAG_N_CELLS, TAG_LIST_LENGTH, TAG_PARTICLES, TAG_PROP_RIGHT, TAG_PROP_LEFT
 };
 
 // Define the particle structure
@@ -30,6 +30,7 @@ extern int imin, imax, jmin, jmax, kmin, kmax;	//Processor minimum indicies
 extern int g_xwidth, g_ywidth, g_zwidth; // the dimensions of the base grid array
 extern int pid;	//Processor ID
 extern double pxmin, pymin, pzmin;	//Processor minimum x, y, and z
+extern int wi, wj, wk;
 //global MPI custom data types:
 
 extern int nProcs;
@@ -46,9 +47,9 @@ double time; // changes every iteration
 #define z_max (1e-4)
 
 // number of cells in each direction; nx+1 is number of grid points
-#define nx (30) 
-#define ny (30)
-#define nz (30)
+#define nx (96) 
+#define ny (96)
+#define nz (96)
 
 #define dx (x_max/nx)
 #define dy (y_max/ny)
