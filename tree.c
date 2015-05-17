@@ -25,12 +25,13 @@ tree* tree_init(vec3 loc, int owner) {
 }
 
 // fwd decl for tree_free
-static void coarsen(TreeNode *node);
+static void coarsen(TreeNode *node, int *nPoints);
 
 void tree_free(tree *t) {
 	TreeNode *root = t->root;
+	int dummy;
 	// remove all children from the root
-	coarsen(root);
+	coarsen(root, &dummy);
 
 	// remove only the 0-th grid_point since that is what was initialized by tree_init
 	free(root->points[0]);
@@ -136,7 +137,7 @@ static void coarsen(TreeNode *cell, int *nPoints) {
 	}
 	// 1st, coarsen your children so you have no grandchildren
 	for(i = 0; i < 8; i++) {
-		coarsen(cell->children[i]);
+		coarsen(cell->children[i], nPoints);
 	}
 
 	// now, remove your children
