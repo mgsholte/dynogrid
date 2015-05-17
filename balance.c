@@ -322,7 +322,7 @@ void give_take_surface(tree**** base_grid, List* list_u, int id_u, List* list_d,
 	// send first up then down (up to 1 can be a real send)
 	List* move_list;
 	int neighbor_id;
-	int i,j,k;
+	int i,l,m,n;
 	vec3 pos;
 	for (i = 0; i < nNeighbors; ++i) { // nNeighbors = 2 = number of directions to send
 		// assign left or right
@@ -343,22 +343,25 @@ void give_take_surface(tree**** base_grid, List* list_u, int id_u, List* list_d,
 		list_reset_iter(move_list);
 		while (list_has_next(move_list)) {
 			pos = ((tree*) list_get_next(move_list))->loc;
-			base_grid[pos.x][pox.y][pox.z]->owner = neighbor_id;
+			l = imin + (int) round((pos.x - pxmin)/dx);
+			m = jmin + (int) round((pos.y - pymin)/dy);
+			n = kmin + (int) round((pos.z - pzmin)/dz);
+			base_grid[l][m][n]->owner = neighbor_id;
 			if (send_dir[i] == 'u') {
 				for (j = -1; j <= 1; ++j) {
 					for (k = -1; k <= 1; ++k) {
-						if ( base_grid[pos.x+j][pos.y-1][pos.z+k] != NULL )
-							tree_free( base_grid[pos.x+j][pos.y-1][pos.z+k] );
-						base_grid[pos.x+j][pos.y-1][pos.z+k] = NULL;
+						if ( base_grid[l+j][m-1][n+k] != NULL )
+							tree_free( base_grid[l+j][m-1][n+k] );
+						base_grid[l+j][m-1][n+k] = NULL;
 					}
 				}
 			} else if (send_dir[i] == 'd') {
 				for (j = -1; j <= 1; ++j) {
 					for (k = -1; k <= 1; ++k) {
-						if ( base_grid[pos.x+j][pos.y+2][pos.z+k] != NULL )
-							tree_free( base_grid[pos.x+j][pos.y+2][pos.z+k] );
-						base_grid[pos.x+j][pos.y+2][pos.z+k] = NULL;
-						base_grid[pos.x+j][pos.y+1][pos.z+k]->owner = -2;
+						if ( base_grid[l+j][m+2][n+k] != NULL )
+							tree_free( base_grid[l+j][m+2][n+k] );
+						base_grid[l+j][m+2][n+k] = NULL;
+						base_grid[l+j][m+1][n+k]->owner = -2;
 					}
 				}
 			}
