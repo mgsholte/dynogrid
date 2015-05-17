@@ -3,6 +3,7 @@
 
 #include "decs.h"
 #include "list.h"
+#include "tree.h"
 
 typedef struct {
 	List *cells;
@@ -11,6 +12,6 @@ typedef struct {
 	int layer;
 } surface;
 
-
+void Balance(tree ****grid);
 
 #endif //BALANCE_H

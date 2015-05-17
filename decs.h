@@ -10,7 +10,7 @@
 typedef enum { false, true } bool;
 
 enum {
-	TAG_N_CELLS, TAG_LIST_LENGTH, TAG_PARTICLES
+	TAG_N_CELLS, TAG_LIST_LENGTH, TAG_PARTICLES, TAG_PROP_RIGHT, TAG_PROP_LEFT
 };
 
 // Define the particle structure

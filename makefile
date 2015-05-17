@@ -4,7 +4,7 @@ CFLAGS = -g
 LFLAGS = -O0
 
 ALL_SRC := $(wildcard *.c)
-EXCLUDES = mpi_dyno.c pseudocode.c balance.c $(wildcard *test.c)
+EXCLUDES = mpi_dyno.c pseudocode.c $(wildcard *test.c)
 SRCS := $(filter-out $(EXCLUDES),$(ALL_SRC))
 OBJS := $(patsubst %.c,%.o,$(SRCS))
 

@@ -1,3 +1,6 @@
+#include "balance.h"
+#include <stdio.h>
+
 
 bool is_real(tree* curCell){
 	if (curCell != NULL) {
@@ -17,7 +20,7 @@ bool is_ghost(tree* curCell){
 	return false;
 }//end is_ghost()
 
-void determine_neighbor_matchings(List* ne_matchings[], char dim){
+void determine_neighbor_matchings(List* ne_matchings[], char dim, tree**** grid){
 	// loop over each ghost cell.
 	// loop over entire grid to find the ghost cells, this is the easiest way to find them
 	// this can't be integrated with above identical loop since the push must be completed before checking to see which pushed things need to be sent to neighbors
@@ -28,7 +31,7 @@ void determine_neighbor_matchings(List* ne_matchings[], char dim){
 	tree *nextCell = NULL;
 
 	//instantiate all pointers to NULL for checking to see if whe need to malloc them in loop:
-	for(ne_num = 0, ne_num < nProcs; ne_num++){
+	for(ne_num = 0; ne_num < nProcs; ne_num++){
 		ne_matchings[ne_num] = NULL;
 	}//end for
 
@@ -50,7 +53,7 @@ void determine_neighbor_matchings(List* ne_matchings[], char dim){
 								the neighbor must be to our LEFT direction (hence the dir = "-1") */
 							dir = -1; //dir for "direction"
 							nextCell = grid[i+1][j][k];
-						}else if(i == iw-1){
+						}else if(i == wi-1){
 							/* 	we can't access the i+1 element of the grid, but we know that
 								the neighbor must be to our RIGHT direction (hence the dir ="+1") */
 							dir = 1;
@@ -159,6 +162,7 @@ void Balance(tree ****grid){
 	tree *curCell = NULL;
 	int partwork = 0;
 	int cellwork = 0;
+	int i,j,k;
 	double work, avgwork, mostwork, propensity;
 	// Calculate amount of work on this processor
 	for (i = imin; i < imax; ++i) {
@@ -167,7 +171,7 @@ void Balance(tree ****grid){
 				curCell = grid[i][j][k];
 				if (curCell != NULL) {
 					// if (curCell->owner == pid) {
-					partwork += list_length(curCell->part_list);
+					partwork += list_length(curCell->particles);
 					// }
 					// TODO: Keep track of number oc decendants
 					cellwork += 1;// curCell->descendants;
@@ -186,7 +190,7 @@ void Balance(tree ****grid){
 	// List (*cells_to_send)[nProcs];
 	// IS THIS CORRECT SYNTAX?? (below, not above)
 	List* ne_matchings[nProcs];
-	determine_neighbor_matchings(ne_matchings, 'x');
+	determine_neighbor_matchings(ne_matchings, 'x', grid);
 
 	int left_pid=-1, right_pid=-1, it, err_ct=0;
 	for (it = 0; it < nProcs; it ++){
@@ -208,7 +212,7 @@ void Balance(tree ****grid){
 		printf("\n err_ct is %d", err_ct);
 
 	MPI_Request reqs[2];
-	List null_list = list_init();
+	List *null_list = list_init();
 	double left_pro, right_pro;
 	
 	while (mostwork > 1.1*avgwork){
@@ -218,8 +222,8 @@ void Balance(tree ****grid){
 		MPI_Isend(&(propensity), 1, MPI_INT, left_pid, TAG_PROP_LEFT, MPI_COMM_WORLD, &reqs[0]);
 		MPI_Isend(&(propensity), 1, MPI_INT, right_pid, TAG_PROP_RIGHT, MPI_COMM_WORLD, &reqs[1]);
 		// recv same info back from them
-		MPI_Recv(&(left_pro), 1, MPI_INT, left_pid, TAG_PROP_RIGHT, MPI_COMM_WORLD);
-		MPI_Recv(&(right_pro), 1, MPI_INT, right_pid, TAG_PROP_LEFT, MPI_COMM_WORLD);
+		MPI_Recv(&(left_pro), 1, MPI_INT, left_pid, TAG_PROP_RIGHT, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+		MPI_Recv(&(right_pro), 1, MPI_INT, right_pid, TAG_PROP_LEFT, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
 		MPI_Request_free(&reqs[0]);
 		MPI_Request_free(&reqs[1]);
@@ -266,7 +270,7 @@ void Balance(tree ****grid){
 				list_free(curr->cells, false);
 				list_pop(ne_matchings[it], true);
 			}
-			list_free(ne_matchings[it], true)
+			list_free(ne_matchings[it], true);
 		}
 	}
 	
