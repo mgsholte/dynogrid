@@ -1,7 +1,7 @@
-CC = mpicc -cc=clang
-LD = mpicc -cc=clang
-CFLAGS = -g -MMD -Werror
-LFLAGS = -O3
+CC = mpicc
+LD = mpicc
+CFLAGS = -g
+LFLAGS = -O0
 
 ALL_SRC := $(wildcard *.c)
 EXCLUDES = mpi_dyno.c pseudocode.c balance.c $(wildcard *test.c)
