@@ -17,7 +17,7 @@ bool is_ghost(tree* curCell){
 	return false;
 }//end is_ghost()
 
-void determine_neighbor_matchings(List** ne_matchings, char dim){
+void determine_neighbor_matchings(List* ne_matchings[], char dim){
 	// loop over each ghost cell.
 	// loop over entire grid to find the ghost cells, this is the easiest way to find them
 	// this can't be integrated with above identical loop since the push must be completed before checking to see which pushed things need to be sent to neighbors
@@ -49,21 +49,23 @@ void determine_neighbor_matchings(List** ne_matchings, char dim){
 							/* 	we can't access the i-1 element of the grid, but we know that
 								the neighbor must be to our LEFT direction (hence the dir = "-1") */
 							dir = -1; //dir for "direction"
+							nextCell = grid[i+1][j][k];
 						}else if(i == iw-1){
 							/* 	we can't access the i+1 element of the grid, but we know that
 								the neighbor must be to our RIGHT direction (hence the dir ="+1") */
-							dir = 1
+							dir = 1;
+							prevCell = grid[i-1][j][k];
 						}else{
 							//we know we can access the i-1 and i+1 element of the grid
 							prevCell = grid[i-1][j][k];
 							nextCell = grid[i+1][j][k];
-						}//end if else for checking extremes
 						
-						if(is_real(nextCell)){
-							dir = -1;
-						}else if(is_real(prevCell)){
-							dir = 1;
-						}//end if else if
+							if(is_real(nextCell)){
+								dir = -1;
+							}else if(is_real(prevCell)){
+								dir = 1;
+							}//end if else if
+						}//end if else for checking extremes
 						//set the neighbor pid:
 						neighbor = curCell->owner;
 						//set the layer value for the surface struct (i.e. )
@@ -78,12 +80,11 @@ void determine_neighbor_matchings(List** ne_matchings, char dim){
 								prev_surf_match->dir == dir){
 								//then we are dealing with the same surface matching
 								surf_match = prev_surf_match;
-								list_of_cells = &(surf_match->cells);
+								list_of_cells = surf_match->cells;
 							}//end inner if
 						}else{
 							surf_match = (surface*) malloc(sizeof(surface));
-							list_of_cells = (List*) malloc(sizeof(List));
-							*list_of_cell = list_init();
+							list_of_cells = list_init();
 						}//end if else
 						
 						surf_match->neighbor = curCell->owner;
@@ -91,15 +92,13 @@ void determine_neighbor_matchings(List** ne_matchings, char dim){
 						surf_match->layer = layer;
 						
 						if(dir < 0){
-							list_add(list_of_cell, nextCell);
+							list_add(list_of_cells, nextCell);
 						}else if(dir > 0){
-							list_add(list_of_cell, prevCell);
+							list_add(list_of_cells, prevCell);
 						}
-						if(ne_matchings[surf_match->neighbor]) == NULL){
+						if((ne_matchings[surf_match->neighbor]) == NULL){
 							//then the List has not yet been initialized so we have to malloc it and initialize it:
-							List* list_of_surfaces = (List*) malloc(sizeof(List));
-							*list_of_surfaces = list_init();
-							ne_matchings[surf_match->neighbor] = list_of_surfaces;
+							ne_matchings[surf_match->neighbor] = list_init();
 						}
 						/* reminder: 
 								ne_matchings ......	an array of
@@ -130,22 +129,22 @@ void determine_neighbor_matchings(List** ne_matchings, char dim){
 		}//end if
 		list_reset_iter(ne_matchings[ne_num]);
 		int it, ct = 0;
-		while(ct < list_length(*(ne_matchings[ne_num]))){
+		while(ct < list_length(ne_matchings[ne_num])){
 			for(it = 0; it < ct; it++){
 				//cycle through the list to get to the correct starting point...
 				//probably a better way to do this whole scheme, but not sure...
 				list_get_next(ne_matchings[ne_num]);
 			}//end for
-			cur_surface = (surface*) (list_get_next(ne_matchings[ne_num]);
-			while(list_has_next(*(ne_matchings[ne_num]))){
-				next_surface = (surface*) (list_get_next(ne_matchings[ne_num]);
+			cur_surface = (surface*) (list_get_next(ne_matchings[ne_num]));
+			while(list_has_next(ne_matchings[ne_num])){
+				next_surface = (surface*) (list_get_next(ne_matchings[ne_num]));
 				if(	(cur_surface->layer == next_surface->layer) &&
 					(cur_surface->dir == next_surface->dir)){
 					//then the surface matchings should belong to the same surface, thus should be combined:
 					//note, we already know that they have the same neighbor at this point bc of indexing into the array...
 					//so, combine next_surface into cur_surface and then free next_surface:
-					list_combine(&(cur_surface->cells), &(next_surface->cells));
-					list_pop(ne_matchings[ne_num]); //remove (and free) next_surface from the list
+					list_combine(cur_surface->cells, next_surface->cells);
+					list_pop(ne_matchings[ne_num], true); //remove (and free) next_surface from the list
 				}//end if
 			}//end inner while
 			ct++;
@@ -170,7 +169,8 @@ void Balance(tree ****grid){
 					// if (curCell->owner == pid) {
 					partwork += list_length(curCell->part_list);
 					// }
-					cellwork += curCell->descendants;
+					// TODO: Keep track of number oc decendants
+					cellwork += 1;// curCell->descendants;
 				}
 			}
 		}
@@ -179,32 +179,95 @@ void Balance(tree ****grid){
 
 	// Find out how much work there is in total:
 	MPI_Allreduce(&work, &avgwork, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
-	avgwork = avgwork / (float)nProcs;
+	avgwork = avgwork / (double)nProcs;
 	// Find out the most work that a processor in the group has:
 	MPI_Allreduce(&work, &mostwork, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
 	
 	// List (*cells_to_send)[nProcs];
 	// IS THIS CORRECT SYNTAX?? (below, not above)
-	List** ne_matchings = (List**)malloc(sizeof(List*)* nProcs);
+	List* ne_matchings[nProcs];
 	determine_neighbor_matchings(ne_matchings, 'x');
 
+	int left_pid=-1, right_pid=-1, it, err_ct=0;
+	for (it = 0; it < nProcs; it ++){
+		if(ne_matchings[it] != NULL){
+			err_ct++;
+			list_reset_iter(ne_matchings[it]);
+			surface *surf;
+			if (list_length(ne_matchings[it]) > 1)
+				printf("\n BADDDDDDDDDD\n");
+			//while (list_has_next(ne_matchings[it])){}
+			surf = list_get_next(ne_matchings[it]);
+			if (surf->dir < 0)
+				left_pid = surf->neighbor;
+			else
+				right_pid = surf->neighbor;
+		}
+	}
+	if (err_ct > 2 )
+		printf("\n err_ct is %d", err_ct);
+
+	MPI_Request reqs[2];
+	List null_list = list_init();
+	double left_pro, right_pro;
 	
 	while (mostwork > 1.1*avgwork){
+		// If you have a bit too much, don't worry
 		propensity = work - 1.05*avgwork;
 		//Tell neighbors propensity
+		MPI_Isend(&(propensity), 1, MPI_INT, left_pid, TAG_PROP_LEFT, MPI_COMM_WORLD, &reqs[0]);
+		MPI_Isend(&(propensity), 1, MPI_INT, right_pid, TAG_PROP_RIGHT, MPI_COMM_WORLD, &reqs[1]);
+		// recv same info back from them
+		MPI_Recv(&(left_pro), 1, MPI_INT, left_pid, TAG_PROP_RIGHT, MPI_COMM_WORLD);
+		MPI_Recv(&(right_pro), 1, MPI_INT, right_pid, TAG_PROP_LEFT, MPI_COMM_WORLD);
 
+		MPI_Request_free(&reqs[0]);
+		MPI_Request_free(&reqs[1]);
 
-
-		//get propensity from neighbors
 		if (propensity > 0){
+			//If both neighbors are givers, give out
+			if (left_pro > 0 && right_pro > 0){
+				double center = (pymin + dy*(jmax-jmin)*.5);
+				if (center < y_max/2){
+					list_reset_iter(ne_matchings[left_pid]);
+					give_take_surface(grid, list_get_next(ne_matchings[left_pid]), left_pid, null_list, right_pid);
+				}
+				else {
+					list_reset_iter(ne_matchings[right_pid]);
+					give_take_surface(grid, null_list, left_pid, list_get_next(ne_matchings[right_pid]), right_pid);
+				}
+			}
+			// Else give to lowest propensity
+			else if (left_pro < right_pro){
+				list_reset_iter(ne_matchings[left_pid]);
+				give_take_surface(grid, list_get_next(ne_matchings[left_pid]), left_pid, null_list, right_pid);
+			}
+			else {
+				list_reset_iter(ne_matchings[right_pid]);
+				give_take_surface(grid, null_list, left_pid, list_get_next(ne_matchings[right_pid]), right_pid);
+			}
 			//calculate propensity left and right
 			//Give left or right and give null other way
 			//update work based on what was given
 		}
 		else{
 			//Give null left and right
+			give_take_surface(grid, null_list, left_pid, null_list, right_pid);
 		}
 		//Recieve from left and right and update work
 		MPI_Allreduce(&work, &mostwork, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
 	}
+	surface *curr;
+	list_free(null_list, false);
+	for (it = 0; it < nProcs; it ++){
+		if(ne_matchings[it] != NULL){
+			while (list_has_next(ne_matchings[it])){
+				curr = list_get_next(ne_matchings[it]);
+				list_free(curr->cells, false);
+				list_pop(ne_matchings[it], true);
+			}
+			list_free(ne_matchings[it], true)
+		}
+	}
+	
 }

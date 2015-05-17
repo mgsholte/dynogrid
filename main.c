@@ -81,12 +81,14 @@ int main(int argc, char *argv[]) {
 
 	for(i = 0; i < nSteps; ++i) {
 		time = i*dt;
-		printf("updating grid for iteration %d of %d\n", i, nSteps);
+		if (pid == 0){
+			printf("updating grid for iteration %d of %d\n", i, nSteps);
+			//printf("pushing particles\n");
+		}
 		grid_update(base_grid);  // add the laser, etc.
-		printf("pushing particles\n");
 		push_particles(base_grid);
 		if (i % output_freq == 0) {
-			printf("outputting grid\n");
+			//printf("outputting grid\n");
 			output_grid((i/output_freq), (nSteps/output_freq), base_grid);
 		}
 		MPI_Barrier(MPI_COMM_WORLD);

@@ -299,7 +299,7 @@ void push_particles(tree ****grid) {
 						// allocate and assign the neighbor the 1st time you add a cell
 						if (neighbors[owner] == NULL) {
 							neighbors[owner] = neighbor_init(owner);
-							printf("proc pid = %d, neighbor.pid = %d, owner = %d\n", pid, neighbors[owner]->pid, owner);
+							//printf("proc pid = %d, neighbor.pid = %d, owner = %d\n", pid, neighbors[owner]->pid, owner);
 						}
 						neighbor_add_cell(neighbors[owner], curCell);
 					}
