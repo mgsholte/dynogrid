@@ -47,12 +47,12 @@ MPI_Request* mpi_tree_send(List *tree_list, int to_pid, simple_tree** simple_tre
 		j = 0;
 		while(list_has_next(part_list)){
 			(*all_particles_array)[i] = *((particle*)list_get_next(part_list));
-			list_pop(part_list);
+			list_pop(part_list, true);
 			i++;
 			j++;	
 		}//end inner while
 		(*part_counts)[k] = j;
-		list_pop(tree_list);
+		list_pop(tree_list, false);
 		k++;
 	}//end while	
 
