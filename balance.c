@@ -275,3 +275,4 @@ void Balance(tree ****grid){
 	}
 	
 }
+void give_take_surface(tree**** ou, List* aoeu, int i, List* hoets, int htn){}

@@ -20,6 +20,7 @@ int imin, imax, jmin, jmax, kmin, kmax;	//Processor minimum indicies
 int g_xwidth, g_ywidth, g_zwidth; // the dimensions of the base grid array
 int pid;	//Processor ID
 double pxmin, pymin, pzmin;	//Processor minimum x, y, and z
+int wi, wj, wk;
 double time = 0.;
 
 //global MPI custom data types:
@@ -92,6 +93,7 @@ int main(int argc, char *argv[]) {
 			output_grid((i/output_freq), (nSteps/output_freq), base_grid);
 		}
 		MPI_Barrier(MPI_COMM_WORLD);
+		Balance(base_grid);
 	}
 
 	// print final state unless it was already output on the last iteration of the above loop
