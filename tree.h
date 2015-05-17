@@ -29,6 +29,7 @@ typedef struct {
 typedef struct {
 	vec3 loc; // the (x,y,z) location of the lower-left-front point of the root node
 	int owner; // the rank of the processor which owns this cell
+	int nPoints;
 	int neighbor_owners[9];
 } simple_tree;
 
