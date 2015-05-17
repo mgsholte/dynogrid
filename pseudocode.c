@@ -17,7 +17,7 @@ some logic
 
 #include "grid.h"
 
-
+/*
 // TODO: This is not up to date with how load balancer logic will work
 // Correct logic: for each neighbor, say whether you're giving left (into them), right (into them), or neither (possibly receiving), and by how many "faces" if you choose one of the first two
 trade_cells(base_grid)
@@ -34,18 +34,23 @@ trade_cells(base_grid)
 		give_and_take_cells(base_grid, dir6)
 	end
 end trade_cells
+*/
 
 // TODO: written only for x direction, need to generalize to y and z
 // determine which trees to send where, and send them. then take trees given to you, adjust your base_grid if necessary, and insert the trees
-give_and_take_cells(tree**** base_grid, char dir6)
+give_take_surface(tree**** base_grid, List* list_l, int id_l, List* list_r, int id_r) {
 	//direction-dependent pointers to variables
 	
+	int nNeighbors = 2; // for 1D balancing
+	//int nNeighbors = sizeof(moving_trees); // should have been statically declared to be size of neighbors so this should work
+	
+	/* // now getting moving_trees passed in, so this is unnecessary
 	
 	int neighbors[numNeighbors] = proc neighbors
 	
 	// create moving_trees: an array of List*s pointing to tree*s. The use of tree*s is not made explicit here, may need to cast later
 	// always List*, never just List, for C reasons
-	List* moving_trees[sizeof(neighbors)]
+	List* moving_trees[nNeighbors]
 	for (neighbors)
 		*moving_trees[neighbor_id] = list_init();
 	end
@@ -58,48 +63,67 @@ give_and_take_cells(tree**** base_grid, char dir6)
 			list_add(moving_trees[neighbor_id], tree*)
 		end
 	end
+	*/
 	
-	// need a neighbors-sized buffer array filled with simple_tree/particle arrays. both get malloced in mpi_tree_send
-	simple_tree* buff_send_trees[sizeof(neighbors)]
-	particle* buff_send_parts[sizeof(neighbors)]
-	int* buff_send_part_list_lengths[sizeof(neighbors)]
-	
+	// buffer send arrays. both get malloced in mpi_tree_send
+	simple_tree* buff_send_trees[nNeighbors];
+	particle* buff_send_parts[nNeighbors];
+	int* buff_send_part_list_lengths[nNeighbors];
+	int* lengths_of_buffs[nNeighbors][3]; //one length for each of the above 3 buffers
+
 	// TODO: add sending/receiving a char. send a &char, recv a &char. this is the dir6 of the incoming processor
 	// need to track MPI_request objects for a waitall later, in order to be non-blocking
-	MPI_Request req_send_trees[sizeof(neighbors)]
-	MPI_Request req_send_parts[sizeof(neighbors)]
-	MPI_Request req_send_lengths[sizeof(neighbors)]
-	MPI_Request trees_parts_and_lengths[3]
+	MPI_Request req_send_trees[nNeighbors];
+	MPI_Request req_send_parts[nNeighbors];
+	MPI_Request req_send_lengths[nNeighbors];
+	MPI_Request trees_parts_and_lengths[3];
+		
+	// send first to left then to right (up to 1 can be a real send)
+	List* move_list;
+	int neighbor_id;
+	int i;
+	for (i = 0; i < nNeighbors; ++i) { // nNeighbors = 2 = number of directions to send
+		// assign left or right
+		if (i == 0) { move_list = list_l; neighbor_id = id_l; }
+		else if (i == 1) { move_list = list_r; neighbor_id = id_r; }
+		
+		if (neighbor_id == -1) continue;
 
-	// send moving_trees, they will be converted into buffers before send
-	for (neighbors)
-		trees_parts_and_lengths = mpi_tree_send(moving_trees[neighbor_id], neighbor_id, &buff_send_trees[neighbor_id], &buff_send_parts[neighbor_id], &buff_send_part_list_lengths[neighbor_id])
-		req_send_trees[neighbor_id] = trees_parts_and_lengths[0]
-		req_send_parts[neighbor_id] = trees_parts_and_lengths[1]
-		req_send_lengths[neighbor_id] = trees_parts_and_lengths[2]
-	end
+		// send move_list, cells within will be converted into these buffers before send
+		trees_parts_and_lengths = mpi_tree_send(move_list, neighbor_id, &buff_send_trees[i], &buff_send_parts[i], &buff_send_part_list_lengths[i], &lengths_of_buffs[i]);
+		req_send_trees[i] = trees_parts_and_lengths[0];
+		req_send_parts[i] = trees_parts_and_lengths[1];
+		req_send_lengths[i] = trees_parts_and_lengths[2];
+	}
+		
+	// buffer receive arrays
+	simple_tree* buff_recv_trees[nNeighbors];
+	particle* buff_recv_parts[nNeighbors];
+	int* buff_recv_part_list_lengths[nNeighbors];
 	
-	simple_tree* buff_recv_trees[sizeof(neighbors)]
-	particle* buff_recv_parts[sizeof(neighbors)]
-	int* buff_recv_part_list_lengths[sizeof(neighbors)]
-	int lengths_of_buffs[sizeof(neighbors)][3] //one length for each of the above 3 buffers
-	
-	MPI_Request req_recv_trees[sizeof(neighbors)]
-	MPI_Request req_recv_parts[sizeof(neighbors)]
-	MPI_Request req_recv_lengths[sizeof(neighbors)]
+	MPI_Request req_recv_trees[nNeighbors];
+	MPI_Request req_recv_parts[nNeighbors];
+	MPI_Request req_recv_lengths[nNeighbors];
 	
 	// receive from neighbors: either buffers or nothing
-	for (neighbors)
-		trees_parts_and_lengths = mpi_tree_recv(neighbor_id, &buff_recv_trees[neighbor_id], &buff_recv_parts[neighbor_id], &buff_recv_part_list_lengths[neighbor_id], &lengths_of_buffs[neighbor_id])
-		req_recv_trees[neighbor_id] = trees_parts_and_lengths[0]
-		req_recv_parts[neighbor_id] = trees_parts_and_lengths[1]
-		req_recv_lengths[neighbor_id] = trees_parts_and_lengths[2]
-	end
+	// receive first from left then from right (up to 2 can be real receives)
+	for (i = 0; i < nNeighbors; ++i) { // nNeighbors = 2 = number of directions to send
+		// assign left or right
+		if (i == 0) { move_list = list_l; neighbor_id = id_l; }
+		else if (i == 1) { move_list = list_r; neighbor_id = id_r; }
+		
+		if (neighbor_id == -1) continue;
+
+		trees_parts_and_lengths = mpi_tree_recv(neighbor_id, &buff_recv_trees[i], &buff_recv_parts[i], &buff_recv_part_list_lengths[i], &lengths_of_buffs[i]);
+		req_recv_trees[i] = trees_parts_and_lengths[0];
+		req_recv_parts[i] = trees_parts_and_lengths[1];
+		req_recv_lengths[i] = trees_parts_and_lengths[2];
+	}
 	
 	// wait for receives
-	MPI_Waitall(sizeof(neighbors), req_recv_trees);
-	MPI_Waitall(sizeof(neighbors), req_recv_parts);
-	MPI_Waitall(sizeof(neighbors), req_recv_lengths);
+	MPI_Waitall(nNeighbors, req_recv_trees);
+	MPI_Waitall(nNeighbors, req_recv_parts);
+	MPI_Waitall(nNeighbors, req_recv_lengths);
 	
 	// once receives are done, can start unpacking buffers, putting new trees where they belong, while adjusting base_grid as necessary
 	List* new_trees;
@@ -107,8 +131,8 @@ give_and_take_cells(tree**** base_grid, char dir6)
 	double pxmax = pxmin+dx*(imax-imin); //pxmin is start of ghosts using global x position
 	int j,k;
 	for (neighbors)
-		//new_trees = mpi_tree_unpack(&buff_recv_trees[neighbor_id], &buff_recv_parts[neighbor_id], &buff_recv_part_list_lengths[neighbor_id], &lengths_of_buffs[neighbor_id]);
-		new_trees = mpi_tree_unpack(&buff_recv_trees[neighbor_id], &buff_recv_parts[neighbor_id], &buff_recv_part_list_lengths[neighbor_id], &lengths_of_buffs[neighbor_id]);
+		//new_trees = mpi_tree_unpack(&buff_recv_trees[i], &buff_recv_parts[i], &buff_recv_part_list_lengths[i], &lengths_of_buffs[i]);
+		new_trees = mpi_tree_unpack(&buff_recv_trees[i], &buff_recv_parts[i], &buff_recv_part_list_lengths[i], &lengths_of_buffs[i]);
 		list_reset_iter(new_trees);
 		
 		// first new_tree is used to check if base_grid is big enough
@@ -151,11 +175,11 @@ give_and_take_cells(tree**** base_grid, char dir6)
 	end
 	
 	// wait for sends
-	MPI_Waitall(sizeof(neighbors), req_send_trees);
-	MPI_Waitall(sizeof(neighbors), req_send_parts);
-	MPI_Waitall(sizeof(neighbors), req_send_lengths);
+	MPI_Waitall(nNeighbors, req_send_trees);
+	MPI_Waitall(nNeighbors, req_send_parts);
+	MPI_Waitall(nNeighbors, req_send_lengths);
 	
-end give_and_take_cells
+} //end give_and_take_cells
 
 
 // re-allocates base_grid such that wi is 2*(imax-imin) and grid is centered around (imin+imax)/2 (so 50% padding each side)
