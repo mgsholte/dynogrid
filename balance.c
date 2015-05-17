@@ -174,7 +174,7 @@ void Balance(tree ****grid){
 					partwork += list_length(curCell->particles);
 					// }
 					// TODO: Keep track of number oc decendants
-					cellwork += 1;// curCell->descendants;
+					cellwork += curCell->nPoints;
 				}
 			}
 		}
@@ -190,7 +190,7 @@ void Balance(tree ****grid){
 	// List (*cells_to_send)[nProcs];
 	// IS THIS CORRECT SYNTAX?? (below, not above)
 	List* ne_matchings[nProcs];
-	determine_neighbor_matchings(ne_matchings, 'x', grid);
+	determine_neighbor_matchings(ne_matchings, 'y', grid);
 
 	int left_pid=-1, right_pid=-1, it, err_ct=0;
 	for (it = 0; it < nProcs; it ++){
@@ -210,6 +210,7 @@ void Balance(tree ****grid){
 	}
 	if (err_ct > 2 )
 		printf("\n err_ct is %d", err_ct);
+	printf("\n Hello, I am proc %d, and my left and right neighbors are %d and %d, errct is %d\n", pid, left_pid, right_pid, err_ct);
 
 	MPI_Request reqs[2];
 	List *null_list = list_init();
@@ -259,6 +260,7 @@ void Balance(tree ****grid){
 			give_take_surface(grid, null_list, left_pid, null_list, right_pid);
 		}
 		//Recieve from left and right and update work
+		//Need to actually update work. Maybe I can convince Max to do this so I don't have to loop over all cells
 		MPI_Allreduce(&work, &mostwork, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
 	}
 	surface *curr;
