@@ -2,6 +2,7 @@
 
 // GRID CELL PASSER
 /*
+some logic (may be outdated)
 - load balancer just decides 'along the x axis, I'm sending [left or right], or not at all', then decides similarly for y and for z
 - then an algorithm figures out which procs this means we're sending to, and constructs lists of the trees to be sent (mpi_tree_send expects lists)
 	- for this we look at all non-ghost cells at position imax-2 (1 from edge), since that's what we pass
