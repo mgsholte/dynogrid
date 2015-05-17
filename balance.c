@@ -41,27 +41,27 @@ void determine_neighbor_matchings(List* ne_matchings[], char dim, tree**** grid)
 	int layer = -1;
 	surface* prev_surf_match = NULL;
 	
-	if(dim == 'x'){
+	if(dim == 'y'){
 		for (i = imin; i < imax; ++i) {
 			for (j = jmin; j < jmax; ++j) {
 				for (k = kmin; k < kmax; ++k) {
 					curCell = grid[i][j][k];
 					if(is_ghost(curCell)) {
 						//determine the direction of the neighbor (for this particular cell!!!)
-						if(i == 0){
-							/* 	we can't access the i-1 element of the grid, but we know that
+						if(j == 0){
+							/* 	we can't access the j-1 element of the grid, but we know that
 								the neighbor must be to our LEFT direction (hence the dir = "-1") */
 							dir = -1; //dir for "direction"
-							nextCell = grid[i+1][j][k];
-						}else if(i == wi-1){
-							/* 	we can't access the i+1 element of the grid, but we know that
+							nextCell = grid[i][j+1][k];
+						}else if(j == wj-1){
+							/* 	we can't access the j+1 element of the grid, but we know that
 								the neighbor must be to our RIGHT direction (hence the dir ="+1") */
 							dir = 1;
-							prevCell = grid[i-1][j][k];
+							prevCell = grid[i][j-1][k];
 						}else{
-							//we know we can access the i-1 and i+1 element of the grid
-							prevCell = grid[i-1][j][k];
-							nextCell = grid[i+1][j][k];
+							//we know we can access the j-1 and j+1 element of the grid
+							prevCell = grid[i][j-1][k];
+							nextCell = grid[i][j-1][k];
 						
 							if(is_real(nextCell)){
 								dir = -1;
@@ -72,7 +72,7 @@ void determine_neighbor_matchings(List* ne_matchings[], char dim, tree**** grid)
 						//set the neighbor pid:
 						neighbor = curCell->owner;
 						//set the layer value for the surface struct (i.e. )
-						layer = i;
+						layer = j;
 						
 						surface* surf_match;
 						List* list_of_cells; 
