@@ -18,18 +18,20 @@ tree* tree_init(vec3 loc, int owner) {
 	*ans = (tree) { root, loc, list_init(), list_init(), owner, 
 			{{-1, -1, -1}, //TODO: real init of this var
 			 {-1, -1, -1},
-			 {-1, -1, -1}}
+			 {-1, -1, -1}},
+			 1
 		 };
 	return ans;
 }
 
 // fwd decl for tree_free
-static void coarsen(TreeNode *node);
+static void coarsen(TreeNode *node, int *nPoints);
 
 void tree_free(tree *t) {
 	TreeNode *root = t->root;
+	int dummy;
 	// remove all children from the root
-	coarsen(root);
+	coarsen(root, &dummy);
 
 	// remove only the 0-th grid_point since that is what was initialized by tree_init
 	free(root->points[0]);
@@ -126,7 +128,8 @@ static bool need_to_refine(TreeNode *cell) {
 	return false;
 }
 
-static void coarsen(TreeNode *cell) {
+// pass nPoints ptr rather than return a value so that fcn can be optimized with tail call elimination
+static void coarsen(TreeNode *cell, int *nPoints) {
 	int i, j;
 	// can't coarsen a cell with no children
 	if (cell->children[0] == NULL) {
@@ -134,7 +137,7 @@ static void coarsen(TreeNode *cell) {
 	}
 	// 1st, coarsen your children so you have no grandchildren
 	for(i = 0; i < 8; i++) {
-		coarsen(cell->children[i]);
+		coarsen(cell->children[i], nPoints);
 	}
 
 	// now, remove your children
@@ -144,6 +147,7 @@ static void coarsen(TreeNode *cell) {
 			// don't free points i==j bc the parent still needs them. also, other children may have already freed one of your points so don't double free
 			if(i != j && ((j&i) == i)) { 
 				free(pChild->points[j]);
+				--(*nPoints);
 			}
 			pChild->points[j] = NULL;
 			//NB: grandchildren already freed by the call to coarsen(cell->children[i])
@@ -154,7 +158,8 @@ static void coarsen(TreeNode *cell) {
 	}
 }
 
-static void refine(TreeNode* cell, double x, double y, double z, vec3 *h) {
+// pass nPoints ptr rather than return a value so that fcn can be optimized with tail call elimination
+static void refine(TreeNode* cell, double x, double y, double z, vec3 *h, int *nPoints) {
 	int i, j, k;
 	// allocate the 8 new children cells
 	TreeNode *children_cells[8];
@@ -177,8 +182,9 @@ static void refine(TreeNode* cell, double x, double y, double z, vec3 *h) {
 				//TODO: these divide by 2s are really just an extra shift
 				#define closest_parent(i,j,k) (((i/2)<<2) + ((j/2)<<1) + (k/2))
 				if (isI || isJ || isK) {  // these are the child points
-					// TODO: init points
+					//TODO: reuse some sibling points
 					children_points[i][j][k] = (grid_point*) malloc(sizeof(grid_point));
+					++(*nPoints);
 					grid_point *pChildPoint = children_points[i][j][k];
 					pChildPoint->E = (vec3) { 0., 0., 0. };
 					pChildPoint->B = (vec3) { 0., 0., 0. };
@@ -222,25 +228,25 @@ static void refine(TreeNode* cell, double x, double y, double z, vec3 *h) {
 	}
 }
 
-static void tree_node_update(TreeNode *node, double x, double y, double z, vec3 *h) {
+static void tree_node_update(TreeNode *node, double x, double y, double z, vec3 *h, int *nPoints) {
 	// points have little E,B difference at this level so it should be even less on the finer grid. remove all children and coarsen to this level
 	if (need_to_coarsen(node)) {
-		coarsen(node);
+		coarsen(node, nPoints);
 	} else if (node->children[0]) { // find the leaf nodes to see if we need to refine/coarsen there
 		vec3_scale(h, 0.5); // spacing is halved every level down
 		int i;
 		for (i = 0; i < 8; ++i) {
-			tree_node_update(node->children[i], x+getX(i), y+getY(i), z+getZ(i), h);
+			tree_node_update(node->children[i], x+getX(i), y+getY(i), z+getZ(i), h, nPoints);
 		vec3_scale(h, 2.); // spacing was halved going down the tree, now it needs to be doubled going back up
 		}
 	} else if (need_to_refine(node)) {  // found a leaf node, might need to refine
 		vec3_scale(h, 0.5); // spacing is halved every level down
-		refine(node, x, y, z, h);
+		refine(node, x, y, z, h, nPoints);
 		vec3_scale(h, 2.); // spacing was halved going down the tree, now it needs to be doubled going back up
 	}
 }
 
 void tree_update(tree *t) {
 	vec3 h = (vec3) { dx, dy, dz };
-	tree_node_update(t->root, t->loc.x, t->loc.y, t->loc.z, &h);
+	tree_node_update(t->root, t->loc.x, t->loc.y, t->loc.z, &h, &t->nPoints);
 }

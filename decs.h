@@ -9,6 +9,9 @@
 
 typedef enum { false, true } bool;
 
+#define MIN(a,b) (a<b?a:b)
+#define MIN3(a,b,c) (a<b?MIN(a,c):MIN(b,c))
+
 enum {
 	TAG_N_CELLS, TAG_LIST_LENGTH, TAG_PARTICLES, TAG_PROP_RIGHT, TAG_PROP_LEFT,
 	TAG_SIMPLE_TREES, TAG_ALL_PARTICLES, TAG_ALL_PARTICLE_COUNTS, TAG_DIR6
@@ -48,21 +51,18 @@ double time; // changes every iteration
 #define z_max (1e-4)
 
 // number of cells in each direction; nx+1 is number of grid points
-#define nx (96) 
-#define ny (96)
-#define nz (96)
+#define nx (32) 
+#define ny (32)
+#define nz (32)
 
 #define dx (x_max/nx)
 #define dy (y_max/ny)
 #define dz (z_max/nz)
 
 // Use the smallest of dx, dy, or dz!!!
-#define dt (dz/C)
+#define dt (MIN3(dx,dy,dz)/C)
 
 #define round_i(x) ((int) (x+0.5))
-//inline int round_i(double x) {
-//	return (int) (x+0.5);
-//}
 
 #define PROTON_WEIGHT (5.0)
 #define ELECTRON_WEIGHT (1.0)
