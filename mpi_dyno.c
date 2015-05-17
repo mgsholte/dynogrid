@@ -8,7 +8,7 @@
 //MPI SEND AND RECV SUBROUTINES:
 
 /*	send a list of trees and each tree's particles */
-MPI_Request* mpi_tree_send(List* tree_list, int to_pid, simple_tree** simple_trees_array, particle** all_particles_array, int** part_counts, char* dir6){
+MPI_Request* mpi_tree_send(List* tree_list, int to_pid, simple_tree **simple_trees_array, particle** all_particles_array, int** part_counts, char* dir6){
 	int error;
 
 	//Allocate an array to hold 3 MPI_Request items to be returned to caller:
@@ -25,13 +25,13 @@ MPI_Request* mpi_tree_send(List* tree_list, int to_pid, simple_tree** simple_tre
 	while(list_has_next(tree_list)){
 		tree* temp_tree = (tree*) list_get_next(tree_list);
 		all_particles_count += list_length(temp_tree->particles);
-		(*simple_trees_array)[i]->loc = temp_tree->loc;
-		(*simple_trees_array)[i]->owner = temp_tree->owner;
-		(*simple_trees_array)[i]->nPoints = temp_tree->nPoints;
+		(*simple_trees_array)[i].loc = temp_tree->loc;
+		(*simple_trees_array)[i].owner = temp_tree->owner;
+		(*simple_trees_array)[i].nPoints = temp_tree->nPoints;
 		int row,col; //iterating nummbers, no specific meaning
 		for(row = 0; row < 3; row++){
 			for(col = 0; col < 3; col++){
-				(*simple_trees_array)[i]->neighbor_owners[row*3 + col] = temp_tree->neighbor_owners[row][col];
+				(*simple_trees_array)[i].neighbor_owners[row*3 + col] = temp_tree->neighbor_owners[row][col];
 			}//end inner of
 		}//end outer for
 		i++;
@@ -126,7 +126,7 @@ MPI_Request* mpi_tree_recv(int from_pid, simple_tree** simple_trees_array, parti
 }//end mpi_tree_recv
 
 
-List* mpi_tree_unpack(simple_tree** simple_trees_array, particle** all_particles_array, int** part_counts, int* trees_len_ptr){
+List* mpi_tree_unpack(simple_tree **simple_trees_array, particle **all_particles_array, int **part_counts, int *trees_len_ptr){
 	int error;
 	List* trees_list = list_init();
 
@@ -150,96 +150,10 @@ List* mpi_tree_unpack(simple_tree** simple_trees_array, particle** all_particles
 
 		list_add(trees_list, tree_ptr);
 		for(part_num = 0; part_num < (*part_counts)[tree_num]; part_num++){
-			list_add(tree_ptr->particles, (*all_particles_array)[tot_parts]);
+			list_add(tree_ptr->particles, &(*all_particles_array)[tot_parts]);
 			tot_parts++;
 		}//end inner for
 	}//end for
 	//free(*simple_trees_array);
 	return trees_list;
 }//end mpi_tree_unpack()
-
-
-//-----------------------------------------------------------------------------------
-
-
-
-
-	// for(i = 0; i < trees_len; i++){
-	// 	(trees_array[i]).loc = (trees[i])->loc;
-	// 	(trees_array[i]).owner = (trees[i])->owner; 
-	// }//end for
-
-
-
-
-
-// int test_mpi_data_type(){
-	 
-// 	//MPI custom data type: Struct Derived Datatype: C Example
-// 	#define NELEM 25 
-
-// 	int main(argc,argv) 
-// 	int argc; 
-// 	char *argv[];  { 
-// 	int numtasks, rank, source=0, dest, tag=1, i; 
-
-// 	typedef struct { 
-// 	  float x, y, z; 
-// 	  float velocity; 
-// 	  int  n, type; 
-// 	  }          Particle; 
-// 	Particle     p[NELEM], particles[NELEM]; 
-// 	MPI_Datatype particletype, oldtypes[2];  
-// 	int          blockcounts[2]; 
-
-// 	/* MPI_Aint type used to be consistent with syntax of */ 
-// 	/* MPI_Type_extent routine */ 
-// 	MPI_Aint    offsets[2], extent; 
-
-// 	MPI_Status stat; 
-
-// 	MPI_Init(&argc,&argv); 
-// 	MPI_Comm_rank(MPI_COMM_WORLD, &rank); 
-// 	MPI_Comm_size(MPI_COMM_WORLD, &numtasks); 
-
-// 	 /* Setup description of the 4 MPI_FLOAT fields x, y, z, velocity */ 
-// 	offsets[0] = 0; 
-// 	oldtypes[0] = MPI_FLOAT; 
-// 	blockcounts[0] = 4; 
-// 	/* Setup description of the 2 MPI_INT fields n, type */ 
-// 	/* Need to first figure offset by getting size of MPI_FLOAT */ 
-// 	MPI_Type_extent(MPI_FLOAT, &extent); 
-// 	offsets[1] = 4 * extent; 
-// 	oldtypes[1] = MPI_INT; 
-// 	blockcounts[1] = 2; 
-
-// 	/* Now define structured type and commit it */ 
-
-// 	MPI_Type_struct(2, blockcounts, offsets, oldtypes, &particletype); 
-// 	MPI_Type_commit(&particletype); 
-
-// 	/* Initialize the particle array and then send it to each task */ 
-// 	if (rank == 0) { 
-// 	  for (i=0; i < NELEM; i++) { 
-// 	     particles[i].x = i * 1.0; 
-// 	     particles[i].y = i * -1.0; 
-// 	     particles[i].z = i * 1.0;  
-// 	     particles[i].velocity = 0.25; 
-// 	     particles[i].n = i; 
-// 	     particles[i].type = i % 2;  
-// 	     } 
-	  
-// 	 for (i=0; i < numtasks; i++)  
-// 	     MPI_Send(particles, NELEM, particletype, i, tag, MPI_COMM_WORLD); 
-// 	  } 
-	  
-// 	MPI_Recv(p, NELEM, particletype, source, tag, MPI_COMM_WORLD, &stat); 
-
-// 	/* Print a sample of what was received */ 
-// 	printf("rank= %d   %3.2f %3.2f %3.2f %3.2f %d %d\n", rank,p[3].x, 
-// 	     p[3].y,p[3].z,p[3].velocity,p[3].n,p[3].type); 
-	    
-// 	MPI_Finalize(); 
- 
-// }//end test_mpi_data_type()
-

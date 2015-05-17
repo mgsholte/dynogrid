@@ -1,7 +1,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include <mpi.h>
+
 #include "balance.h"
+#include "grid.h"
+#include "dynamics.h"
+#include "mpi_dyno.h"
 
 
 bool is_real(tree* curCell){
@@ -313,21 +318,22 @@ void give_take_surface(tree**** base_grid, List* list_u, int id_u, List* list_d,
 	*/
 	
 	// buffer send arrays. both get malloced in mpi_tree_send, the ** is so after the * gets malloced and therefore changes, I still have the pointer to it
-	simple_tree* buff_send_trees[nNeighbors];
-	particle* buff_send_parts[nNeighbors];
-	int* buff_send_part_list_lengths[nNeighbors];
+	simple_tree *buff_send_trees[nNeighbors];
+	particle *buff_send_parts[nNeighbors];
+	int *buff_send_part_list_lengths[nNeighbors];
 	char send_dir6[nNeighbors]; // the direction of the incoming surface, pointing from giver to taker
 
 	// need to track MPI_request objects for a waitall later, in order to be non-blocking
 	MPI_Request req_send_trees[nNeighbors];
 	MPI_Request req_send_parts[nNeighbors];
 	MPI_Request req_send_lengths[nNeighbors];
-	MPI_Request* trees_parts_and_lengths;
+	MPI_Request *trees_parts_and_lengths;
 	
 	// send first up then down (up to 1 can be a real send)
-	List* move_list;
+	List *move_list;
 	int neighbor_id;
-	int i,l,m,n;
+	int i,j,k;
+	int l,m,n;
 	vec3 pos;
 	for (i = 0; i < nNeighbors; ++i) { // nNeighbors = 2 = number of directions to send
 		// assign left or right
@@ -351,7 +357,7 @@ void give_take_surface(tree**** base_grid, List* list_u, int id_u, List* list_d,
 			m = jmin + (int) round((pos.y - pymin)/dy);
 			n = kmin + (int) round((pos.z - pzmin)/dz);
 			base_grid[l][m][n]->owner = neighbor_id;
-			if (send_dir[i] == 'u') {
+			if (send_dir6[i] == 'u') {
 				for (j = -1; j <= 1; ++j) {
 					for (k = -1; k <= 1; ++k) {
 						if ( base_grid[l+j][m-1][n+k] != NULL )
@@ -359,7 +365,7 @@ void give_take_surface(tree**** base_grid, List* list_u, int id_u, List* list_d,
 						base_grid[l+j][m-1][n+k] = NULL;
 					}
 				}
-			} else if (send_dir[i] == 'd') {
+			} else if (send_dir6[i] == 'd') {
 				for (j = -1; j <= 1; ++j) {
 					for (k = -1; k <= 1; ++k) {
 						if ( base_grid[l+j][m+2][n+k] != NULL )
@@ -372,10 +378,10 @@ void give_take_surface(tree**** base_grid, List* list_u, int id_u, List* list_d,
 		}
 		
 		// if giving up a surface, change imin and pxmin or imax
-		if (send_dir[i] == 'u' && move_list->length != 0) {
+		if (send_dir6[i] == 'u' && move_list->length != 0) {
 			++imin;
 			pxmin += dx;
-		} else if (send_dir[i] == 'd' && move_list->length != 0) {
+		} else if (send_dir6[i] == 'd' && move_list->length != 0) {
 			--imax;
 		}
 			
@@ -387,7 +393,7 @@ void give_take_surface(tree**** base_grid, List* list_u, int id_u, List* list_d,
 	particle* buff_recv_parts[nNeighbors];
 	int* buff_recv_part_list_lengths[nNeighbors];
 	char recv_dir6[nNeighbors];
-	int length_of_trees[nNeighbors]; //int for the tree array, pointer so it can be filled in mpi_tree_recv
+	int lengths_of_trees[nNeighbors]; //int for the tree array, pointer so it can be filled in mpi_tree_recv
 	
 	MPI_Request req_recv_trees[nNeighbors];
 	MPI_Request req_recv_parts[nNeighbors];
@@ -410,9 +416,9 @@ void give_take_surface(tree**** base_grid, List* list_u, int id_u, List* list_d,
 	}	
 	
 	// wait for receives
-	MPI_Waitall(nNeighbors, req_recv_trees);
-	MPI_Waitall(nNeighbors, req_recv_parts);
-	MPI_Waitall(nNeighbors, req_recv_lengths);
+	MPI_Waitall(nNeighbors, req_recv_trees, MPI_STATUSES_IGNORE);
+	MPI_Waitall(nNeighbors, req_recv_parts, MPI_STATUSES_IGNORE);
+	MPI_Waitall(nNeighbors, req_recv_lengths, MPI_STATUSES_IGNORE);
 	
 	// once receives are done, can start unpacking buffers, putting new trees where they belong, while adjusting base_grid as necessary
 	// skips empty lists, but always expects a list from each neighbor in the current direction of passing
@@ -425,7 +431,7 @@ void give_take_surface(tree**** base_grid, List* list_u, int id_u, List* list_d,
 		else if (i == 1) { neighbor_id = id_d; }
 		
 		new_trees = mpi_tree_unpack(&buff_recv_trees[i], &buff_recv_parts[i], &buff_recv_part_list_lengths[i], &lengths_of_trees[i]);
-		list_deset_iter(new_trees);
+		list_reset_iter(new_trees);
 		
 		// first new_tree is used to check if base_grid is big enough, we loop through the rest later
 		if (list_has_next(new_trees)) {
@@ -442,7 +448,7 @@ void give_take_surface(tree**** base_grid, List* list_u, int id_u, List* list_d,
 			} else if (imin < 0) {
 				printf("ERROR: unexpected imin < 0");
 				MPI_Finalize();
-				return -1;
+				return;
 			}
 			--imin;
 			pxmin -= dx;
@@ -452,7 +458,7 @@ void give_take_surface(tree**** base_grid, List* list_u, int id_u, List* list_d,
 			} else if (imax > wi-1) {
 				printf("ERROR: unexpected imax > wi-1");
 				MPI_Finalize();
-				return -1;
+				return;
 			}
 			++imax;
 		}
@@ -467,9 +473,9 @@ void give_take_surface(tree**** base_grid, List* list_u, int id_u, List* list_d,
 	}
 	
 	// wait for sends
-	MPI_Waitall(nNeighbors, req_send_trees);
-	MPI_Waitall(nNeighbors, req_send_parts);
-	MPI_Waitall(nNeighbors, req_send_lengths);
+	MPI_Waitall(nNeighbors, req_send_trees, MPI_STATUSES_IGNORE);
+	MPI_Waitall(nNeighbors, req_send_parts, MPI_STATUSES_IGNORE);
+	MPI_Waitall(nNeighbors, req_send_lengths, MPI_STATUSES_IGNORE);
 	
 	// free buffers etc.
 	for (i = 0; i < nNeighbors; ++i) {
@@ -548,7 +554,7 @@ void convert_ghost2real_and_reghost(tree**** base_grid, tree* new_tree, char dir
 	
 	// use pointers to iterate over the 9 (or fewer) new ghost cells, respecting which plane they lie in
 	int di,dj,dk;
-	int* d1,d2;
+	int *d1, *d2;
 	if (dir6 == 'l') {
 		di = 1;
 		d1 = &dj;
@@ -581,7 +587,11 @@ void convert_ghost2real_and_reghost(tree**** base_grid, tree* new_tree, char dir
 			if (base_grid[i+di][j+dj][k+dk] == NULL) {
 				
 				// tree_init, includes setting points[0] and owner
-				base_grid[i+di][j+dj][k+dk] = tree_init(get_loc(i+di,j+dj,k+dk), new_tree->neighbor_owners[1+*d1][1+*d2]);
+				base_grid[i+di][j+dj][k+dk] = 
+				tree_init(
+				get_loc(i+di,j+dj,k+dk), 
+				new_tree->
+				neighbor_owners[1+*d1][1+*d2]);
 				
 			// if init ghost then convert into ghost instead of re-mallocing
 			} else if (base_grid[i+di][j+dj][k+dk]->owner == -2) {
