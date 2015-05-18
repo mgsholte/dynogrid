@@ -32,7 +32,7 @@ void determine_neighbor_matchings(List* ne_matchings[], char dim, tree**** grid)
 	// loop over each ghost cell.
 	// loop over entire grid to find the ghost cells, this is the easiest way to find them
 	// this can't be integrated with above identical loop since the push must be completed before checking to see which pushed things need to be sent to neighbors
-	int i,j,k, ne_num; //ne_num is for "neighbor_number"
+	int i,j,k, ne_num, jghost; //ne_num is for "neighbor_number"
 	
 	//tree *prevCell = NULL;
 	tree *curCell = NULL;
@@ -51,15 +51,23 @@ void determine_neighbor_matchings(List* ne_matchings[], char dim, tree**** grid)
 	
 	if(dim == 'y'){
 		// only do j = jmin, jmax
-		for (j = jmin; j <= jmax; j += (jmax-jmin)) {
+		for (j = jmin+1; j <= jmax-1; j += (jmax-jmin-2)) {
 		
 			// first set up the surface	
 			surf_match = NULL;
 			surface *surf_match = malloc(sizeof(surface));
 			surf_match->cells = list_init();
-			surf_match->neighbor = grid[imin+1][j][kmin+1]->owner;
-			if (j == jmin) surf_match->dir = -1;
-			if (j == jmax) surf_match->dir = 1;
+			if (j == jmin+1) {
+				surf_match->dir = -1;
+				jghost = jmin;
+			} else if (j == jmax-1) {
+				surf_match->dir = 1;
+				jghost = jmax;
+			} else {
+				printf("determine_neighbor_matchings: Screwed up. j is not one of the only two values it should be.");
+			}
+			surf_match->neighbor = grid[imin+1][jghost][kmin+1]->owner;
+
 			ne_matchings[surf_match->neighbor] = list_init();
 			list_add(ne_matchings[surf_match->neighbor], surf_match);
 			
@@ -136,6 +144,29 @@ void determine_neighbor_matchings(List* ne_matchings[], char dim, tree**** grid)
 					*/
 				}//end k loop
 			}//end i loop
+			
+			// if processor is 1 real cell wide, kinda hack it to work. both surfaces are the same but it can only give one way so that's no problem
+			if (jmax-jmin-2 == 0) {
+				surf_match = NULL;
+				surface *surf_match = malloc(sizeof(surface));
+				surf_match->cells = list_init();
+				surf_match->dir = 1;
+				jghost = jmax;
+			
+				surf_match->neighbor = grid[imin+1][jghost][kmin+1]->owner;
+
+				ne_matchings[surf_match->neighbor] = list_init();
+				list_add(ne_matchings[surf_match->neighbor], surf_match);
+			
+				for (i = imin+1; i < imax-1; ++i) {
+					for (k = kmin+1; k < kmax-1; ++k) {
+						curCell = grid[i][j][k];
+						list_add(surf_match->cells, curCell);
+					}
+				}
+				
+				break;
+			}
 		}//end j loop
 	}//end x dimension
 
@@ -215,13 +246,12 @@ void Balance(tree ****grid){
 	MPI_Allreduce(&work, &mostwork, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
 	
 	// List (*cells_to_send)[nProcs];
-	// IS THIS CORRECT SYNTAX?? (below, not above)
 	List* ne_matchings[nProcs];
 	determine_neighbor_matchings(ne_matchings, 'y', grid);
 
 	// figure out the neighbor pids
 	int left_pid=-1, right_pid=-1, it, ne_ct=0;
-	for (it = 0; it < nProcs; it ++){
+	for (it = 0; it < nProcs; it++){
 		if(ne_matchings[it] != NULL){
 			ne_ct++;
 			list_reset_iter(ne_matchings[it]);
@@ -277,6 +307,7 @@ void Balance(tree ****grid){
 
 		MPI_Waitall(4, reqs, MPI_STATUSES_IGNORE);
 
+		// want to give
 		if (propensity > 0){
 			//If both neighbors are givers, give out
 			surface *leftSfc = NULL, *rightSfc = NULL;
