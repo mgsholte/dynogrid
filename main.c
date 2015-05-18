@@ -65,12 +65,12 @@ int main(int argc, char *argv[]) {
 	// read as inputs in the future
 	const int nSteps = ceil(t_end/dt);
 	//int nx = 100, ny = 100, nz = 100;
-	const int elec_per_cell = 3;
+	const int elec_per_cell = 40;
 	// print output every output_freq iterations of the main loop
 	const int output_freq = nSteps/10;
 	// lower left coordinate and dimensions defining the rectangle where particles begin in the simulation
-	const vec3 origin = {.46*x_max, .46*y_max, .46*z_max};
-	const vec3 dims = {.08*x_max, .08*y_max, .08*z_max};
+	const vec3 origin = {.25*x_max, .25*y_max, .25*z_max};
+	const vec3 dims = {.5*x_max, .5*y_max, .5*z_max};
 
 	printf("initializing grid and particles\n");
 
@@ -92,8 +92,8 @@ int main(int argc, char *argv[]) {
 			//printf("outputting grid\n");
 			output_grid((i/output_freq), (nSteps/output_freq), base_grid);
 		}
-		MPI_Barrier(MPI_COMM_WORLD);
-		Balance(base_grid);
+		// MPI_Barrier(MPI_COMM_WORLD);
+		// Balance(base_grid);
 		MPI_Barrier(MPI_COMM_WORLD);
 	}
 
