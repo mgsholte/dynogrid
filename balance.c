@@ -396,25 +396,31 @@ void give_take_surface(tree**** base_grid, List* list_u, int id_u, List* list_d,
 
 	MPI_Waitall(4*nNeighbors, presend_reqs, MPI_STATUSES_IGNORE);
 
+	MPI_Request all_reqs[6*nNeighbors];
+	
 	for (i = 0; i < nNeighbors; ++i) { // nNeighbors = 2 = number of directions to send
 		// assign left or right
 		if (i == 0) { move_list = list_u; neighbor_id = id_u; send_dir6[i] = 'u'; }
 		else if (i == 1) { move_list = list_d; neighbor_id = id_d; send_dir6[i] = 'd'; }
 		if (neighbor_id == -1){
-			req_send_trees[i] = MPI_REQUEST_NULL;
-			req_send_parts[i] = MPI_REQUEST_NULL;
-			req_send_lengths[i] = MPI_REQUEST_NULL;
+			all_reqs[3*i] = MPI_REQUEST_NULL;
+			all_reqs[3*i+1] = MPI_REQUEST_NULL;
+			all_reqs[3*i+2] = MPI_REQUEST_NULL;
 			buff_send_trees[i] = malloc(0);
 			buff_send_parts[i] = malloc(0);
 			buff_send_part_list_lengths[i] = malloc(0);
 			continue;
 		}
 		
+		buff_send_trees[i] = malloc(nTreeSends[i] * sizeof(simple_tree));
+		buff_send_parts[i] = malloc(nParticleSends[i] * sizeof(particle));
+		buff_send_part_list_lengths[i] = malloc(nTreeSends[i] * sizeof(simple_tree));
+
 		// send move_list, cells within will be converted into these buffers before send
-		trees_parts_and_lengths = mpi_tree_send(move_list, neighbor_id, &buff_send_trees[i], &buff_send_parts[i], &buff_send_part_list_lengths[i], &send_dir6[i]);
-		req_send_trees[i] = trees_parts_and_lengths[0];
-		req_send_parts[i] = trees_parts_and_lengths[1];
-		req_send_lengths[i] = trees_parts_and_lengths[2];
+		trees_parts_and_lengths = mpi_tree_send(move_list, neighbor_id, buff_send_trees[i], buff_send_parts[i], buff_send_part_list_lengths[i], &send_dir6[i]);
+		all_reqs[3*i] = trees_parts_and_lengths[0];
+		all_reqs[3*i+1] = trees_parts_and_lengths[1];
+		all_reqs[3*i+2] = trees_parts_and_lengths[2];
 		free(trees_parts_and_lengths);
 		
 		// clean out trees being given away by turning them into ghosts, their neighbor ghosts into NULLs or init ghosts, and their neighbor init ghosts into NULLs
@@ -463,8 +469,6 @@ void give_take_surface(tree**** base_grid, List* list_u, int id_u, List* list_d,
 	int* buff_recv_part_list_lengths[nNeighbors];
 	char recv_dir6[nNeighbors];
 	
-	MPI_Request recv_reqs[3*nNeighbors];
-	
 	// receive from neighbors: either buffers or nothing
 	// receive first from up then from down (up to 2 can be real receives)
 	for (i = 0; i < nNeighbors; ++i) { // nNeighbors = 2 = number of directions to send
@@ -473,9 +477,9 @@ void give_take_surface(tree**** base_grid, List* list_u, int id_u, List* list_d,
 		else if (i == 1) { neighbor_id = id_d; }
 		
 		if (neighbor_id == -1){
-			recv_reqs[3*i] = MPI_REQUEST_NULL;
-			recv_reqs[3*i+1] = MPI_REQUEST_NULL;
-			recv_reqs[3*i+2] = MPI_REQUEST_NULL;
+			all_reqs[3*(i+nNeighbors)] = MPI_REQUEST_NULL;
+			all_reqs[3*(i+nNeighbors)+1] = MPI_REQUEST_NULL;
+			all_reqs[3*(i+nNeighbors)+2] = MPI_REQUEST_NULL;
 			buff_recv_trees[i] = malloc(0);
 			buff_recv_parts[i] = malloc(0);
 			buff_recv_part_list_lengths[i] = malloc(0);
@@ -487,14 +491,14 @@ void give_take_surface(tree**** base_grid, List* list_u, int id_u, List* list_d,
 		buff_recv_part_list_lengths[i] = malloc(nTreeRecvs[i] * sizeof(simple_tree));
 
 		trees_parts_and_lengths = mpi_tree_recv(neighbor_id, buff_recv_trees[i], nTreeRecvs[i], buff_recv_parts[i], nParticleRecvs[i], buff_recv_part_list_lengths[i], &recv_dir6[i]);
-		recv_reqs[3*i] = trees_parts_and_lengths[0];
-		recv_reqs[3*i+1] = trees_parts_and_lengths[1];
-		recv_reqs[3*i+2] = trees_parts_and_lengths[2];
+		all_reqs[3*(i+nNeighbors)] = trees_parts_and_lengths[0];
+		all_reqs[3*(i+nNeighbors)+1] = trees_parts_and_lengths[1];
+		all_reqs[3*(i+nNeighbors)+2] = trees_parts_and_lengths[2];
 		free(trees_parts_and_lengths);
 	}	
 	
-	// wait for receives
-	MPI_Waitall(3*nNeighbors, recv_reqs, MPI_STATUSES_IGNORE);
+	// wait for the sends and receives
+	MPI_Waitall(6*nNeighbors, all_reqs, MPI_STATUSES_IGNORE);
 
 	// once receives are done, can start unpacking buffers, putting new trees where they belong, while adjusting base_grid as necessary
 	// skips empty lists, but always expects a list from each neighbor in the current direction of passing
@@ -507,9 +511,13 @@ void give_take_surface(tree**** base_grid, List* list_u, int id_u, List* list_d,
 		else if (i == 1) { neighbor_id = id_d; }
 		
 		if (neighbor_id == -1) {
+			free(buff_recv_trees[i]);
+			free(buff_recv_parts[i]);
+			free(buff_recv_part_list_lengths[i]);
 			continue;
 		}
-		new_trees = mpi_tree_unpack(&buff_recv_trees[i], &buff_recv_parts[i], &buff_recv_part_list_lengths[i], nTreeRecvs[i]);
+		//NB: frees the arrays after it unpacks
+		new_trees = mpi_tree_unpack(buff_recv_trees[i], buff_recv_parts[i], buff_recv_part_list_lengths[i], nTreeRecvs[i]);
 		list_reset_iter(new_trees);
 		
 		// first new_tree is used to check if base_grid is big enough, we loop through the rest later
@@ -551,20 +559,12 @@ void give_take_surface(tree**** base_grid, List* list_u, int id_u, List* list_d,
 		
 	}
 	
-	// wait for sends
-	MPI_Waitall(nNeighbors, req_send_trees, MPI_STATUSES_IGNORE);
-	MPI_Waitall(nNeighbors, req_send_parts, MPI_STATUSES_IGNORE);
-	MPI_Waitall(nNeighbors, req_send_lengths, MPI_STATUSES_IGNORE);
-	
 	// free buffers etc.
 	for (i = 0; i < nNeighbors; ++i) {
 		free(buff_send_trees[i]);
 		free(buff_send_parts[i]);
 		free(buff_send_part_list_lengths[i]);
 
-		free(buff_recv_trees[i]);
-		free(buff_recv_parts[i]);
-		free(buff_recv_part_list_lengths[i]);
 	}
 
 	
@@ -667,10 +667,7 @@ void convert_ghost2real_and_reghost(tree**** base_grid, tree* new_tree, char dir
 				
 				// tree_init, includes setting points[0] and owner
 				base_grid[i+di][j+dj][k+dk] = 
-				tree_init(
-				get_loc(i+di,j+dj,k+dk), 
-				new_tree->
-				neighbor_owners[1+*d1][1+*d2]);
+				tree_init(get_loc(i+di,j+dj,k+dk), new_tree->neighbor_owners[1+*d1][1+*d2]);
 				
 			// if init ghost then convert into ghost instead of re-mallocing
 			} else if (base_grid[i+di][j+dj][k+dk]->owner == -2) {
@@ -714,4 +711,7 @@ void convert_ghost2real_and_reghost(tree**** base_grid, tree* new_tree, char dir
 			}
 		}
 	}
+	// dont want to free the particle list we copied from this
+	new_tree->particles = list_init();
+	tree_free(new_tree);
 } //convert_ghost2real_and_reghost
