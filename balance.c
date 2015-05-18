@@ -410,6 +410,30 @@ void give_take_surface(tree**** base_grid, List* list_u, int id_u, List* list_d,
 			continue;
 		}
 		
+		// fill neighbor_owners
+		tree* move_tree;
+		list_reset_iter(move_list);
+		while (list_has_next(move_list)) {
+			move_tree = (tree*) list_get_next(move_list);
+			pos = move_tree->loc;
+			l = imin + round_i((pos.x - pxmin)/dx);
+			m = jmin + round_i((pos.y - pymin)/dy);
+			n = kmin + round_i((pos.z - pzmin)/dz);
+			if (send_dir6[i] == 'u') {
+				for (j = -1; j <= 1; ++j) {
+					for (k = -1; k <= 1; ++k) {
+						move_tree->neighbor_owners[j+1][k+1] = base_grid[l+k][m+1][n+j]->owner; //yes j and k are used correctly here
+					}
+				}
+			} else if (send_dir6[i] == 'd') {
+				for (j = -1; j <= 1; ++j) {
+					for (k = -1; k <= 1; ++k) {
+						move_tree->neighbor_owners[j+1][k+1] = base_grid[l+k][m-1][n+j]->owner; //yes j and k are used correctly here
+					}
+				}
+			}		
+		}
+		
 		// send move_list, cells within will be converted into these buffers before send
 		trees_parts_and_lengths = mpi_tree_send(move_list, neighbor_id, &buff_send_trees[i], &buff_send_parts[i], &buff_send_part_list_lengths[i], &send_dir6[i]);
 		req_send_trees[i] = trees_parts_and_lengths[0];
@@ -556,7 +580,7 @@ void give_take_surface(tree**** base_grid, List* list_u, int id_u, List* list_d,
 	MPI_Waitall(nNeighbors, req_send_parts, MPI_STATUSES_IGNORE);
 	MPI_Waitall(nNeighbors, req_send_lengths, MPI_STATUSES_IGNORE);
 	
-	// free buffers etc.
+	// free buffers
 	for (i = 0; i < nNeighbors; ++i) {
 		free(buff_send_trees[i]);
 		free(buff_send_parts[i]);
