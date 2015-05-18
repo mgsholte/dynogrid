@@ -239,25 +239,30 @@ void Balance(tree ****grid){
 
 		if (propensity > 0){
 			//If both neighbors are givers, give out
+			surface *leftSfc = NULL, *rightSfc = NULL;
+			list_reset_iter(ne_matchings[left_pid]);
+			list_reset_iter(ne_matchings[right_pid]);
+			if (right_pid != -1) {
+				rightSfc = list_get_next(ne_matchings[right_pid]);
+			}
+			if (left_pid != -1) {
+				leftSfc = list_get_next(ne_matchings[left_pid]);
+			}
 			if (left_pro > 0 && right_pro > 0){
 				double center = (pymin + dy*(jmax-jmin)*.5);
 				if (center < y_max/2){
-					list_reset_iter(ne_matchings[left_pid]);
-					give_take_surface(grid, list_get_next(ne_matchings[left_pid]), left_pid, null_list, right_pid);
+					give_take_surface(grid, leftSfc->cells, left_pid, null_list, right_pid);
 				}
 				else {
-					list_reset_iter(ne_matchings[right_pid]);
-					give_take_surface(grid, null_list, left_pid, list_get_next(ne_matchings[right_pid]), right_pid);
+					give_take_surface(grid, null_list, left_pid, rightSfc->cells, right_pid);
 				}
 			}
 			// Else give to lowest propensity
 			else if (left_pro < right_pro){
-				list_reset_iter(ne_matchings[left_pid]);
-				give_take_surface(grid, list_get_next(ne_matchings[left_pid]), left_pid, null_list, right_pid);
+				give_take_surface(grid, leftSfc->cells, left_pid, null_list, right_pid);
 			}
 			else {
-				list_reset_iter(ne_matchings[right_pid]);
-				give_take_surface(grid, null_list, left_pid, list_get_next(ne_matchings[right_pid]), right_pid);
+				give_take_surface(grid, null_list, left_pid, rightSfc->cells, right_pid);
 			}
 			//calculate propensity left and right
 			//Give left or right and give null other way
