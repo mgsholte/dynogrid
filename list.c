@@ -31,7 +31,7 @@ void list_free(List *list, bool free_payloads) {
 	}
 	free(list->sentinel);
 	//TODO: should be unnecessary
-	memset(list, (int) NULL, sizeof(Node*)); // <==> list->sentinel = NULL;
+	memset(list, (size_t) NULL, sizeof(Node*)); // <==> list->sentinel = NULL;
 	
 
 	free(list);

@@ -34,9 +34,7 @@ void determine_neighbor_matchings(List* ne_matchings[], char dim, tree**** grid)
 	// this can't be integrated with above identical loop since the push must be completed before checking to see which pushed things need to be sent to neighbors
 	int i,j,k, ne_num, jghost; //ne_num is for "neighbor_number"
 	
-	//tree *prevCell = NULL;
 	tree *curCell = NULL;
-	//tree *nextCell = NULL;
 
 	//instantiate all pointers to NULL for checking to see if whe need to malloc them in loop:
 	for(ne_num = 0; ne_num < nProcs; ne_num++){
@@ -49,166 +47,82 @@ void determine_neighbor_matchings(List* ne_matchings[], char dim, tree**** grid)
 	int layer = -1;
 	surface* prev_surf_match = NULL;
 	
+		//for (j = jmin+1; j <= jmax-1; j += (jmax-jmin-2)) {
 	if(dim == 'y'){
-		// only do j = jmin, jmax
-		for (j = jmin+1; j <= jmax-1; j += (jmax-jmin-2)) {
-		
-			// first set up the surface	
-			surf_match = NULL;
+		// if processor is 1 real cell wide, kinda hack it to work. both surfaces are the same but it can only give one way so that's no problem
+		if (jmax-jmin-2 == 0) {
 			surface *surf_match = malloc(sizeof(surface));
 			surf_match->cells = list_init();
-			if (j == jmin+1) {
-				surf_match->dir = -1;
-				jghost = jmin;
-			} else if (j == jmax-1) {
-				surf_match->dir = 1;
-				jghost = jmax;
-			} else {
-				printf("determine_neighbor_matchings: Screwed up. j is not one of the only two values it should be.");
-			}
+			surf_match->dir = 1;
+			jghost = jmax;
+		
 			surf_match->neighbor = grid[imin+1][jghost][kmin+1]->owner;
+
+			if (surf_match->neighbor == -1) {
+				return;
+			}
 
 			ne_matchings[surf_match->neighbor] = list_init();
 			list_add(ne_matchings[surf_match->neighbor], surf_match);
+		
+			for (i = imin+1; i < imax-1; ++i) {
+				for (k = kmin+1; k < kmax-1; ++k) {
+					curCell = grid[i][j][k];
+					list_add(surf_match->cells, curCell);
+				}
+			}
 			
+			return;
+		}		
+		// first set up the surface	
+		surface *surf_match = malloc(sizeof(surface));
+
+		// do interface with left neighbor
+		j = jmin+1;
+		surf_match->dir = -1;
+		jghost = j + surf_match->dir;
+
+		surf_match->cells = list_init();
+		surf_match->neighbor = grid[imin+1][jghost][kmin+1]->owner;
+
+		if (surf_match->neighbor != -1) {
+			ne_matchings[surf_match->neighbor] = list_init();
+			list_add(ne_matchings[surf_match->neighbor], surf_match);
+
+			
+			// loop over the entire surface at this j value
 			for (i = imin+1; i < imax-1; ++i) {
 				for (k = kmin+1; k < kmax-1; ++k) {
 					curCell = grid[i][j][k];
 					list_add(surf_match->cells, curCell);
 					
-					/*
-					if(is_ghost(curCell)) {
-						//determine the direction of the neighbor (for this particular cell!!!)
-						if(j == 0){
-							// 	we can't access the j-1 element of the grid, but we know that
-							//  the neighbor must be to our LEFT direction (hence the dir = "-1")
-							dir = -1; //dir for "direction"
-							nextCell = grid[i][j+1][k];
-						}else if(j == wj-1){
-							// 	we can't access the j+1 element of the grid, but we know that
-							//  the neighbor must be to our RIGHT direction (hence the dir ="+1")
-							dir = 1;
-							prevCell = grid[i][j-1][k];
-						}else{
-							//we know we can access the j-1 and j+1 element of the grid
-							prevCell = grid[i][j-1][k];
-							nextCell = grid[i][j+1][k];
-						
-							if(is_real(nextCell)){
-								dir = -1;
-							}else if(is_real(prevCell)){
-								dir = 1;
-							}//end if else if
-						}//end if else for checking extremes
-						//set the neighbor pid:
-						neighbor = curCell->owner;
-						//set the layer value for the surface struct (i.e. )
-						layer = j;
-						
-						if( prev_surf_match != NULL &&
-							prev_surf_match->neighbor == neighbor &&
-							prev_surf_match->layer == layer &&
-							prev_surf_match->dir == dir){
-								//then we are dealing with the same surface matching
-								surf_match = prev_surf_match;
-						}else{
-							surf_match = malloc(sizeof(*surf_match));
-
-							surf_match->cells = list_init();
-							surf_match->neighbor = curCell->owner;
-							surf_match->dir = dir;
-							surf_match->layer = layer;
-
-							if((ne_matchings[surf_match->neighbor]) == NULL){
-								//then the List has not yet been initialized so we have to malloc it and initialize it:
-								ne_matchings[surf_match->neighbor] = list_init();
-							}
-							list_add(ne_matchings[surf_match->neighbor], surf_match);
-						}//end if else
-						
-						// since curCell is a ghost, we add the real cell next to it, determined by dir from earlier
-						if(dir < 0){
-							list_add(surf_match->cells, nextCell);
-						}else if(dir > 0){
-							list_add(surf_match->cells, prevCell);
-						}
-						// reminder: 
-						//		ne_matchings ......	an array of
-						//							List pointers
-						//			where each list holds "surface"s (a new type of struct...see Balance.h)
-						//			each "surface" has meta data and
-						//			a List of trees
-						prev_surf_match = surf_match;
-						// reminder ne_matchings[match->neighbor] is a List*
-					}//end if(is_ghost())
-					*/
 				}//end k loop
 			}//end i loop
+		}
 			
-			// if processor is 1 real cell wide, kinda hack it to work. both surfaces are the same but it can only give one way so that's no problem
-			if (jmax-jmin-2 == 0) {
-				surf_match = NULL;
-				surface *surf_match = malloc(sizeof(surface));
-				surf_match->cells = list_init();
-				surf_match->dir = 1;
-				jghost = jmax;
-			
-				surf_match->neighbor = grid[imin+1][jghost][kmin+1]->owner;
+		// now do the right interface
+		surf_match = malloc(sizeof(surface));
 
-				ne_matchings[surf_match->neighbor] = list_init();
-				list_add(ne_matchings[surf_match->neighbor], surf_match);
-			
-				for (i = imin+1; i < imax-1; ++i) {
-					for (k = kmin+1; k < kmax-1; ++k) {
-						curCell = grid[i][j][k];
-						list_add(surf_match->cells, curCell);
-					}
-				}
-				
-				break;
-			}
-		}//end j loop
-	}//end x dimension
+		j = jmax-2;
+		surf_match->dir = 1;
+		jghost = j + surf_match->dir;
 
-	//TODO: y dimension (should be almost identical to x except for changing order of loops)
+		surf_match->cells = list_init();
+		surf_match->neighbor = grid[imax-2][jghost][kmax-2]->owner;
 
-	//TODO: z dimension (should be almost identical to x except for changing order of loops)
+		if (surf_match->neighbor != -1) {
+			ne_matchings[surf_match->neighbor] = list_init();
+			list_add(ne_matchings[surf_match->neighbor], surf_match);
 
-	/*
-	//for each neighbor, go through its list of surface matchings and combine contiguous matchings together:
-	//note, this means that the surface matchings get combined only if they have the same neighbor, direction, AND layer
-	surface* cur_surface;
-	surface* next_surface;
-	for(ne_num = 0; ne_num < nProcs; ne_num++){
-		if(ne_matchings[ne_num] == NULL){
-			continue;
-		}//end if
-		list_reset_iter(ne_matchings[ne_num]);
-		int it, ct = 0;
-		while(ct < list_length(ne_matchings[ne_num])){
-			for(it = 0; it < ct; it++){
-				//cycle through the list to get to the correct starting point...
-				//probably a better way to do this whole scheme, but not sure...
-				list_get_next(ne_matchings[ne_num]);
-			}//end for
-			cur_surface = (surface*) (list_get_next(ne_matchings[ne_num]));
-			while(list_has_next(ne_matchings[ne_num])){
-				next_surface = (surface*) (list_get_next(ne_matchings[ne_num]));
-				if(	(cur_surface->layer == next_surface->layer) &&
-					(cur_surface->dir == next_surface->dir)){
-					//then the surface matchings should belong to the same surface, thus should be combined:
-					//note, we already know that they have the same neighbor at this point bc of indexing into the array...
-					//so, combine next_surface into cur_surface and then free next_surface:
-					list_combine(cur_surface->cells, next_surface->cells);
-					list_pop(ne_matchings[ne_num], true); //remove (and free) next_surface from the list
-				}//end if
-			}//end inner while
-			//printf("After while length of ne_matchings[%d] is %d\ncount is %d \n", ne_num, list_length(ne_matchings[ne_num]), ct);
-			ct++;
-			list_reset_iter(ne_matchings[ne_num]);
-		}//end outer while
-	}//end for
-	*/
+			for (i = imin+1; i < imax-1; ++i) {
+				for (k = kmin+1; k < kmax-1; ++k) {
+					curCell = grid[i][j][k];
+					list_add(surf_match->cells, curCell);
+					
+				}//end k loop
+			}//end i loop
+		}
+	}//end y dimension
 
 }//end determine_neighbor_matchings(List** ne_matchings, char dim)
 

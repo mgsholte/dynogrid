@@ -8,6 +8,7 @@
 #include "dynamics.h"
 #include "list.h"
 #include "mpitypes.h"
+#include "balance.h"
 
 static double min(const double x, const double y, const double z) {
 	return (x < y)
@@ -69,8 +70,8 @@ int main(int argc, char *argv[]) {
 	// print output every output_freq iterations of the main loop
 	const int output_freq = nSteps/10;
 	// lower left coordinate and dimensions defining the rectangle where particles begin in the simulation
-	const vec3 origin = {.25*x_max, .25*y_max, .25*z_max};
-	const vec3 dims = {.5*x_max, .5*y_max, .5*z_max};
+	const vec3 origin = {.4*x_max, .4*y_max, .4*z_max};
+	const vec3 dims = {.2*x_max, .2*y_max, .2*z_max};
 
 	printf("initializing grid and particles\n");
 
@@ -92,8 +93,8 @@ int main(int argc, char *argv[]) {
 			//printf("outputting grid\n");
 			output_grid((i/output_freq), (nSteps/output_freq), base_grid);
 		}
-		// MPI_Barrier(MPI_COMM_WORLD);
-		// Balance(base_grid);
+		MPI_Barrier(MPI_COMM_WORLD);
+		Balance(base_grid);
 		MPI_Barrier(MPI_COMM_WORLD);
 	}
 
