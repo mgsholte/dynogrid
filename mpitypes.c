@@ -2,6 +2,7 @@
 #include <mpi.h>
 
 #include "mpitypes.h"
+#include "tree.h"
 
 //---------------------------------------------------------------------
 //FUNCTIONS TO INITIALIZE MPI CUSTOM DATA TYPES:
@@ -105,20 +106,21 @@ int init_mpi_tree(){
 	//set count, blocks, and types:
 	count = 4;
 
-	//get the size of an mpi_vec3 datatype (our custom made datatype):
-	MPI_Aint size_of_mpi_vec3;
-	MPI_Aint size_of_mpi_int;
-	err = MPI_Type_extent(mpi_vec3, &size_of_mpi_vec3);
-	err = MPI_Type_extent(MPI_INT, &size_of_mpi_int);
-
+	simple_tree tmp;
 	//set offsets[]:	
 	offsets[0] = (MPI_Aint) (0);
-	offsets[1] = size_of_mpi_vec3;
-	offsets[2] = size_of_mpi_vec3 + size_of_mpi_int;
-	offsets[3] = size_of_mpi_vec3 + 2*size_of_mpi_int;
+	offsets[1] = (void*)&(tmp.owner) - (void*)&(tmp);
+	offsets[2] = (void*)&(tmp.nPoints) - (void*)&(tmp);
+	offsets[3] = (void*)&(tmp.neighbor_owners) - (void*)&(tmp);
 
-	err = MPI_Type_create_struct(count, block_lengths, offsets, types, &mpi_tree);
+	MPI_Datatype mpi_tree_unpadded;
+	err = MPI_Type_create_struct(count, block_lengths, offsets, types, &mpi_tree_unpadded);
+	err = MPI_Type_commit(&mpi_tree_unpadded);
+
+	MPI_Type_create_resized(mpi_tree_unpadded, (MPI_Aint)(0), (MPI_Aint)(sizeof(simple_tree)), &mpi_tree);
 	err = MPI_Type_commit(&mpi_tree);
+	err = MPI_Type_free(&mpi_tree_unpadded);
+
 	return err;
 }//end init_mpi_tree()
 

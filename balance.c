@@ -220,22 +220,41 @@ void Balance(tree ****grid){
 		printf("\n err_ct is %d", err_ct);
 	//printf("\n Hello, I am proc %d, and my left and right neighbors are %d and %d, errct is %d\n", pid, left_pid, right_pid, err_ct);
 
-	MPI_Request reqs[2];
+	MPI_Request reqs[4];
 	List *null_list = list_init();
 	double left_pro, right_pro;
 
-	while (mostwork > 1.1*avgwork){
+	while (mostwork > 1.18*avgwork){
 		// If you have a bit too much, don't worry
 		propensity = work - 1.05*avgwork;
 		//Tell neighbors propensity
-		MPI_Isend(&(propensity), 1, MPI_INT, left_pid, TAG_PROP_LEFT, MPI_COMM_WORLD, &reqs[0]);
-		MPI_Isend(&(propensity), 1, MPI_INT, right_pid, TAG_PROP_RIGHT, MPI_COMM_WORLD, &reqs[1]);
-		// recv same info back from them
-		MPI_Recv(&(left_pro), 1, MPI_INT, left_pid, TAG_PROP_RIGHT, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-		MPI_Recv(&(right_pro), 1, MPI_INT, right_pid, TAG_PROP_LEFT, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+		if (left_pid != -1) {
+			MPI_Isend(&(propensity), 1, MPI_DOUBLE, left_pid, TAG_PROP_LEFT, MPI_COMM_WORLD, &reqs[0]);
+		} else {
+			reqs[0] = MPI_REQUEST_NULL;
+		}
 
-		MPI_Request_free(&reqs[0]);
-		MPI_Request_free(&reqs[1]);
+		if (right_pid != -1) {
+			MPI_Isend(&(propensity), 1, MPI_DOUBLE, right_pid, TAG_PROP_RIGHT, MPI_COMM_WORLD, &reqs[1]);
+			// recv same info back from them
+		} else {
+			reqs[1] = MPI_REQUEST_NULL;
+		}
+
+		if (left_pid != -1) {
+			MPI_Irecv(&(left_pro), 1, MPI_DOUBLE, left_pid, TAG_PROP_RIGHT, MPI_COMM_WORLD, &reqs[2]);
+		} else {
+			left_pro = 1.0/0.0;
+			reqs[2] = MPI_REQUEST_NULL;
+		}
+		if (right_pid != -1) {
+			MPI_Irecv(&(right_pro), 1, MPI_DOUBLE, right_pid, TAG_PROP_LEFT, MPI_COMM_WORLD, &reqs[3]);
+		} else {
+			right_pro = 1.0/0.0;
+			reqs[3] = MPI_REQUEST_NULL;
+		}
+
+		MPI_Waitall(4, reqs, MPI_STATUSES_IGNORE);
 
 		if (propensity > 0){
 			//If both neighbors are givers, give out
@@ -337,6 +356,44 @@ void give_take_surface(tree**** base_grid, List* list_u, int id_u, List* list_d,
 	int i,j,k;
 	int l,m,n;
 	vec3 pos;
+	MPI_Request presend_reqs[4*nNeighbors];
+	int nTreeSends[nNeighbors], nParticleSends[nNeighbors];
+	int nTreeRecvs[nNeighbors], nParticleRecvs[nNeighbors];
+	for (i = 0; i < nNeighbors; ++i) { // nNeighbors = 2 = number of directions to send
+		if (i == 0) { 
+			move_list = list_u;
+			neighbor_id = id_u; 
+		} else if (i == 1) {
+			move_list = list_d;
+			neighbor_id = id_d; 
+		}
+		if (neighbor_id == -1){
+			presend_reqs[2*i] = MPI_REQUEST_NULL;
+			presend_reqs[2*i+1] = MPI_REQUEST_NULL;
+			presend_reqs[2*(i+nNeighbors)] = MPI_REQUEST_NULL;
+			presend_reqs[2*(i+nNeighbors)+1] = MPI_REQUEST_NULL;
+			continue;
+		}
+		// send move_list, cells within will be converted into these buffers before send
+		nTreeSends[i] = list_length(move_list);
+		nParticleSends[i] = 0;
+		list_reset_iter(move_list);
+		while(list_has_next(move_list)) {
+			List *parts = ((tree*) list_get_next(move_list))->particles;
+			nParticleSends[i] += list_length(parts);
+		}
+		MPI_Request *tmp = mpi_tree_presend(&nTreeSends[i], &nParticleSends[i], neighbor_id);
+		presend_reqs[2*i] = tmp[0];
+		presend_reqs[2*i+1] = tmp[1];
+		free(tmp);
+
+		tmp = mpi_tree_prerecv(&nTreeRecvs[i], &nParticleRecvs[i], neighbor_id);
+		presend_reqs[2*(i+nNeighbors)] = tmp[0];
+		presend_reqs[2*(i+nNeighbors)+1] = tmp[1];
+	}
+
+	MPI_Waitall(4*nNeighbors, presend_reqs, MPI_STATUSES_IGNORE);
+
 	for (i = 0; i < nNeighbors; ++i) { // nNeighbors = 2 = number of directions to send
 		// assign left or right
 		if (i == 0) { move_list = list_u; neighbor_id = id_u; send_dir6[i] = 'u'; }
@@ -350,7 +407,7 @@ void give_take_surface(tree**** base_grid, List* list_u, int id_u, List* list_d,
 			buff_send_part_list_lengths[i] = malloc(0);
 			continue;
 		}
-
+		
 		// send move_list, cells within will be converted into these buffers before send
 		trees_parts_and_lengths = mpi_tree_send(move_list, neighbor_id, &buff_send_trees[i], &buff_send_parts[i], &buff_send_part_list_lengths[i], &send_dir6[i]);
 		req_send_trees[i] = trees_parts_and_lengths[0];
@@ -403,7 +460,6 @@ void give_take_surface(tree**** base_grid, List* list_u, int id_u, List* list_d,
 	particle* buff_recv_parts[nNeighbors];
 	int* buff_recv_part_list_lengths[nNeighbors];
 	char recv_dir6[nNeighbors];
-	int lengths_of_trees[nNeighbors]; //int for the tree array, pointer so it can be filled in mpi_tree_recv
 	
 	MPI_Request req_recv_trees[nNeighbors];
 	MPI_Request req_recv_parts[nNeighbors];
@@ -426,7 +482,7 @@ void give_take_surface(tree**** base_grid, List* list_u, int id_u, List* list_d,
 			continue;
 		}
 
-		trees_parts_and_lengths = mpi_tree_recv(neighbor_id, &buff_recv_trees[i], &buff_recv_parts[i], &buff_recv_part_list_lengths[i], &lengths_of_trees[i], &recv_dir6[i]);
+		trees_parts_and_lengths = mpi_tree_recv(neighbor_id, &buff_recv_trees[i], nTreeRecvs[i], &buff_recv_parts[i], nParticleRecvs[i], &buff_recv_part_list_lengths[i], &recv_dir6[i]);
 		req_recv_trees[i] = trees_parts_and_lengths[0];
 		req_recv_parts[i] = trees_parts_and_lengths[1];
 		req_recv_lengths[i] = trees_parts_and_lengths[2];
@@ -442,7 +498,7 @@ void give_take_surface(tree**** base_grid, List* list_u, int id_u, List* list_d,
 	// skips empty lists, but always expects a list from each neighbor in the current direction of passing
 	List* new_trees;
 	tree* new_tree;
-	double pxmax = pxmin+dx*(imax-imin); //pxmin is start of ghosts using global x position
+	double pymax = pymin+dy*(jmax-jmin); //pxmin is start of ghosts using global x position
 	for (i = 0; i < nNeighbors; ++i) { // nNeighbors = 2 = number of directions to send
 		// assign left or right
 		if (i == 0) { neighbor_id = id_u; }
@@ -451,7 +507,7 @@ void give_take_surface(tree**** base_grid, List* list_u, int id_u, List* list_d,
 		if (neighbor_id == -1) {
 			continue;
 		}
-		new_trees = mpi_tree_unpack(&buff_recv_trees[i], &buff_recv_parts[i], &buff_recv_part_list_lengths[i], &lengths_of_trees[i]);
+		new_trees = mpi_tree_unpack(&buff_recv_trees[i], &buff_recv_parts[i], &buff_recv_part_list_lengths[i], nTreeRecvs[i]);
 		list_reset_iter(new_trees);
 		
 		// first new_tree is used to check if base_grid is big enough, we loop through the rest later
@@ -463,25 +519,25 @@ void give_take_surface(tree**** base_grid, List* list_u, int id_u, List* list_d,
 		
 		// possibly change imin/imax plus possibly resize whole base_grid
 		// new_tree only provides spatial to work with, so compare that to pxmin
-		if ((new_tree->loc.x+dx/2) < pxmin) {	//all new_tree's have same x. using dx/2 to prevent rounding issues
-			if (imin == 0) {
+		if ((new_tree->loc.y+dy/2) < pymin) {	//all new_tree's have same x. using dx/2 to prevent rounding issues
+			if (jmin == 0) {
 				resize_allocation(base_grid); //resets wi to 2*(imax-imin) and centers around (imin+imax)/2
-			} else if (imin < 0) {
-				printf("ERROR: unexpected imin < 0");
+			} else if (jmin < 0) {
+				printf("ERROR: unexpected jmin < 0");
 				MPI_Finalize();
 				return;
 			}
-			--imin;
-			pxmin -= dx;
-		} else if((new_tree->loc.x-dx/2) > pxmax) {
-			if (imax == wi-1) {
+			--jmin;
+			pymin -= dy;
+		} else if((new_tree->loc.y-dy/2) > pymax) {
+			if (jmax == wj-1) {
 				resize_allocation(base_grid);
-			} else if (imax > wi-1) {
-				printf("ERROR: unexpected imax > wi-1");
+			} else if (jmax > wj-1) {
+				printf("ERROR: unexpected jmax > wj-1");
 				MPI_Finalize();
 				return;
 			}
-			++imax;
+			++jmax;
 		}
 		
 		// we're good now: let's insert our new_tree's
@@ -564,9 +620,9 @@ void resize_allocation(tree**** base_grid) {
 // init ghosts should be overwritten by new ghosts and recreated as necessary
 //  - when moving left, up, or forward, up to 23 new init ghosts are needed; otherwise up to 14 new init ghosts are needed
 void convert_ghost2real_and_reghost(tree**** base_grid, tree* new_tree, char dir6) {
-	int i = imin + 1 + (int) round((new_tree->loc.x - pxmin)/dx); //round to force correct int value
-	int j = jmin + 1 + (int) round((new_tree->loc.y - pymin)/dy);
-	int k = kmin + 1 + (int) round((new_tree->loc.z - pzmin)/dz);
+	int i = imin + 1 + round_i((new_tree->loc.x - pxmin)/dx); //round to force correct int value
+	int j = jmin + 1 + round_i((new_tree->loc.y - pymin)/dy);
+	int k = kmin + 1 + round_i((new_tree->loc.z - pzmin)/dz);
 	
 	// for new tree, need to: give particles, set owner
 	// we leave children and point values alone, those should be fine

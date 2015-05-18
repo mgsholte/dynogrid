@@ -14,7 +14,7 @@ typedef enum { false, true } bool;
 
 enum {
 	TAG_N_CELLS, TAG_LIST_LENGTH, TAG_PARTICLES, TAG_PROP_RIGHT, TAG_PROP_LEFT,
-	TAG_SIMPLE_TREES, TAG_ALL_PARTICLES, TAG_ALL_PARTICLE_COUNTS, TAG_DIR6
+	TAG_N_SIMPLE_TREES, TAG_SIMPLE_TREES, TAG_N_PARTICLES, TAG_ALL_PARTICLES, TAG_ALL_PARTICLE_COUNTS, TAG_DIR6
 };
 
 // Define the particle structure
@@ -51,9 +51,9 @@ double time; // changes every iteration
 #define z_max (1e-4)
 
 // number of cells in each direction; nx+1 is number of grid points
-#define nx (32) 
-#define ny (32)
-#define nz (32)
+#define nx (40) 
+#define ny (40)
+#define nz (40)
 
 #define dx (x_max/nx)
 #define dy (y_max/ny)

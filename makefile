@@ -24,6 +24,9 @@ list_test: list_test.o list.o
 %.o: %.c
 	$(CC) -c $(CFLAGS) $< -o $@
 
+%.c: %.h decs.h
+	@touch $@
+
 .PHONY: run
 run: dynogrid
 	@mpirun -np 2 -hostfile hostfile ./dynogrid 1 2 1
