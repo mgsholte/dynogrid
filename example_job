@@ -1,0 +1,24 @@
+#!/usr/bin/env python
+#$ -q normal
+#$ -cwd 
+#$ -V 
+#$ -A A-phdem
+#$ -pe 12way 24
+#$ -j y
+#$ -l h_rt=10:00:00
+#$ -o batch_electrooptic
+#$ -N electrooptic_bto_abinit
+import subprocess as sp
+import time
+import shutil
+import os
+import errno
+os.chdir("/scratch/02288/mgs763/abinit/bto/electrooptic")
+print "launching abinit"
+start_t = time.time()
+sp.check_call("ibrun abinit < electrooptic.files >& log", shell=True)
+elapsed = time.time() - start_t
+hours = int(elapsed/3600)
+mins = int((elapsed-3600*hours)/60)
+secs = elapsed - 3600*hours - 60*mins
+print "abinit finished. time elapsed: {:02d}:{:02d}:{:.1f}".format(hours, mins, secs)
