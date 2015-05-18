@@ -109,9 +109,9 @@ int init_mpi_tree(){
 	simple_tree tmp;
 	//set offsets[]:	
 	offsets[0] = (MPI_Aint) (0);
-	offsets[1] = (void*)&(tmp.owner) - (void*)&(tmp);
-	offsets[2] = (void*)&(tmp.nPoints) - (void*)&(tmp);
-	offsets[3] = (void*)&(tmp.neighbor_owners) - (void*)&(tmp);
+	offsets[1] = (size_t)&(tmp.owner) - (size_t)&(tmp);
+	offsets[2] = (size_t)&(tmp.nPoints) - (size_t)&(tmp);
+	offsets[3] = (size_t)&(tmp.neighbor_owners) - (size_t)&(tmp);
 
 	MPI_Datatype mpi_tree_unpadded;
 	err = MPI_Type_create_struct(count, block_lengths, offsets, types, &mpi_tree_unpadded);

@@ -89,34 +89,25 @@ MPI_Request* mpi_tree_send(List* tree_list, int to_pid, simple_tree **simple_tre
 
 
 /*	recv an array of trees and each tree's particles and each trees particle_count */
-MPI_Request* mpi_tree_recv(int from_pid, simple_tree** simple_trees_array, int nTreeRecvs, particle** all_particles_array, int nParticleRecvs, int** part_counts, char* dir6) {
+MPI_Request* mpi_tree_recv(int from_pid, simple_tree* simple_trees_array, int nTreeRecvs, particle* all_particles_array, int nParticleRecvs, int* part_counts, char* dir6) {
 	
 	MPI_Status status;
 	MPI_Request *reqs = (MPI_Request*) malloc(sizeof(MPI_Request)*4);
 
 //IRECV THE ARRAY OF SIMPLE_TREES:
 	
-    // Allocate a buffer to hold the incoming simple_trees:
-	*simple_trees_array = (simple_tree*) malloc(sizeof(simple_tree) * nTreeRecvs);
-
     // Now receive the message with the allocated buffer (non-blocking, so unpacking must be done in separate function)
-	MPI_Irecv(*simple_trees_array, nTreeRecvs, mpi_tree, from_pid, TAG_SIMPLE_TREES, MPI_COMM_WORLD, &(reqs[0]));
+	MPI_Irecv(simple_trees_array, nTreeRecvs, mpi_tree, from_pid, TAG_SIMPLE_TREES, MPI_COMM_WORLD, &(reqs[0]));
 	
 //IRECV THE ARRAY OF PARTICLES:
-    // Allocate a buffer to hold the incoming simple_trees:
-	*all_particles_array = (particle*) malloc(sizeof(particle) * nParticleRecvs);
-
     // Now receive the message with the allocated buffer (non-blocking, so unpacking must be done in separate function)
-	MPI_Irecv(*all_particles_array, nParticleRecvs, mpi_particle, from_pid, TAG_ALL_PARTICLES, MPI_COMM_WORLD, &(reqs[1]));
+	MPI_Irecv(all_particles_array, nParticleRecvs, mpi_particle, from_pid, TAG_ALL_PARTICLES, MPI_COMM_WORLD, &(reqs[1]));
 	
 //IRECV THE INT ARRAY OF PARTICLE_OFFSETS FOR EACH TREE IN THE LIST OF TREES BEING PASSED:
 	// (*buf_lens)[2] = nTreesRecv;//SHOULDN'T NEED THIS ANYMORE
 
-    // Allocate a buffer to hold the incoming simple_trees:
-	*part_counts = (int*) malloc(sizeof(int) * nTreeRecvs);
-
     // Now receive the message with the allocated buffer (non-blocking, so unpacking must be done in separate function)
-	MPI_Irecv(*part_counts, nTreeRecvs, MPI_INT, from_pid, TAG_ALL_PARTICLE_COUNTS, MPI_COMM_WORLD, &(reqs[2]));
+	MPI_Irecv(part_counts, nTreeRecvs, MPI_INT, from_pid, TAG_ALL_PARTICLE_COUNTS, MPI_COMM_WORLD, &(reqs[2]));
 	
 //IRECV THE SINGLE CHAR FOR DIR6:
     // Allocate a buffer to hold the incoming simple_trees:

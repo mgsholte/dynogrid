@@ -200,6 +200,7 @@ void Balance(tree ****grid){
 	List* ne_matchings[nProcs];
 	determine_neighbor_matchings(ne_matchings, 'y', grid);
 
+	// figure out the neighbor pids
 	int left_pid=-1, right_pid=-1, it, err_ct=0;
 	for (it = 0; it < nProcs; it ++){
 		if(ne_matchings[it] != NULL){
@@ -225,6 +226,7 @@ void Balance(tree ****grid){
 	double left_pro, right_pro;
 
 	while (mostwork > 1.18*avgwork){
+		determine_neighbor_matchings(ne_matchings, 'y', grid);
 		// If you have a bit too much, don't worry
 		propensity = work - 1.05*avgwork;
 		//Tell neighbors propensity
@@ -420,9 +422,9 @@ void give_take_surface(tree**** base_grid, List* list_u, int id_u, List* list_d,
 		list_reset_iter(move_list);
 		while (list_has_next(move_list)) {
 			pos = ((tree*) list_get_next(move_list))->loc;
-			l = imin + (int) round((pos.x - pxmin)/dx);
-			m = jmin + (int) round((pos.y - pymin)/dy);
-			n = kmin + (int) round((pos.z - pzmin)/dz);
+			l = imin + round_i((pos.x - pxmin)/dx);
+			m = jmin + round_i((pos.y - pymin)/dy);
+			n = kmin + round_i((pos.z - pzmin)/dz);
 			base_grid[l][m][n]->owner = neighbor_id;
 			if (send_dir6[i] == 'u') {
 				for (j = -1; j <= 1; ++j) {
@@ -461,9 +463,7 @@ void give_take_surface(tree**** base_grid, List* list_u, int id_u, List* list_d,
 	int* buff_recv_part_list_lengths[nNeighbors];
 	char recv_dir6[nNeighbors];
 	
-	MPI_Request req_recv_trees[nNeighbors];
-	MPI_Request req_recv_parts[nNeighbors];
-	MPI_Request req_recv_lengths[nNeighbors];
+	MPI_Request recv_reqs[3*nNeighbors];
 	
 	// receive from neighbors: either buffers or nothing
 	// receive first from up then from down (up to 2 can be real receives)
@@ -473,27 +473,29 @@ void give_take_surface(tree**** base_grid, List* list_u, int id_u, List* list_d,
 		else if (i == 1) { neighbor_id = id_d; }
 		
 		if (neighbor_id == -1){
-			req_recv_trees[i] = MPI_REQUEST_NULL;
-			req_recv_parts[i] = MPI_REQUEST_NULL;
-			req_recv_lengths[i] = MPI_REQUEST_NULL;
+			recv_reqs[3*i] = MPI_REQUEST_NULL;
+			recv_reqs[3*i+1] = MPI_REQUEST_NULL;
+			recv_reqs[3*i+2] = MPI_REQUEST_NULL;
 			buff_recv_trees[i] = malloc(0);
 			buff_recv_parts[i] = malloc(0);
 			buff_recv_part_list_lengths[i] = malloc(0);
 			continue;
 		}
 
-		trees_parts_and_lengths = mpi_tree_recv(neighbor_id, &buff_recv_trees[i], nTreeRecvs[i], &buff_recv_parts[i], nParticleRecvs[i], &buff_recv_part_list_lengths[i], &recv_dir6[i]);
-		req_recv_trees[i] = trees_parts_and_lengths[0];
-		req_recv_parts[i] = trees_parts_and_lengths[1];
-		req_recv_lengths[i] = trees_parts_and_lengths[2];
+		buff_recv_trees[i] = malloc(nTreeRecvs[i] * sizeof(simple_tree));
+		buff_recv_parts[i] = malloc(nParticleRecvs[i] * sizeof(particle));
+		buff_recv_part_list_lengths[i] = malloc(nTreeRecvs[i] * sizeof(simple_tree));
+
+		trees_parts_and_lengths = mpi_tree_recv(neighbor_id, buff_recv_trees[i], nTreeRecvs[i], buff_recv_parts[i], nParticleRecvs[i], buff_recv_part_list_lengths[i], &recv_dir6[i]);
+		recv_reqs[3*i] = trees_parts_and_lengths[0];
+		recv_reqs[3*i+1] = trees_parts_and_lengths[1];
+		recv_reqs[3*i+2] = trees_parts_and_lengths[2];
 		free(trees_parts_and_lengths);
 	}	
 	
 	// wait for receives
-	MPI_Waitall(nNeighbors, req_recv_trees, MPI_STATUSES_IGNORE);
-	MPI_Waitall(nNeighbors, req_recv_parts, MPI_STATUSES_IGNORE);
-	MPI_Waitall(nNeighbors, req_recv_lengths, MPI_STATUSES_IGNORE);
-	
+	MPI_Waitall(3*nNeighbors, recv_reqs, MPI_STATUSES_IGNORE);
+
 	// once receives are done, can start unpacking buffers, putting new trees where they belong, while adjusting base_grid as necessary
 	// skips empty lists, but always expects a list from each neighbor in the current direction of passing
 	List* new_trees;

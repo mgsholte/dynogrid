@@ -1,10 +1,10 @@
 CC = mpicc
 LD = mpicc
-CFLAGS = -g -wn5
-LFLAGS = -O0
+CFLAGS = -g -MMD -Wcheck -Werror
+LFLAGS = -O3
 
 ALL_SRC := $(wildcard *.c)
-EXCLUDES = pseudocode.c $(wildcard *test.c)
+EXCLUDES = pseudocode.c list_test.c
 SRCS := $(filter-out $(EXCLUDES),$(ALL_SRC))
 OBJS := $(patsubst %.c,%.o,$(SRCS))
 
@@ -24,16 +24,15 @@ list_test: list_test.o list.o
 %.o: %.c
 	$(CC) -c $(CFLAGS) $< -o $@
 
-%.c: %.h decs.h
-	@touch $@
-
 .PHONY: run
 run: dynogrid
-	@mpirun -np 2 -hostfile hostfile ./dynogrid 1 2 1
+	@rm -f batch_dynogrid
+	@qsub jobscript
+	@watch -n 10 qstat
 
 .PHONY: debug
 debug: dynogrid
-	@idev -t 01:00:00
+	@idev -l h_rt=03:00:00
 
 .PHONY: valgrind
 valgrind: dynogrid
@@ -41,8 +40,8 @@ valgrind: dynogrid
 
 clean:
 	@/bin/rm -f *.d
-	@/bin/rm -f idev*
 	@/bin/rm -f *.o
+	@/bin/rm -f idev*
 	@/bin/rm -f dynogrid
 
 -include $(OBJS:%.o=%.d)
