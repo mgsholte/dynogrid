@@ -27,15 +27,16 @@ bool is_ghost(tree* curCell){
 	return false;
 }//end is_ghost()
 
+// heavily simplified for 1D
 void determine_neighbor_matchings(List* ne_matchings[], char dim, tree**** grid){
 	// loop over each ghost cell.
 	// loop over entire grid to find the ghost cells, this is the easiest way to find them
 	// this can't be integrated with above identical loop since the push must be completed before checking to see which pushed things need to be sent to neighbors
 	int i,j,k, ne_num; //ne_num is for "neighbor_number"
 	
-	tree *prevCell = NULL;
+	//tree *prevCell = NULL;
 	tree *curCell = NULL;
-	tree *nextCell = NULL;
+	//tree *nextCell = NULL;
 
 	//instantiate all pointers to NULL for checking to see if whe need to malloc them in loop:
 	for(ne_num = 0; ne_num < nProcs; ne_num++){
@@ -49,21 +50,35 @@ void determine_neighbor_matchings(List* ne_matchings[], char dim, tree**** grid)
 	surface* prev_surf_match = NULL;
 	
 	if(dim == 'y'){
-		surface *surf_match = NULL;
-		for (i = imin+1; i < imax-1; ++i) {
-			for (j = jmin; j < jmax; ++j) {
+		// only do j = jmin, jmax
+		for (j = jmin; j <= jmax; j += (jmax-jmin)) {
+		
+			// first set up the surface	
+			surf_match = NULL;
+			surface *surf_match = malloc(sizeof(surface));
+			surf_match->cells = list_init();
+			surf_match->neighbor = grid[imin+1][j][kmin+1]->owner;
+			if (j == jmin) surf_match->dir = -1;
+			if (j == jmax) surf_match->dir = 1;
+			ne_matchings[surf_match->neighbor] = list_init();
+			list_add(ne_matchings[surf_match->neighbor], surf_match);
+			
+			for (i = imin+1; i < imax-1; ++i) {
 				for (k = kmin+1; k < kmax-1; ++k) {
 					curCell = grid[i][j][k];
+					list_add(surf_match->cells, curCell);
+					
+					/*
 					if(is_ghost(curCell)) {
 						//determine the direction of the neighbor (for this particular cell!!!)
 						if(j == 0){
-							/* 	we can't access the j-1 element of the grid, but we know that
-								the neighbor must be to our LEFT direction (hence the dir = "-1") */
+							// 	we can't access the j-1 element of the grid, but we know that
+							//  the neighbor must be to our LEFT direction (hence the dir = "-1")
 							dir = -1; //dir for "direction"
 							nextCell = grid[i][j+1][k];
 						}else if(j == wj-1){
-							/* 	we can't access the j+1 element of the grid, but we know that
-								the neighbor must be to our RIGHT direction (hence the dir ="+1") */
+							// 	we can't access the j+1 element of the grid, but we know that
+							//  the neighbor must be to our RIGHT direction (hence the dir ="+1")
 							dir = 1;
 							prevCell = grid[i][j-1][k];
 						}else{
@@ -82,7 +97,6 @@ void determine_neighbor_matchings(List* ne_matchings[], char dim, tree**** grid)
 						//set the layer value for the surface struct (i.e. )
 						layer = j;
 						
-						// QUESTION: shouldn't curCell get added if we are dealing with the same surf as previous iteration?
 						if( prev_surf_match != NULL &&
 							prev_surf_match->neighbor == neighbor &&
 							prev_surf_match->layer == layer &&
@@ -101,34 +115,35 @@ void determine_neighbor_matchings(List* ne_matchings[], char dim, tree**** grid)
 								//then the List has not yet been initialized so we have to malloc it and initialize it:
 								ne_matchings[surf_match->neighbor] = list_init();
 							}
-							// QUESTION: later the surface that gets passed is the first one on the list. how is the order of adding surfaces controlled to make that correct?
 							list_add(ne_matchings[surf_match->neighbor], surf_match);
 						}//end if else
 						
-						// QUESTION: why would we add nextCell and prevCell, which are at different y values than curCell, to the same surface?
+						// since curCell is a ghost, we add the real cell next to it, determined by dir from earlier
 						if(dir < 0){
 							list_add(surf_match->cells, nextCell);
 						}else if(dir > 0){
 							list_add(surf_match->cells, prevCell);
 						}
-						/* reminder: 
-								ne_matchings ......	an array of
-													List pointers
-									where each list holds "surface"s (a new type of struct...see Balance.h)
-									each "surface" has meta data and
-									a List of trees */
+						// reminder: 
+						//		ne_matchings ......	an array of
+						//							List pointers
+						//			where each list holds "surface"s (a new type of struct...see Balance.h)
+						//			each "surface" has meta data and
+						//			a List of trees
 						prev_surf_match = surf_match;
-						/* reminder ne_matchings[match->neighbor] is a List* */
+						// reminder ne_matchings[match->neighbor] is a List*
 					}//end if(is_ghost())
+					*/
 				}//end k loop
-			}//end j loop
-		}//end i loop
+			}//end i loop
+		}//end j loop
 	}//end x dimension
 
 	//TODO: y dimension (should be almost identical to x except for changing order of loops)
 
 	//TODO: z dimension (should be almost identical to x except for changing order of loops)
 
+	/*
 	//for each neighbor, go through its list of surface matchings and combine contiguous matchings together:
 	//note, this means that the surface matchings get combined only if they have the same neighbor, direction, AND layer
 	surface* cur_surface;
@@ -162,6 +177,7 @@ void determine_neighbor_matchings(List* ne_matchings[], char dim, tree**** grid)
 			list_reset_iter(ne_matchings[ne_num]);
 		}//end outer while
 	}//end for
+	*/
 
 }//end determine_neighbor_matchings(List** ne_matchings, char dim)
 
