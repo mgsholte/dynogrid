@@ -20,7 +20,7 @@ bool is_real(tree* curCell){
 
 bool is_ghost(tree* curCell){
 	if (curCell != NULL) {
-		if (curCell->owner != pid && curCell->owner != -1){
+		if (curCell->owner != pid && curCell->owner != -1 && curCell->owner != -2){
 			return true;
 		}
 	}
@@ -82,6 +82,7 @@ void determine_neighbor_matchings(List* ne_matchings[], char dim, tree**** grid)
 						//set the layer value for the surface struct (i.e. )
 						layer = j;
 						
+						// QUESTION: shouldn't curCell get added if we are dealing with the same surf as previous iteration?
 						if( prev_surf_match != NULL &&
 							prev_surf_match->neighbor == neighbor &&
 							prev_surf_match->layer == layer &&
@@ -100,9 +101,11 @@ void determine_neighbor_matchings(List* ne_matchings[], char dim, tree**** grid)
 								//then the List has not yet been initialized so we have to malloc it and initialize it:
 								ne_matchings[surf_match->neighbor] = list_init();
 							}
+							// QUESTION: later the surface that gets passed is the first one on the list. how is the order of adding surfaces controlled to make that correct?
 							list_add(ne_matchings[surf_match->neighbor], surf_match);
 						}//end if else
 						
+						// QUESTION: why would we add nextCell and prevCell, which are at different y values than curCell, to the same surface?
 						if(dir < 0){
 							list_add(surf_match->cells, nextCell);
 						}else if(dir > 0){
