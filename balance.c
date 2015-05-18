@@ -201,10 +201,10 @@ void Balance(tree ****grid){
 	determine_neighbor_matchings(ne_matchings, 'y', grid);
 
 	// figure out the neighbor pids
-	int left_pid=-1, right_pid=-1, it, err_ct=0;
+	int left_pid=-1, right_pid=-1, it, ne_ct=0;
 	for (it = 0; it < nProcs; it ++){
 		if(ne_matchings[it] != NULL){
-			err_ct++;
+			ne_ct++;
 			list_reset_iter(ne_matchings[it]);
 			surface *surf;
 			if (list_length(ne_matchings[it]) > 1)
@@ -217,9 +217,9 @@ void Balance(tree ****grid){
 				right_pid = surf->neighbor;
 		}
 	}
-	if (err_ct > 2 )
-		printf("\n err_ct is %d", err_ct);
-	//printf("\n Hello, I am proc %d, and my left and right neighbors are %d and %d, errct is %d\n", pid, left_pid, right_pid, err_ct);
+	if (ne_ct > 2 )
+		printf("\n ne_ct is %d", ne_ct);
+	//printf("\n Hello, I am proc %d, and my left and right neighbors are %d and %d, errct is %d\n", pid, left_pid, right_pid, ne_ct);
 
 	MPI_Request reqs[4];
 	List *null_list = list_init();
@@ -352,7 +352,7 @@ void give_take_surface(tree**** base_grid, List* list_u, int id_u, List* list_d,
 	MPI_Request req_send_lengths[nNeighbors];
 	MPI_Request *trees_parts_and_lengths;
 	
-	// send first up then down (up to 1 can be a real send)
+	// do presend to communicate message sizes to expect
 	List *move_list;
 	int neighbor_id;
 	int i,j,k;
@@ -394,6 +394,7 @@ void give_take_surface(tree**** base_grid, List* list_u, int id_u, List* list_d,
 		presend_reqs[2*(i+nNeighbors)+1] = tmp[1];
 	}
 
+	// send list_u up then list_d down (up to 1 can be a real send)
 	MPI_Waitall(4*nNeighbors, presend_reqs, MPI_STATUSES_IGNORE);
 
 	MPI_Request all_reqs[6*nNeighbors];
@@ -478,10 +479,10 @@ void give_take_surface(tree**** base_grid, List* list_u, int id_u, List* list_d,
 		
 		// if giving up a surface, change imin and pxmin or imax
 		if (send_dir6[i] == 'u' && move_list->length != 0) {
-			++imin;
-			pxmin += dx;
+			++jmin;
+			pymin += dy;
 		} else if (send_dir6[i] == 'd' && move_list->length != 0) {
-			--imax;
+			--jmax;
 		}
 			
 	}
