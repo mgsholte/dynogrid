@@ -162,13 +162,10 @@ void determine_neighbor_matchings(List* ne_matchings[], char dim, tree**** grid)
 
 }//end determine_neighbor_matchings(List** ne_matchings, char dim)
 
-
-void Balance(tree ****grid){
-	tree *curCell = NULL;
-	int partwork = 0;
-	int cellwork = 0;
+double get_work(tree ****grid){
+	tree * curCell = NULL;
+	int partwork=0, cellwork=0;
 	int i,j,k;
-	double work, avgwork, mostwork, propensity;
 	// Calculate amount of work on this processor
 	for (i = imin; i < imax; ++i) {
 		for (j = jmin; j < jmax; ++j) {
@@ -184,7 +181,13 @@ void Balance(tree ****grid){
 			}
 		}
 	}
-	work = .8*partwork + .2*cellwork;
+	return .8*partwork + .2*cellwork;
+}
+
+void Balance(tree ****grid){
+	double work, avgwork, mostwork, propensity;
+
+	work = get_work(grid);
 
 	// Find out how much work there is in total:
 	MPI_Allreduce(&work, &avgwork, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
@@ -266,6 +269,7 @@ void Balance(tree ****grid){
 		}
 		//Recieve from left and right and update work
 		//Need to actually update work. Maybe I can convince Max to do this so I don't have to loop over all cells
+		work = get_work(grid);
 		MPI_Allreduce(&work, &mostwork, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
 	}
 	surface *curr;
