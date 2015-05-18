@@ -17,6 +17,10 @@ MPI_Request* mpi_tree_send(List* tree_list, int to_pid, simple_tree **simple_tre
 	int trees_len = list_length(tree_list);
 	*simple_trees_array = (simple_tree*) malloc(sizeof(simple_tree) * trees_len);
 	*part_counts = (int*) malloc(sizeof(int) * trees_len);
+	int set;
+	for (set = 0; set < trees_len; set ++){
+		(*part_counts)[set] = 0;
+	}
 	int all_particles_count = 0;
 	
 	//convert the list of tree pointers to an array of simple_tree's and pack into an array:
@@ -150,7 +154,7 @@ List* mpi_tree_unpack(simple_tree **simple_trees_array, particle **all_particles
 
 		list_add(trees_list, tree_ptr);
 		for(part_num = 0; part_num < (*part_counts)[tree_num]; part_num++){
-			list_add(tree_ptr->particles, &(*all_particles_array)[tot_parts]);
+			list_add(tree_ptr->particles, &((*all_particles_array)[tot_parts]));
 			tot_parts++;
 		}//end inner for
 	}//end for

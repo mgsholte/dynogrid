@@ -88,9 +88,7 @@ void determine_neighbor_matchings(List* ne_matchings[], char dim, tree**** grid)
 							prev_surf_match->dir == dir){
 								//then we are dealing with the same surface matching
 								surf_match = prev_surf_match;
-								printf("surf_match = prev_surf_match\n");
 						}else{
-							printf("surf_match != prev_surf_match\n");
 							surf_match = malloc(sizeof(*surf_match));
 
 							surf_match->cells = list_init();
@@ -145,7 +143,6 @@ void determine_neighbor_matchings(List* ne_matchings[], char dim, tree**** grid)
 				list_get_next(ne_matchings[ne_num]);
 			}//end for
 			cur_surface = (surface*) (list_get_next(ne_matchings[ne_num]));
-			printf("before while length of ne_matchings[%d] is %d\n", ne_num, list_length(ne_matchings[ne_num]));
 			while(list_has_next(ne_matchings[ne_num])){
 				next_surface = (surface*) (list_get_next(ne_matchings[ne_num]));
 				if(	(cur_surface->layer == next_surface->layer) &&
@@ -153,13 +150,11 @@ void determine_neighbor_matchings(List* ne_matchings[], char dim, tree**** grid)
 					//then the surface matchings should belong to the same surface, thus should be combined:
 					//note, we already know that they have the same neighbor at this point bc of indexing into the array...
 					//so, combine next_surface into cur_surface and then free next_surface:
-					printf("Precombined cur_surface->cells length is %d\n", list_length(cur_surface->cells));
 					list_combine(cur_surface->cells, next_surface->cells);
-					printf("Postcombined cur_surface->cells length is %d\n", list_length(cur_surface->cells));
 					list_pop(ne_matchings[ne_num], true); //remove (and free) next_surface from the list
 				}//end if
 			}//end inner while
-			printf("After while length of ne_matchings[%d] is %d\ncount is %d \n", ne_num, list_length(ne_matchings[ne_num]), ct);
+			//printf("After while length of ne_matchings[%d] is %d\ncount is %d \n", ne_num, list_length(ne_matchings[ne_num]), ct);
 			ct++;
 			list_reset_iter(ne_matchings[ne_num]);
 		}//end outer while
@@ -220,12 +215,12 @@ void Balance(tree ****grid){
 	}
 	if (err_ct > 2 )
 		printf("\n err_ct is %d", err_ct);
-	printf("\n Hello, I am proc %d, and my left and right neighbors are %d and %d, errct is %d\n", pid, left_pid, right_pid, err_ct);
+	//printf("\n Hello, I am proc %d, and my left and right neighbors are %d and %d, errct is %d\n", pid, left_pid, right_pid, err_ct);
 
 	MPI_Request reqs[2];
 	List *null_list = list_init();
 	double left_pro, right_pro;
-	
+
 	while (mostwork > 1.1*avgwork){
 		//TODO: get rid of this.
 		work = avgwork;
@@ -339,7 +334,15 @@ void give_take_surface(tree**** base_grid, List* list_u, int id_u, List* list_d,
 		// assign left or right
 		if (i == 0) { move_list = list_u; neighbor_id = id_u; send_dir6[i] = 'u'; }
 		else if (i == 1) { move_list = list_d; neighbor_id = id_d; send_dir6[i] = 'd'; }
-		if (neighbor_id == -1) continue;
+		if (neighbor_id == -1){
+			req_send_trees[i] = MPI_REQUEST_NULL;
+			req_send_parts[i] = MPI_REQUEST_NULL;
+			req_send_lengths[i] = MPI_REQUEST_NULL;
+			buff_send_trees[i] = malloc(0);
+			buff_send_parts[i] = malloc(0);
+			buff_send_part_list_lengths[i] = malloc(0);
+			continue;
+		}
 
 		// send move_list, cells within will be converted into these buffers before send
 		trees_parts_and_lengths = mpi_tree_send(move_list, neighbor_id, &buff_send_trees[i], &buff_send_parts[i], &buff_send_part_list_lengths[i], &send_dir6[i]);
@@ -406,7 +409,15 @@ void give_take_surface(tree**** base_grid, List* list_u, int id_u, List* list_d,
 		if (i == 0) { neighbor_id = id_u; }
 		else if (i == 1) { neighbor_id = id_d; }
 		
-		if (neighbor_id == -1) continue;
+		if (neighbor_id == -1){
+			req_recv_trees[i] = MPI_REQUEST_NULL;
+			req_recv_parts[i] = MPI_REQUEST_NULL;
+			req_recv_lengths[i] = MPI_REQUEST_NULL;
+			buff_recv_trees[i] = malloc(0);
+			buff_recv_parts[i] = malloc(0);
+			buff_recv_part_list_lengths[i] = malloc(0);
+			continue;
+		}
 
 		trees_parts_and_lengths = mpi_tree_recv(neighbor_id, &buff_recv_trees[i], &buff_recv_parts[i], &buff_recv_part_list_lengths[i], &lengths_of_trees[i], &recv_dir6[i]);
 		req_recv_trees[i] = trees_parts_and_lengths[0];
