@@ -47,15 +47,15 @@ void determine_neighbor_matchings(List* ne_matchings[], char dim, tree**** grid)
 	int layer = -1;
 	surface* prev_surf_match = NULL;
 	
-		//for (j = jmin+1; j <= jmax-1; j += (jmax-jmin-2)) {
+		//for (j = jmin+1; j <= jmax-2; j += (jmax-jmin-3)) {
 	if(dim == 'y'){
 		// if processor is 1 real cell wide, kinda hack it to work. both surfaces are the same but it can only give one way so that's no problem
-		if (jmax-jmin-2 == 0) {
+		if (jmax-jmin-3 == 0) {
 			surface *surf_match = malloc(sizeof(surface));
 			surf_match->cells = list_init();
 			surf_match->dir = 1;
-			jghost = jmax;
-		
+			jghost = jmax-1;
+
 			surf_match->neighbor = grid[imin+1][jghost][kmin+1]->owner;
 
 			if (surf_match->neighbor == -1) {
@@ -99,7 +99,7 @@ void determine_neighbor_matchings(List* ne_matchings[], char dim, tree**** grid)
 				}//end k loop
 			}//end i loop
 		}
-			
+		
 		// now do the right interface
 		surf_match = malloc(sizeof(surface));
 
@@ -529,10 +529,10 @@ void give_take_surface(tree**** base_grid, List* list_u, int id_u, List* list_d,
 			--jmin;
 			pymin -= dy;
 		} else if((new_tree->loc.y-dy/2) > pymax) {
-			if (jmax == wj-1) {
+			if (jmax-1 == wj-1) {
 				resize_allocation(base_grid);
-			} else if (jmax > wj-1) {
-				printf("ERROR: unexpected jmax > wj-1");
+			} else if (jmax-1 > wj-1) {
+				printf("ERROR: unexpected jmax-1 > wj-1");
 				MPI_Finalize();
 				return;
 			}
