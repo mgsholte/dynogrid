@@ -94,6 +94,7 @@ int main(int argc, char *argv[]) {
 		}
 		MPI_Barrier(MPI_COMM_WORLD);
 		Balance(base_grid);
+		MPI_Barrier(MPI_COMM_WORLD);
 	}
 
 	// print final state unless it was already output on the last iteration of the above loop

@@ -222,8 +222,6 @@ void Balance(tree ****grid){
 	double left_pro, right_pro;
 
 	while (mostwork > 1.1*avgwork){
-		//TODO: get rid of this.
-		work = avgwork;
 		// If you have a bit too much, don't worry
 		propensity = work - 1.05*avgwork;
 		//Tell neighbors propensity
@@ -441,6 +439,9 @@ void give_take_surface(tree**** base_grid, List* list_u, int id_u, List* list_d,
 		if (i == 0) { neighbor_id = id_u; }
 		else if (i == 1) { neighbor_id = id_d; }
 		
+		if (neighbor_id == -1) {
+			continue;
+		}
 		new_trees = mpi_tree_unpack(&buff_recv_trees[i], &buff_recv_parts[i], &buff_recv_part_list_lengths[i], &lengths_of_trees[i]);
 		list_reset_iter(new_trees);
 		
