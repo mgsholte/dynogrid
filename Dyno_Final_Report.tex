@@ -88,6 +88,8 @@ Our pusher follows the implementation in EPOCH \cite{epoch}, but with some modif
 \subsection{Particle Lists}
 
 \subsection{Grid Trees}
+In order to simulate electromagnetic fields, the area of the simulation must be discretized, with each point on its grid holding 3D values for the electric and magnetic fields $\vec{E}$ and $\vec{B}$. Since we are implementing an adaptive grid, we chose to represent our grid cells with a data type called a tree. A tree holds various information at the coarsest cell size, such as the particles located in that cell, the cell position relative to the entire grid over all processors (a.k.a. its global position), and the ID of the processor that owns it. It also holds a pointer to a tree node, which holds the 8 corner grid points ($\vec{E}$ and $\vec{B}$ fields) and 8 recursive pointers to potential tree node children. Trees allow for an efficient
+
 
 \subsection{Grid Refinement}
 
@@ -105,6 +107,9 @@ First, each processor communicates to each neighbor how many particle lists it w
 In the third step, the particles are themselves passed.  First, the singly-linked lists of particles are packed in to buffers that are continuous arrays of particles.  These buffers are then sent.  Memory for the receive is allocated based on the previous two communications and the receive is executed, followed by a final \texttt{MPI\_WaitAll}.  Finally, the particles are unpacked into their respective lists.
 
 \subsection{Cell Passer}
+During load balancing (explained in the next section) it is necessary to pass cells between processors in order to equilibrate the amount of work required of each processor. This is carried out with the cell passer. The cell passer executes \texttt{MPI\_Isend} and \texttt{MPI\_Irecv} with each of its neighbors along the axis of load balancing, although only up to one of these sends will be non-empty. Since we have chosen the y-axis to be our single axis of load balancing, only processors directly above or below each other trade cells. 
+
+The process of trading cells goes as follows: first the lists to be sent to neighbors are compressed to a convenient, simplified form to minimize the message size. Since each cell actually contains both a cell (grid points plus a global spatial location) and a list of particles, these elements are compressed individually and sent sequentially. After all messages are sent, the cells which are being given away are removed from the local grid. Then all receives are called and waited for. Upon completion, the received data is uncompressed and restored to full cell form, and one cell at a time is added to the grid based on its global spatial position. Care is taken to update the local grid's size and, as may occasionally be necessary, check whether the new cells stray out of bounds of the previously initialized grid, and if so, to re-initialize the grid so that it is centered around the new dimensions with ample padding to avoid another re-initialization in the near future. Finally we ensure that all sends have finished (which they surely have) and exit the cell passer.
 
 \subsection{Load Balancer}
 
