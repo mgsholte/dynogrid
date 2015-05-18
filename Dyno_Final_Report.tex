@@ -117,6 +117,11 @@ During load balancing (explained in the next section) it is necessary to pass ce
 The process of trading cells goes as follows: first the lists to be sent to neighbors are compressed to a convenient, simplified form to minimize the message size. Since each cell actually contains both a cell (grid points plus a global spatial location) and a list of particles, these elements are compressed individually and sent sequentially. After all messages are sent, the cells which are being given away are removed from the local grid. Then all receives are called and waited for. Upon completion, the received data is uncompressed and restored to full cell form, and one cell at a time is added to the grid based on its global spatial position. Care is taken to update the local grid's size and, as may occasionally be necessary, check whether the new cells stray out of bounds of the previously initialized grid, and if so, to re-initialize the grid so that it is centered around the new dimensions with ample padding to avoid another re-initialization in the near future. Finally we ensure that all sends have finished (which they surely have) and exit the cell passer.
 
 \subsection{Load Balancer}
+The load balancer exchanges cells and particles between processors so that each processor has approximately the same amount of work to do.  The cell passer does not currently work, so the balancer has not been fully tested.
+
+The balancer first calculates how much work is on each processor based on the number of particles and cells each processor controls.  An all reduce computes the total work from which the target work is calculated.  The balancer then enters a loop that runs until no processor has more work than 1.1 times the average work.
+
+In each step of the balancer, each processor communicates with its neighbors and tells it how much work it wants to give or receive to become balanced.  Based on the responses of its neighbors, each overloaded processor gives a layer of cells in one direction.  If a processor and it's neighbors are all overloaded, there is a heuristic that gives cells outwards.  The heuristic prevents deadlocking and matches where the particles typically go.
 
 
 \section{Theoretical Performance}
@@ -134,9 +139,9 @@ Despite all that we accomplished in this project, the size of what we aimed to a
 \section{Whodunit}
 Scott Luedtke was primarily responsible for the particle pusher and load balancer.  Since this project is closely related to Scott's research, he oversaw the physics and provided general guidance for what the code should accomplish.
 
-Max Porter was most frequently responsible for grid-related functions. He wrote the grid (and particle) initializations, the laser, and much of the (rather complicated) grid cell passer. He also worked out bitwise logic on several occasions.
+Max Porter was most frequently responsible for grid-related functions. He wrote the grid (and particle) initializations, the laser, and much of the (rather complicated) grid cell passer. He also worked out bitwise logic necessary for grid implementation.
 
-Joel Iventosch wrote the output and visualization routines and helped with MPI passing.  He also helped with the grid refinement.
+Joel Iventosch wrote the output and visualization routines and helped with MPI passing.  He also helped with the grid refinement and load balancer.
 
 Mark Sholte wrote much of the list functions and tree structure.  He also managed any git repository issues that arose and proved a masterful debugger.
 
