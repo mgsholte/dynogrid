@@ -334,7 +334,15 @@ void give_take_surface(tree**** base_grid, List* list_u, int id_u, List* list_d,
 		// assign left or right
 		if (i == 0) { move_list = list_u; neighbor_id = id_u; send_dir6[i] = 'u'; }
 		else if (i == 1) { move_list = list_d; neighbor_id = id_d; send_dir6[i] = 'd'; }
-		if (neighbor_id == -1) continue;
+		if (neighbor_id == -1){
+			req_send_trees[i] = MPI_REQUEST_NULL;
+			req_send_parts[i] = MPI_REQUEST_NULL;
+			req_send_lengths[i] = MPI_REQUEST_NULL;
+			buff_send_trees[i] = malloc(0);
+			buff_send_parts[i] = malloc(0);
+			buff_send_part_list_lengths[i] = malloc(0);
+			continue;
+		}
 
 		// send move_list, cells within will be converted into these buffers before send
 		trees_parts_and_lengths = mpi_tree_send(move_list, neighbor_id, &buff_send_trees[i], &buff_send_parts[i], &buff_send_part_list_lengths[i], &send_dir6[i]);
@@ -401,7 +409,15 @@ void give_take_surface(tree**** base_grid, List* list_u, int id_u, List* list_d,
 		if (i == 0) { neighbor_id = id_u; }
 		else if (i == 1) { neighbor_id = id_d; }
 		
-		if (neighbor_id == -1) continue;
+		if (neighbor_id == -1){
+			req_recv_trees[i] = MPI_REQUEST_NULL;
+			req_recv_parts[i] = MPI_REQUEST_NULL;
+			req_recv_lengths[i] = MPI_REQUEST_NULL;
+			buff_recv_trees[i] = malloc(0);
+			buff_recv_parts[i] = malloc(0);
+			buff_recv_part_list_lengths[i] = malloc(0);
+			continue;
+		}
 
 		trees_parts_and_lengths = mpi_tree_recv(neighbor_id, &buff_recv_trees[i], &buff_recv_parts[i], &buff_recv_part_list_lengths[i], &lengths_of_trees[i], &recv_dir6[i]);
 		req_recv_trees[i] = trees_parts_and_lengths[0];
