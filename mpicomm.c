@@ -34,7 +34,6 @@ void neighbor_free(neighbor *n) {
 void neighbor_add_cell(neighbor *n, tree *cell) {
 	// only add cells that have particles to send
 	if (list_length(cell->particles) != 0) {
-		//TODO: could init sendlens here and set its values rather than doing that in send_cell_lengths
 		list_add(n->part_lists, cell->particles);
 		n->ncellsends += 1;
 	}

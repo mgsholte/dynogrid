@@ -308,7 +308,7 @@ void push_particles(tree ****grid) {
 		}
 	}
 
-	// array to the requests so that we can wait for all receives to finish
+	// array to the requests so that we can wait for all sends/receives to finish
 	MPI_Request cell_metadata_reqs[2*nProcs];
 
 	// send # of particle lists we will be sending
