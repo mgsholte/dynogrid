@@ -6,6 +6,10 @@
 \usepackage{tikz}
 \usetikzlibrary{shapes.geometric, arrows}
 
+\usepackage{multirow}
+
+
+
 \tikzstyle{startstop} = [rectangle, rounded corners, minimum width=3cm, minimum height=1cm,text centered, text width=3cm, draw=black, fill=red!30]
 \tikzstyle{io} = [trapezium, trapezium left angle=70, trapezium right angle=110, minimum width=3cm, minimum height=1cm, text centered, text width=2cm, draw=black, fill=blue!30]
 \tikzstyle{process} = [rectangle, minimum width=3cm, minimum height=1cm, text centered, text width=3cm, draw=black, fill=orange!30]
@@ -133,6 +137,77 @@ For sequential performance, performance should depend on the number of particles
 where $N$ is the number of particles and $M$ is the number of grid points.  Since we are using an adaptive grid, $M$ is not constant, however, we will treat it as a constant here.  I (Scott) expect that full, physics-accurate simulations will refine in one area and simultaneously coarsen in another, keeping the total number (but not the processor distribution) of grid points generally constant.  This is especially true for our test problem.
 
 \section{Performance Results}
+Although limitations in our cell passing and load balancing routines did not enable us to fully implement the load balancing schema that we'd envisioned, our parallelized code was still able to achieve satisfactory results, as is evidenced in the table and plots below. Please see the Discussion section for more detailed analysis of these results.
+
+
+
+
+
+
+% Please add the following required packages to your document preamble:
+% \usepackage{multirow}
+\begin{table}[h!]
+\centering
+\begin{tabular}{|r|r|r|c|c|c|c|c|c|c|r|r|}
+\hline
+\multicolumn{1}{|c|}{\multirow{2}{*}{\textbf{Time}}} & \multicolumn{1}{l|}{\multirow{2}{*}{\textbf{S}}} & \multicolumn{1}{l|}{\multirow{2}{*}{\textbf{E}}} & \multirow{2}{*}{\textbf{p}} & \multicolumn{3}{c|}{\textbf{Proc Divs}} & \multicolumn{3}{c|}{\textbf{\# of Cells}} & \multicolumn{1}{c|}{\multirow{2}{*}{\textbf{Tot Cells}}} & \multicolumn{1}{c|}{\multirow{2}{*}{\textbf{Tot Particles}}} \\ \cline{5-10}
+\multicolumn{1}{|c|}{}                               & \multicolumn{1}{l|}{}                            & \multicolumn{1}{l|}{}                            &                             & \textbf{x}  & \textbf{y}  & \textbf{z}  & \textbf{x}   & \textbf{y}   & \textbf{z}  & \multicolumn{1}{c|}{}                                    & \multicolumn{1}{c|}{}                                        \\ \hline
+731.9                                                & 1.00                                             & 1.00                                             & 1                           & 1           & 1           & 1           & 96           & 96           & 96          & 2,097,152                                                & 20,971,520                                                   \\ \hline
+209.0                                                & 3.50                                             & 0.29                                             & 12                          & 1           & 4           & 3           & 96           & 96           & 96          & 2,097,152                                                & 20,971,520                                                   \\ \hline
+124.6                                                & 5.87                                             & 0.24                                             & 24                          & 1           & 6           & 4           & 96           & 96           & 96          & 2,097,152                                                & 20,971,520                                                   \\ \hline
+80.0                                                 & 9.15                                             & 0.19                                             & 48                          & 1           & 8           & 6           & 96           & 96           & 96          & 2,097,152                                                & 20,971,520                                                   \\ \hline
+1.0                                                  & 1.0                                              & 1.0                                              & 96                          & 1           & 12          & 8           & 96           & 96           & 96          & 2,097,152                                                & 20,971,520                                                   \\ \hline
+1.0                                                  & 1.0                                              & 1.0                                              & 192                         & 1           & 16          & 12          & 96           & 96           & 96          & 2,097,152                                                & 20,971,520                                                   \\ \hline
+\end{tabular}
+\caption{\textbf{Strong Scaling Results}. S = speedup, E = efficiency, p = number of processors}
+\end{table}
+
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=10cm]{strong_times.png}
+    \caption{Strong Scaling: \textbf{\textit{Time} vs Number of Processors}}
+\end{figure}
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=10cm]{strong_speedup.png}
+    \caption{Strong Scaling: \textbf{\textit{Speedup} vs Number of Processors}}
+\end{figure}
+
+% Please add the following required packages to your document preamble:
+% \usepackage{multirow}
+\begin{table}[h!]
+\centering
+\begin{tabular}{|r|r|r|c|c|c|c|c|c|c|r|r|}
+\hline
+\multicolumn{1}{|c|}{\multirow{2}{*}{\textbf{Time}}} & \multicolumn{1}{l|}{\multirow{2}{*}{\textbf{S}}} & \multicolumn{1}{l|}{\multirow{2}{*}{\textbf{E}}} & \multirow{2}{*}{\textbf{p}} & \multicolumn{3}{c|}{\textbf{Proc Divs}} & \multicolumn{3}{c|}{\textbf{\# of Cells}} & \multicolumn{1}{c|}{\multirow{2}{*}{\textbf{Tot Cells}}} & \multicolumn{1}{c|}{\multirow{2}{*}{\textbf{Tot Particles}}} \\ \cline{5-10}
+\multicolumn{1}{|c|}{}                               & \multicolumn{1}{l|}{}                            & \multicolumn{1}{l|}{}                            &                             & \textbf{x}  & \textbf{y}  & \textbf{z}  & \textbf{x}   & \textbf{y}   & \textbf{z}  & \multicolumn{1}{c|}{}                                    & \multicolumn{1}{c|}{}                                        \\ \hline
+1                                                    & 1                                                & 1                                                & 1                           & 1           & 1           & 1           & 96           & 96           & 96          & 884,736                                                  & 8,847,360                                                    \\ \hline
+1                                                    & 1                                                & 1                                                & 16                          & 1           & 4           & 4           & 192          & 192          & 192         & 7,077,888                                                & 70,778,880                                                   \\ \hline
+1                                                    & 1                                                & 1                                                & 256                         & 1           & 16          & 16          & 384          & 384          & 384         & 56,623,104                                               & 566,231,040                                                  \\ \hline
+\end{tabular}
+\caption{\textbf{Weak Scaling Results}. S = speedup, E = efficiency, p = number of processors}
+\end{table}
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=10cm]{weak_times.png}
+    \caption{Weak Scaling: \textbf{\textit{Time} vs Number of Processors}}
+\end{figure}
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=10cm]{weak_speedup.png}
+    \caption{Weak Scaling: \textbf{\textit{Speedup} vs Number of Processors}}
+\end{figure}
+
+
+
+
+
+
+\newpage
 
 \section{Discussion}
 Despite all that we accomplished in this project, the size of what we aimed to achieve ended up greater than we could manage. Most notably, the logic for load balancing in all three dimensions proved too convoluted to figure out and implement in the time available, so we opted for a (still challenging) one-dimensional balancer instead. The choice of going one-dimensional rather than, say, two-dimensional, is that a large jump in complexity occurs once the faces of processors no longer line up on a one-to-one basis. For instance, it can quickly become the case that each processor is facing two or more processors in each direction, so that during load balancing processor A needs to negotiate with B and C, but the decisions of B are also dependent on D and E, which are also each dependent on F and G and H and J respectively, and so on. It would take significantly longer to solve these decisions of exponential complexity, so we restricted to the more deterministic case in which each processor always has only one neighbor in each direction. There still exist significant challenges here, such as ensuring the propagation of excess loads across the grid when one whole side of the grid has heavier loads than the other. We took care to address this and other concerns to make our one-dimensional load balancer as effective as possible.
@@ -142,7 +217,7 @@ Scott Luedtke was primarily responsible for the particle pusher and load balance
 
 Max Porter was most frequently responsible for grid-related functions. He wrote the grid (and particle) initializations, the laser, and much of the (rather complicated) grid cell passer. He also worked out bitwise logic necessary for grid implementation.
 
-Joel Iventosch wrote the output and visualization routines and helped with MPI passing.  He also helped with the grid refinement and load balancer.
+Joel Iventosch wrote the output and visualization routines and helped with the MPI passing routines.  He also contributed to the grid refinement and load balancing functions, and helped with the recursive laser implementation.
 
 Mark Sholte wrote much of the list functions and tree structure.  He also managed any git repository issues that arose and proved a masterful debugger.
 
