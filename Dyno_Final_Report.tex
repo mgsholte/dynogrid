@@ -31,7 +31,6 @@ Particle in Cell (PIC) codes are commonly used to simulate plasma physics.  Exis
 
 We have developed a 3D PIC code with a standard Boris particle pusher \cite{bird}, added an adaptive grid, and implemented data passing routines among nodes.  Additionally, we developed a load balancer, however we were unable to finish debugging it.  Our code is not physically accurate, ommiting a field solver and ignoring many physically relevant effects, but we believe it is an accurate representation of a production code in performance characteristics and expect it to scale similarly to a production code.
 
-
 \section{Code Description}
 PIC codes are commonly used in computational physics.  A PIC code typically consists of an array of grid points that define electromagnetic field values, and particles that move continuously throughout the grid.  We created a fairly simple 3D laser-plasma code with externally defined fields (the laser), and physical effects such as particle collision and photon pair production omitted.  We did however add an adaptive grid which makes load balancing more complex.
 
