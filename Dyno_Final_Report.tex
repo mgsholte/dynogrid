@@ -32,6 +32,12 @@ Particle in Cell (PIC) codes are commonly used to simulate plasma physics.  Exis
 We have developed a 3D PIC code with a standard Boris particle pusher \cite{bird}, added an adaptive grid, and implemented data passing routines among nodes.  Additionally, we developed a load balancer, however we were unable to finish debugging it.  Our code is not physically accurate, ommiting a field solver and ignoring many physically relevant effects, but we believe it is an accurate representation of a production code in performance characteristics and expect it to scale similarly to a production code.
 
 
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=15cm]{viz_1.png}
+    \caption{Visualization of our Simulation, showing the particles dispersing after the laser hits them.}
+\end{figure}
+
 \section{Code Description}
 PIC codes are commonly used in computational physics.  A PIC code typically consists of an array of grid points that define electromagnetic field values, and particles that move continuously throughout the grid.  We created a fairly simple 3D laser-plasma code with externally defined fields (the laser), and physical effects such as particle collision and photon pair production omitted.  We did however add an adaptive grid which makes load balancing more complex.
 
@@ -160,7 +166,7 @@ Although limitations in our cell passing and load balancing routines did not ena
 124.6                                                & 5.87                                             & 0.24                                             & 24                          & 1           & 6           & 4           & 96           & 96           & 96          & 2,097,152                                                & 20,971,520                                                   \\ \hline
 80.0                                                 & 9.15                                             & 0.19                                             & 48                          & 1           & 8           & 6           & 96           & 96           & 96          & 2,097,152                                                & 20,971,520                                                   \\ \hline
 55.6                                                  & 13.16                                              & 0.14                                              & 96                          & 1           & 12          & 8           & 96           & 96           & 96          & 2,097,152                                                & 20,971,520                                                   \\ \hline
-1.0                                                  & 1.0                                              & 1.0                                              & 192                         & 1           & 16          & 12          & 96           & 96           & 96          & 2,097,152                                                & 20,971,520                                                   \\ \hline
+37.8                                                  & 19.36                                              & 0.10                                              & 192                         & 1           & 16          & 12          & 96           & 96           & 96          & 2,097,152                                                & 20,971,520                                                   \\ \hline
 \end{tabular}
 \caption{\textbf{Strong Scaling Results}. S = speedup, E = efficiency, p = number of processors}
 \end{table}
@@ -186,9 +192,8 @@ Although limitations in our cell passing and load balancing routines did not ena
 \hline
 \multicolumn{1}{|c|}{\multirow{2}{*}{\textbf{Time}}} & \multicolumn{1}{l|}{\multirow{2}{*}{\textbf{S}}} & \multicolumn{1}{l|}{\multirow{2}{*}{\textbf{E}}} & \multirow{2}{*}{\textbf{p}} & \multicolumn{3}{c|}{\textbf{Proc Divs}} & \multicolumn{3}{c|}{\textbf{\# of Cells}} & \multicolumn{1}{c|}{\multirow{2}{*}{\textbf{Tot Cells}}} & \multicolumn{1}{c|}{\multirow{2}{*}{\textbf{Tot Particles}}} \\ \cline{5-10}
 \multicolumn{1}{|c|}{}                               & \multicolumn{1}{l|}{}                            & \multicolumn{1}{l|}{}                            &                             & \textbf{x}  & \textbf{y}  & \textbf{z}  & \textbf{x}   & \textbf{y}   & \textbf{z}  & \multicolumn{1}{c|}{}                                    & \multicolumn{1}{c|}{}                                        \\ \hline
-1                                                    & 1                                                & 1                                                & 1                           & 1           & 1           & 1           & 96           & 96           & 96          & 884,736                                                  & 8,847,360                                                    \\ \hline
-1                                                    & 1                                                & 1                                                & 16                          & 1           & 4           & 4           & 192          & 192          & 192         & 7,077,888                                                & 70,778,880                                                   \\ \hline
-1                                                    & 1                                                & 1                                                & 256                         & 1           & 16          & 16          & 384          & 384          & 384         & 56,623,104                                               & 566,231,040                                                  \\ \hline
+689.6                                                    & 1.0                                                & 1.0                                                & 1                           & 1           & 1           & 1           & 96           & 96           & 96          & 884,736                                                  & 8,847,360                                                    \\ \hline
+2215.2                                                 & 0.3                                                & 0.002                                                & 16                          & 1           & 4           & 4           & 192          & 192          & 192         & 7,077,888                                                & 70,778,880                                                    \\ \hline
 \end{tabular}
 \caption{\textbf{Weak Scaling Results}. S = speedup, E = efficiency, p = number of processors}
 \end{table}
@@ -204,9 +209,6 @@ Although limitations in our cell passing and load balancing routines did not ena
     \includegraphics[width=10cm]{weak_speedup.png}
     \caption{Weak Scaling: \textbf{\textit{Speedup} vs Number of Processors}}
 \end{figure}
-
-
-
 
 
 
@@ -227,29 +229,7 @@ Max Porter was most frequently responsible for grid-related functions. He wrote 
 
 Joel Iventosch wrote the output and visualization routines and helped with the MPI passing routines.  He also contributed to the grid refinement and load balancing functions, and helped with the recursive laser implementation.
 
-Mark Sholte wrote much of the list functions and tree structure.  He also managed any git repository issues that arose and proved a masterful debugger.
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+Mark Sholte wrote much of the list functions and tree structure.  He also wrote much of the code for sending particles between processors in the pusher. In addition, he managed any git repository issues that arose and proved a masterful debugger.
 
 
 
