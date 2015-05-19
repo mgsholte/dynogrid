@@ -283,27 +283,6 @@ void give_take_surface(tree**** base_grid, List* list_u, int id_u, List* list_d,
 	
 	int nNeighbors = 2; // for 1D balancing
 	
-	/* // now getting list_u and list_d passed in, so creating moving_trees is unnecessary
-	
-	int neighbors[numNeighbors] = proc neighbors
-	
-	// create moving_trees: an array of List*s pointing to tree*s. The use of tree*s is not made explicit here, may need to cast later
-	// always List*, never just List, for C reasons
-	List* moving_trees[nNeighbors]
-	for (neighbors)
-		moving_trees[neighbor_id] = list_init();
-	end
-	
-	// fill moving_trees
-	int neighbor_id
-	for (tree*s at position i = imax-2)
-		if (tree->owner == pid) //not a ghost
-			neighbor_id = base_grid[i+1][j][k]->owner
-			list_add(moving_trees[neighbor_id], tree*)
-		end
-	end
-	*/
-	
 	// buffer send arrays. both get malloced in mpi_tree_send, the ** is so after the * gets malloced and therefore changes, I still have the pointer to it
 	simple_tree *buff_send_trees[nNeighbors];
 	particle *buff_send_parts[nNeighbors];
@@ -518,7 +497,7 @@ void give_take_surface(tree**** base_grid, List* list_u, int id_u, List* list_d,
 		
 		// possibly change imin/imax plus possibly resize whole base_grid
 		// new_tree only provides spatial to work with, so compare that to pxmin
-		if ((new_tree->loc.y+dy/2) < pymin) {	//all new_tree's have same x. using dx/2 to prevent rounding issues
+		if ((new_tree->loc.y-dy/2) < pymin) {	//all new_tree's have same x. using dx/2 to prevent rounding issues
 			if (jmin == 0) {
 				resize_allocation(base_grid); //resets wi to 2*(imax-imin) and centers around (imin+imax)/2
 			} else if (jmin < 0) {
@@ -528,7 +507,7 @@ void give_take_surface(tree**** base_grid, List* list_u, int id_u, List* list_d,
 			}
 			--jmin;
 			pymin -= dy;
-		} else if((new_tree->loc.y-dy/2) > pymax) {
+		} else if((new_tree->loc.y+3*dy/2) > pymax) {
 			if (jmax-1 == wj-1) {
 				resize_allocation(base_grid);
 			} else if (jmax-1 > wj-1) {
@@ -611,9 +590,9 @@ void resize_allocation(tree**** base_grid) {
 // init ghosts should be overwritten by new ghosts and recreated as necessary
 //  - when moving left, up, or forward, up to 23 new init ghosts are needed; otherwise up to 14 new init ghosts are needed
 void convert_ghost2real_and_reghost(tree**** base_grid, tree* new_tree, char dir6) {
-	int i = imin + 1 + round_i((new_tree->loc.x - pxmin)/dx); //round to force correct int value
-	int j = jmin + 1 + round_i((new_tree->loc.y - pymin)/dy);
-	int k = kmin + 1 + round_i((new_tree->loc.z - pzmin)/dz);
+	int i = imin + round_i((new_tree->loc.x - pxmin)/dx); //round to force correct int value
+	int j = jmin + round_i((new_tree->loc.y - pymin)/dy);
+	int k = kmin + round_i((new_tree->loc.z - pzmin)/dz);
 	
 	// for new tree, need to: give particles, set owner
 	// we leave children and point values alone, those should be fine
