@@ -28,15 +28,15 @@
 \section{Introduction}
 
 Particle in Cell (PIC) codes are commonly used to simulate plasma physics.  Existing codes, such as EPOCH~\cite{epoch}, allow physicists to simulate many experiments, including laser experiments.  Larger problems, such as 3D simulations of high-intensity laser experiments like those performed on the Texas Petawatt Laser (TPW), are too computationally expensive to run on modern supercomputers.  One way to bring these problems down to size is to adaptively change the grid size.  Simulations can require a very high resolution at certain sites (for example, where a laser hits a target), and orders of magnitude coarser resolution throughout the rest of the simulation.
-
-We have developed a 3D PIC code with a standard Boris particle pusher \cite{bird}, added an adaptive grid, and implemented data passing routines among nodes.  Additionally, we developed a load balancer, however we were unable to finish debugging it.  Our code is not physically accurate, ommiting a field solver and ignoring many physically relevant effects, but we believe it is an accurate representation of a production code in performance characteristics and expect it to scale similarly to a production code.
-
-
-\begin{figure}[h!]
+\begin{figure}[h]
     \centering
     \includegraphics[width=15cm]{viz_1.png}
     \caption{Visualization of our Simulation, showing the particles dispersing after the laser hits them.}
 \end{figure}
+We have developed a 3D PIC code with a standard Boris particle pusher \cite{bird}, added an adaptive grid, and implemented data passing routines among nodes.  Additionally, we developed a load balancer, however we were unable to finish debugging it.  Our code is not physically accurate, omitting a field solver and ignoring many physically relevant effects, but we believe it is an accurate representation of a production code in performance characteristics and expect it to scale similarly to a production code.
+
+
+
 
 \section{Code Description}
 PIC codes are commonly used in computational physics.  A PIC code typically consists of an array of grid points that define electromagnetic field values, and particles that move continuously throughout the grid.  We created a fairly simple 3D laser-plasma code with externally defined fields (the laser), and physical effects such as particle collision and photon pair production omitted.  We did however add an adaptive grid which makes load balancing more complex.
@@ -45,7 +45,7 @@ PIC codes are commonly used in computational physics.  A PIC code typically cons
 Particle-in-cell (PIC) codes used to simulate laser-plasma interactions commonly use the Boris pusher \cite{bird}, a second order accurate pusher for charged particles in electromagnetic fields.  The pusher is outlined in Fig.~\ref{fig:boris}.  Essentially, the particle is advanced a half time-step, the momentum is updated with $\vec{E}$ and rotated with $\vec{B}$, and the particle is moved a final half time-step.  With a properly set time step, a particle will never move more than one cell.
 
 
-\begin{figure}[htbp]
+\begin{figure}[htbp!]
 \centering
 \caption{Schematic of the Boris pusher.  The sub-cycling and current and density calculations were not implemented.}
 \begin{tikzpicture}[node distance=2cm]
@@ -145,8 +145,14 @@ For sequential performance, performance should depend on the number of particles
 \end{equation}
 where $N$ is the number of particles and $M$ is the number of grid points.  Since we are using an adaptive grid, $M$ is not constant, however, we will treat it as a constant here.  I (Scott) expect that full, physics-accurate simulations will refine in one area and simultaneously coarsen in another, keeping the total number (but not the processor distribution) of grid points generally constant.  This is especially true for our test problem.
 
+In the parallel case, we expect the performance to be
+\begin{equation}
+\mathcal{O} \left(\frac{N+M}{p} + \left[L + \frac{M}{p^\frac{2}{3}b}\right] + \left\{L \log p + (nL + \frac{p^\frac{2}{3}}{b} )p^{\frac{1}{3}}\right\}\right),
+\end{equation}
+where $p$ is the number of processors, $b$ is the bandwidth, and $L$ is the latency.  The terms in brackets are for the particle passing and depend on how much boundary area there is between processors.  The terms in braces are for the load balancer and include reductions and broadcasts on a hypercube topology.
+
 \section{Performance Results}
-Although limitations in our cell passing and load balancing routines did not enable us to fully implement the load balancing schema that we'd envisioned, our parallelized code was still able to achieve satisfactory results, as is evidenced in the table and plots below. Please see the Discussion section for more detailed analysis of these results.
+Although limitations in our cell passing and load balancing routines did not enable us to fully implement the load balancing schema that we'd envisioned, our parallelized code was still able to achieve satisfactory results, as is evidenced in the table and plots below.
 
 
 
@@ -177,6 +183,8 @@ Although limitations in our cell passing and load balancing routines did not ena
     \includegraphics[width=10cm]{strong_times.png}
     \caption{Strong Scaling: \textbf{\textit{Time} vs Number of Processors}}
 \end{figure}
+
+\newpage
 
 \begin{figure}[h!]
     \centering
@@ -212,7 +220,6 @@ Although limitations in our cell passing and load balancing routines did not ena
 
 
 
-\newpage
 
 \section{Conclusions}
 Despite all that we accomplished in this project, the size of what we aimed to achieve ended up greater than we could manage. Most notably, the logic for a 3D code proved very convoluted and difficult to debug.  We were able to figure everything out with the exception of the load balancer and cell passer.  We made significant progress toward a 3D load balancer, but we opted for a (still challenging) one-dimensional balancer instead.  In the end we were not able to fully debug the balancer and cell passer and instead ran a parallel, but unbalanced, code.
