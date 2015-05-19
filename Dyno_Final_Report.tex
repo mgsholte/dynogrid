@@ -28,14 +28,8 @@
 \section{Introduction}
 
 Particle in Cell (PIC) codes are commonly used to simulate plasma physics.  Existing codes, such as EPOCH~\cite{epoch}, allow physicists to simulate many experiments, including laser experiments.  Larger problems, such as 3D simulations of high-intensity laser experiments like those performed on the Texas Petawatt Laser (TPW), are too computationally expensive to run on modern supercomputers.  One way to bring these problems down to size is to adaptively change the grid size.  Simulations can require a very high resolution at certain sites (for example, where a laser hits a target), and orders of magnitude coarser resolution throughout the rest of the simulation.
-<<<<<<< HEAD
-\begin{figure}[h]
-=======
-
-We have developed a 3D PIC code with a standard Boris particle pusher \cite{bird}, added an adaptive grid, and implemented data passing routines among nodes.  Additionally, we developed a load balancer, however we were unable to finish debugging it.  Our code is not physically accurate, omitting a field solver and ignoring many physically relevant effects, but we believe it is an accurate representation of a production code in performance characteristics and expect it to scale similarly to a production code.
 
 \begin{figure}[h!]
->>>>>>> origin/master
     \centering
     \includegraphics[width=15cm]{viz_1.png}
     \caption{Visualization of our Simulation, showing the particles dispersing after the laser hits them.}
